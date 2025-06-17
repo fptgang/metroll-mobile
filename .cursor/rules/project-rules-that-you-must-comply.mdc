@@ -1,0 +1,58 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+<rule>
+the project follow a clean architecture approach 
+where unified data flow is required 
+
+the application data flow is as follow:
+
+Server --> datasource |
+                      |--> repository -->  usecase -->UI
+Local -->  datasource |
+</rule>
+
+
+<rule>
+when implementing viewmodel that viewmodel must apply this interface [BaseViewModel.kt](mdc:common/base/src/main/java/com/vidz/base/viewmodel/BaseViewModel.kt)
+
+here is an example implementation :
+[BlindboxAppViewModel.kt](mdc:app/src/main/java/com/vidz/blindboxapp/presentation/app/BlindboxAppViewModel.kt)
+
+</rule>
+
+<rule>
+when implementing repository you must apply this  [RetrofitServer.kt](mdc:core/data/src/main/java/com/vidz/data/server/retrofit/RetrofitServer.kt) and [ServerFlow.kt](mdc:core/data/src/main/java/com/vidz/data/flow/ServerFlow.kt)
+here is an example implementation :
+
+[BlindBoxRepositoryImpl.kt](mdc:core/data/src/main/java/com/vidz/data/repository/BlindBoxRepositoryImpl.kt)
+
+</rule>
+
+
+<rule>
+when implement a composable that u deemed reusable please put them into common/base/components 
+and u must for a reusable component in common/base/components and only create new one if it not exist
+</rule>
+
+<rule>
+When building composable you must use material 3 component and use Material theme to comply with the project requirement
+</rule>
+
+<rule>
+
+when building Screen level composable the composable must be split into these region and must stricly follow this guidline
+
+//region Define Var
+//endregion
+
+//region Event Handler
+//endregion
+
+//region ui
+  //region Dialog and Sheet
+  //end region
+//end region
+</rule>

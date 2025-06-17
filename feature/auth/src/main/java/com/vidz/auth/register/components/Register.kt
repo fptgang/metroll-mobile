@@ -1,0 +1,1 @@
+package com.vidz.auth.register.components
