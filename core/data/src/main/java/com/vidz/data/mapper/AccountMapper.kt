@@ -12,25 +12,29 @@ class AccountMapper @Inject constructor() : BaseRemoteMapper<Account, AccountDto
 
     override fun toDomain(external: AccountDto): Account {
         return Account(
-            id = external.id,
+            id = external.id.toString(),
             email = external.email,
-            firstName = external.firstName,
-            lastName = external.lastName,
-            isEmailVerified = external.isVerified,
+            fullName = "${external.firstName} ${external.lastName}".trim(),
+            phoneNumber = "", // Not available in DTO
             role = mapAccountRoleToDomain(external.role),
+            active = external.isVerified,
             createdAt = external.createdAt,
             updatedAt = external.updatedAt
         )
     }
 
     override fun toRemote(domain: Account): AccountDto {
+        val nameParts = domain.fullName.split(" ", limit = 2)
+        val firstName = nameParts.getOrNull(0) ?: ""
+        val lastName = nameParts.getOrNull(1) ?: ""
+        
         return AccountDto(
-            id = domain.id,
+            id = domain.id.toLongOrNull() ?: 0L,
             email = domain.email,
-            firstName = domain.firstName,
-            lastName = domain.lastName,
+            firstName = firstName,
+            lastName = lastName,
             role = mapAccountRoleToDto(domain.role),
-            isVerified = domain.isEmailVerified,
+            isVerified = domain.active,
             createdAt = domain.createdAt,
             updatedAt = domain.updatedAt
         )
@@ -38,16 +42,16 @@ class AccountMapper @Inject constructor() : BaseRemoteMapper<Account, AccountDto
 
     private fun mapAccountRoleToDomain(dtoRole: RoleEnum): AccountRole {
         return when (dtoRole) {
-            RoleEnum.ADMIN -> AccountRole.Admin
-            RoleEnum.USER -> AccountRole.Customer
+            RoleEnum.ADMIN -> AccountRole.ADMIN
+            RoleEnum.USER -> AccountRole.CUSTOMER
         }
     }
 
     private fun mapAccountRoleToDto(domainRole: AccountRole): RoleEnum {
         return when (domainRole) {
-            AccountRole.Admin -> RoleEnum.ADMIN
-            AccountRole.Staff -> RoleEnum.USER
-            AccountRole.Customer -> RoleEnum.USER
+            AccountRole.ADMIN -> RoleEnum.ADMIN
+            AccountRole.STAFF -> RoleEnum.USER
+            AccountRole.CUSTOMER -> RoleEnum.USER
         }
     }
 } 

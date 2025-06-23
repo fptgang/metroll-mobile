@@ -10,8 +10,12 @@ android {
 }
 
 dependencies {
-//    implementation(projects.core.data)
+    implementation(projects.core.data)
+    implementation(projects.core.domain)
     implementation(projects.common.base)
     implementation(projects.common.theme)
 
+    // Firebase Auth
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
 }

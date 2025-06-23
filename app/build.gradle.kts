@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.baselineprofile)
     alias(libs.plugins.roborazzi)
     alias(libs.plugins.kotlin.serialization)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -76,6 +77,7 @@ dependencies {
     implementation(projects.feature.membership)
     implementation(projects.feature.staff)
     implementation(projects.feature.qrScanner)
+    implementation(projects.feature.test)
     
     // Common modules
     implementation(projects.common.base)
@@ -85,6 +87,11 @@ dependencies {
     implementation(projects.core.data)
     implementation(projects.core.datastore)
     implementation(projects.core.domain)
+    
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    
     implementation(libs.androidx.multidex)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.compose.material.iconsExtended)

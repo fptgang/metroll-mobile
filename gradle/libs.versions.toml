@@ -144,6 +144,7 @@ coil-kt-svg = { group = "io.coil-kt", name = "coil-svg", version.ref = "coil" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "converterMoshi" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-cloud-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }

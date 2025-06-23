@@ -12,10 +12,8 @@ interface AuthApi {
     @GET("auth/me")
     suspend fun getCurrentUser(): Response<AccountDto>
 
-    @POST("auth/login")
-    suspend fun login(
-        @Body loginRequest: LoginRequest
-    ): Response<LoginResponse>
+    @POST("accounts/login/")
+    suspend fun login(): Response<AccountDto>
 
     @POST("auth/register")
     suspend fun register(
@@ -25,6 +23,11 @@ interface AuthApi {
     @POST("auth/login-with-google")
     suspend fun loginWithGoogle(
         @Body googleLoginRequest: GoogleLoginRequest
+    ): Response<LoginResponse>
+
+    @POST("auth/login-with-firebase")
+    suspend fun loginWithFirebase(
+        @Body firebaseLoginRequest: FirebaseLoginRequest
     ): Response<LoginResponse>
 
     @POST("auth/refresh-token")
@@ -62,6 +65,10 @@ data class RegisterRequest(
 
 data class GoogleLoginRequest(
     val googleToken: String
+)
+
+data class FirebaseLoginRequest(
+    val firebaseToken: String
 )
 
 data class RefreshTokenRequest(

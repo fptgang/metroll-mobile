@@ -1,8 +1,6 @@
 package com.vidz.data.server.retrofit
 
-import com.vidz.domain.Result.Success
-import com.vidz.domain.repository.TokenRepository
-import kotlinx.coroutines.flow.firstOrNull
+import com.vidz.domain.usecase.auth.GetFirebaseTokenUseCase
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.Interceptor
@@ -13,7 +11,7 @@ import javax.inject.Singleton
 
 @Singleton
 class AuthInterceptor @Inject constructor(
-    private val tokenRepository: TokenRepository
+    private val getFirebaseTokenUseCase: GetFirebaseTokenUseCase
 ) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -24,54 +22,50 @@ class AuthInterceptor @Inject constructor(
             return chain.proceed(originalRequest)
         }
 
-        // Get access token and add to request with timeout
-        val accessToken = runBlocking {
-            withTimeoutOrNull(10000) { // Increased to 10 second timeout
+        // Get Firebase token and add to request with timeout
+        val firebaseToken = runBlocking {
+            withTimeoutOrNull(10000) { // 10 second timeout
                 try {
-                    tokenRepository.getValidAccessToken().firstOrNull()
+                    getFirebaseTokenUseCase(forceRefresh = false)
                 } catch (e: Exception) {
                     null // Return null on any exception
                 }
             }
         }
 
-        val requestWithToken = when (accessToken) {
-            is Success -> {
-                originalRequest.newBuilder()
-                    .addHeader("Authorization", "Bearer ${accessToken.data}")
-                    .build()
-            }
-            else -> originalRequest
+        val requestWithToken = if (firebaseToken != null) {
+            originalRequest.newBuilder()
+                .addHeader("Authorization", "Bearer $firebaseToken")
+                .build()
+        } else {
+            originalRequest
         }
 
         val response = chain.proceed(requestWithToken)
 
-        // Handle 401 Unauthorized - try to refresh token
+        // Handle 401 Unauthorized - try to refresh Firebase token
         if (response.code == 401 && !shouldSkipAuth(originalRequest)) {
             response.close()
             
-            val refreshResult = runBlocking {
-                withTimeoutOrNull(15000) { // Increased to 15 second timeout for refresh
+            val refreshedFirebaseToken = runBlocking {
+                withTimeoutOrNull(15000) { // 15 second timeout for refresh
                     try {
-                        tokenRepository.handleTokenExpired().firstOrNull()
+                        getFirebaseTokenUseCase(forceRefresh = true)
                     } catch (e: Exception) {
                         null // Return null on any exception
                     }
                 }
             }
 
-            return when (refreshResult) {
-                is Success -> {
-                    // Retry the original request with new token
-                    val newRequestWithToken = originalRequest.newBuilder()
-                        .addHeader("Authorization", "Bearer ${refreshResult.data}")
-                        .build()
-                    chain.proceed(newRequestWithToken)
-                }
-                else -> {
-                    // Refresh failed, proceed without auth
-                    chain.proceed(originalRequest)
-                }
+            return if (refreshedFirebaseToken != null) {
+                // Retry the original request with refreshed Firebase token
+                val newRequestWithToken = originalRequest.newBuilder()
+                    .addHeader("Authorization", "Bearer $refreshedFirebaseToken")
+                    .build()
+                chain.proceed(newRequestWithToken)
+            } else {
+                // Refresh failed, proceed without auth
+                chain.proceed(originalRequest)
             }
         }
 
@@ -80,7 +74,7 @@ class AuthInterceptor @Inject constructor(
 
     private fun shouldSkipAuth(request: Request): Boolean {
         val url = request.url.toString()
-        return url.contains("/auth/login") || 
+        return url.contains("/accounts/login") ||
                url.contains("/auth/register") || 
                url.contains("/auth/refresh-token") ||
                url.contains("/auth/forgot-password") ||

@@ -3,8 +3,10 @@ package com.vidz.domain.repository
 import com.vidz.domain.Result
 import com.vidz.domain.model.AuthToken
 import com.vidz.domain.model.AuthenticationState
+import com.vidz.domain.model.LoginCredentials
 import com.vidz.domain.model.LoginRequest
 import com.vidz.domain.model.LoginValidation
+import com.vidz.domain.model.RegisterCredentials
 import com.vidz.domain.model.RegisterRequest
 import com.vidz.domain.model.User
 import kotlinx.coroutines.flow.Flow
@@ -19,7 +21,7 @@ interface AuthRepository {
     /**
      * Get current authenticated user
      */
-    suspend fun getCurrentUser(): User?
+    suspend fun getCurrentUser():Flow<Result<User?>>
     
     /**
      * Login with email and password
@@ -34,7 +36,7 @@ interface AuthRepository {
     /**
      * Logout current user
      */
-    suspend fun logout(): Result<Unit>
+    suspend fun logout(): Flow<Result<Unit>>
     
     /**
      * Refresh authentication token
@@ -100,4 +102,10 @@ interface AuthRepository {
      * Authenticate with biometrics
      */
     suspend fun authenticateWithBiometrics(): Result<User>
+
+    suspend fun loginWithEmailAndPassword(credentials: LoginCredentials): Flow<Result<User>>
+    suspend fun registerWithEmailAndPassword(credentials: RegisterCredentials): Flow<Result<User>>
+    suspend fun sendPasswordResetEmail(email: String): Flow<Result<Unit>>
+    suspend fun deleteAccount(): Flow<Result<Unit>>
+    fun isUserLoggedIn(): Boolean
 }

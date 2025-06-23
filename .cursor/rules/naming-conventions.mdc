@@ -1,0 +1,181 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Naming Conventions
+
+## Package Structure
+
+All packages must follow this naming pattern:
+
+```
+com.vidz.[module-name].[layer].[sub-layer]
+```
+
+Examples:
+- `com.vidz.auth.presentation.viewmodels`
+- `com.vidz.membership.data.repository`
+- `com.vidz.base.components`
+
+## File Naming
+
+### Classes and Interfaces
+
+- **ViewModels**: `FeatureNameViewModel.kt`
+- **Repositories**: `FeatureNameRepository.kt` (interface), `FeatureNameRepositoryImpl.kt` (implementation)
+- **Use Cases**: `GetFeatureDataUseCase.kt`, `SaveFeatureDataUseCase.kt`
+- **Data Sources**: `FeatureNameRemoteDataSource.kt`, `FeatureNameLocalDataSource.kt`
+- **DTOs**: `FeatureNameDto.kt`, `FeatureNameResponseDto.kt`
+- **Entities**: `FeatureNameEntity.kt`
+- **Domain Models**: `FeatureName.kt` or `FeatureNameModel.kt`
+
+### Composables
+
+- **Screens**: `FeatureNameScreen.kt`
+- **Components**: `FeatureNameComponent.kt`
+- **Reusable Components**: `ComponentName.kt` (e.g., `CustomButton.kt`)
+
+### State and Events
+
+- **UI State**: `FeatureNameUiState.kt`
+- **Events**: `FeatureNameEvent.kt`
+- **Side Effects**: `FeatureNameSideEffect.kt`
+
+## Variable and Function Naming
+
+### Composable Functions
+
+```kotlin
+@Composable
+fun FeatureNameScreen() // PascalCase for screen composables
+
+@Composable
+fun CustomButton() // PascalCase for component composables
+
+@Composable
+fun FeatureNamePreview() // PascalCase for preview functions
+```
+
+### Variables
+
+```kotlin
+// State variables
+val uiState by viewModel.uiState.collectAsState()
+val isLoading by remember { mutableStateOf(false) }
+
+// Event handlers
+val onButtonClick = { /* handler */ }
+val onItemSelected = { item: Item -> /* handler */ }
+
+// Navigation
+val navController = rememberNavController()
+val navigateBack = { navController.popBackStack() }
+```
+
+### Functions
+
+```kotlin
+// Event handlers
+fun handleButtonClick() { }
+fun handleItemSelection(item: Item) { }
+
+// Navigation functions
+fun navigateToDetail(id: String) { }
+fun navigateBack() { }
+
+// Utility functions
+fun formatDate(date: Date): String { }
+fun validateInput(input: String): Boolean { }
+```
+
+## Resource Naming
+
+### String Resources
+
+```xml
+<!-- Screens -->
+<string name="feature_name_title">Title</string>
+<string name="feature_name_description">Description</string>
+
+<!-- Buttons -->
+<string name="btn_save">Save</string>
+<string name="btn_cancel">Cancel</string>
+
+<!-- Error Messages -->
+<string name="error_network">Network error occurred</string>
+<string name="error_validation">Invalid input</string>
+```
+
+### Drawable Resources
+
+```xml
+<!-- Icons -->
+ic_arrow_back.xml
+ic_search.xml
+ic_menu.xml
+
+<!-- Backgrounds -->
+bg_primary.xml
+bg_card.xml
+
+<!-- Shapes -->
+shape_rounded_corner.xml
+```
+
+## DI Module Naming
+
+```kotlin
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class FeatureNameModule // For feature-specific modules
+
+@Module
+@InstallIn(SingletonComponent::class)
+object NetworkModule // For shared modules
+
+@Module
+@InstallIn(SingletonComponent::class)
+object DatabaseModule // For database-related modules
+```
+
+## Constants and Configuration
+
+```kotlin
+object AppConstants {
+    const val BASE_URL = "https://api.example.com/"
+    const val TIMEOUT_SECONDS = 30L
+    const val DATABASE_NAME = "metroll_database"
+}
+
+object NavigationRoutes {
+    const val HOME = "home"
+    const val PROFILE = "profile"
+    const val SETTINGS = "settings"
+}
+```
+
+## Test File Naming
+
+```kotlin
+// Unit tests
+FeatureNameViewModelTest.kt
+FeatureNameRepositoryTest.kt
+FeatureNameUseCaseTest.kt
+
+// UI tests
+FeatureNameScreenTest.kt
+FeatureNameComponentTest.kt
+
+// Integration tests
+FeatureNameIntegrationTest.kt
+```
+
+## Consistency Rules
+
+1. Use consistent naming patterns across all modules
+2. Prefer descriptive names over abbreviations
+3. Use camelCase for variables and functions
+4. Use PascalCase for classes, interfaces, and composables
+5. Use UPPER_SNAKE_CASE for constants
+6. Use kebab-case for resource files

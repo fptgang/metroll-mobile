@@ -1,25 +1,29 @@
 package com.vidz.metroll_mobile.presentation.app
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vidz.base.interfaces.ViewEvent
+import com.vidz.base.interfaces.ViewModelState
+import com.vidz.base.interfaces.ViewState
+import com.vidz.base.navigation.DestinationRoutes
+import com.vidz.base.viewmodel.BaseViewModel
+import com.vidz.domain.Result
 import com.vidz.domain.model.AuthenticationState
 import com.vidz.domain.model.User
 import com.vidz.domain.model.UserRole
 import com.vidz.domain.usecase.AuthUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class AppEntryViewModel @Inject constructor(
     private val authUseCase: AuthUseCase
-) : ViewModel() {
-    
-    private val _uiState = MutableStateFlow(AppEntryViewState())
-    val uiState: StateFlow<AppEntryViewState> = _uiState.asStateFlow()
+) : BaseViewModel<
+    AppEntryViewModel.AppEntryViewEvent,
+    AppEntryViewModel.AppEntryViewState,
+    AppEntryViewModel.AppEntryViewModelState
+>(AppEntryViewModelState()) {
     
     init {
         observeAuthenticationState()
@@ -28,11 +32,13 @@ class AppEntryViewModel @Inject constructor(
     private fun observeAuthenticationState() {
         viewModelScope.launch {
             authUseCase.getAuthenticationState().collect { authState ->
-                _uiState.value = _uiState.value.copy(
-                    authenticationState = authState,
-                    isLoading = authState is AuthenticationState.Loading,
-                    startDestination = getStartDestinationForAuthState(authState)
-                )
+                viewModelState.update { currentState ->
+                    currentState.copy(
+                        authenticationState = authState,
+                        isLoading = authState is AuthenticationState.Loading,
+                        startDestination = getStartDestinationForAuthState(authState)
+                    )
+                }
             }
         }
     }
@@ -40,28 +46,28 @@ class AppEntryViewModel @Inject constructor(
     private fun getStartDestinationForAuthState(authState: AuthenticationState): String {
         return when (authState) {
             is AuthenticationState.Loading -> "splash"
-            is AuthenticationState.Unauthenticated -> "auth_graph"
+            is AuthenticationState.Unauthenticated -> DestinationRoutes.ROOT_AUTH_SCREEN_ROUTE
             is AuthenticationState.Authenticated -> {
                 getHomeDestinationForRole(authState.user.role)
             }
-            is AuthenticationState.Error -> "auth_graph"
+            is AuthenticationState.Error -> DestinationRoutes.ROOT_AUTH_SCREEN_ROUTE
         }
     }
     
     private fun getHomeDestinationForRole(role: UserRole): String {
         return when (role) {
-            UserRole.CUSTOMER -> "customer_home_graph"
-            UserRole.STAFF -> "staff_home_graph"
-            UserRole.ADMIN -> "admin_dashboard_graph"
+            UserRole.CUSTOMER -> DestinationRoutes.ROOT_HOME_SCREEN_ROUTE
+            UserRole.STAFF -> DestinationRoutes.ROOT_STAFF_SCREEN_ROUTE
+            UserRole.ADMIN -> DestinationRoutes.ROOT_HOME_SCREEN_ROUTE // Admin also uses home for now
         }
     }
     
-    fun onTriggerEvent(event: AppEntryEvent) {
+    override fun onTriggerEvent(event: AppEntryViewEvent) {
         when (event) {
-            is AppEntryEvent.InitializeApp -> {
+            is AppEntryViewEvent.InitializeApp -> {
                 initializeApp()
             }
-            is AppEntryEvent.CheckAuthenticationStatus -> {
+            is AppEntryViewEvent.CheckAuthenticationStatus -> {
                 checkAuthenticationStatus()
             }
         }
@@ -70,7 +76,7 @@ class AppEntryViewModel @Inject constructor(
     private fun initializeApp() {
         viewModelScope.launch {
             try {
-                _uiState.value = _uiState.value.copy(isLoading = true)
+                viewModelState.update { it.copy(isLoading = true) }
                 
                 // Simulate initialization delay (splash screen)
                 kotlinx.coroutines.delay(2000)
@@ -79,10 +85,12 @@ class AppEntryViewModel @Inject constructor(
                 checkAuthenticationStatus()
                 
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = e.message
-                )
+                viewModelState.update { 
+                    it.copy(
+                        isLoading = false,
+                        error = e.message
+                    )
+                }
             }
         }
     }
@@ -91,52 +99,104 @@ class AppEntryViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val isAuthenticated = authUseCase.isAuthenticated()
-                val currentUser = authUseCase.getCurrentUser()
                 
-                if (isAuthenticated && currentUser != null) {
-                    // User is authenticated, navigate to appropriate home
-                    _uiState.value = _uiState.value.copy(
-                        authenticationState = AuthenticationState.Authenticated(currentUser),
-                        isLoading = false,
-                        startDestination = getHomeDestinationForRole(currentUser.role)
-                    )
+                if (isAuthenticated) {
+                    // Get current user
+                    authUseCase.getCurrentUser().collect { result ->
+                        when (result) {
+                            is Result.Success -> {
+                                val user = result.data
+                                if (user != null) {
+                                    viewModelState.update {
+                                        it.copy(
+                                            authenticationState = AuthenticationState.Authenticated(user),
+                                            isLoading = false,
+                                            startDestination = getHomeDestinationForRole(user.role)
+                                        )
+                                    }
+                                } else {
+                                    // User is null, treat as unauthenticated
+                                    viewModelState.update {
+                                        it.copy(
+                                            authenticationState = AuthenticationState.Unauthenticated,
+                                            isLoading = false,
+                                            startDestination = DestinationRoutes.ROOT_AUTH_SCREEN_ROUTE
+                                        )
+                                    }
+                                }
+                            }
+                            is Result.ServerError -> {
+                                viewModelState.update {
+                                    it.copy(
+                                        authenticationState = AuthenticationState.Error(result.message),
+                                        isLoading = false,
+                                        error = result.message,
+                                        startDestination = DestinationRoutes.ROOT_AUTH_SCREEN_ROUTE
+                                    )
+                                }
+                            }
+                            is Result.Init -> {
+                                // Keep loading state
+                            }
+                        }
+                    }
                 } else {
                     // User is not authenticated, navigate to auth
-                    _uiState.value = _uiState.value.copy(
-                        authenticationState = AuthenticationState.Unauthenticated,
-                        isLoading = false,
-                        startDestination = "auth_graph"
-                    )
+                    viewModelState.update {
+                        it.copy(
+                            authenticationState = AuthenticationState.Unauthenticated,
+                            isLoading = false,
+                            startDestination = DestinationRoutes.ROOT_AUTH_SCREEN_ROUTE
+                        )
+                    }
                 }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    authenticationState = AuthenticationState.Error(e.message ?: "Unknown error"),
-                    isLoading = false,
-                    error = e.message,
-                    startDestination = "auth_graph"
-                )
+                viewModelState.update {
+                    it.copy(
+                        authenticationState = AuthenticationState.Error(e.message ?: "Unknown error"),
+                        isLoading = false,
+                        error = e.message,
+                        startDestination = DestinationRoutes.ROOT_AUTH_SCREEN_ROUTE
+                    )
+                }
             }
         }
     }
-}
 
-data class AppEntryViewState(
-    val authenticationState: AuthenticationState = AuthenticationState.Loading,
-    val isLoading: Boolean = true,
-    val error: String? = null,
-    val startDestination: String = "splash"
-) {
-    val isAuthenticated: Boolean
-        get() = authenticationState is AuthenticationState.Authenticated
-    
-    val currentUser: User?
-        get() = (authenticationState as? AuthenticationState.Authenticated)?.user
-    
-    val showSplash: Boolean
-        get() = isLoading && startDestination == "splash"
-}
+    sealed interface AppEntryViewEvent : ViewEvent {
+        object InitializeApp : AppEntryViewEvent
+        object CheckAuthenticationStatus : AppEntryViewEvent
+    }
 
-sealed class AppEntryEvent {
-    object InitializeApp : AppEntryEvent()
-    object CheckAuthenticationStatus : AppEntryEvent()
+    data class AppEntryViewState(
+        val authenticationState: AuthenticationState = AuthenticationState.Loading,
+        val isLoading: Boolean = true,
+        val error: String? = null,
+        val startDestination: String = "splash"
+    ) : ViewState() {
+        val isAuthenticated: Boolean
+            get() = authenticationState is AuthenticationState.Authenticated
+        
+        val currentUser: User?
+            get() = (authenticationState as? AuthenticationState.Authenticated)?.user
+        
+        val showSplash: Boolean
+            get() = isLoading && startDestination == "splash"
+    }
+
+    data class AppEntryViewModelState(
+        val authenticationState: AuthenticationState = AuthenticationState.Loading,
+        val isLoading: Boolean = true,
+        val error: String? = null,
+        val startDestination: String = "splash"
+    ) : ViewModelState() {
+        override fun toUiState(): ViewState {
+            return AppEntryViewState(
+                authenticationState = authenticationState,
+                isLoading = isLoading,
+                error = error,
+                startDestination = startDestination
+            )
+        }
+    }
 } 

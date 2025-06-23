@@ -16,4 +16,8 @@ android {
 
 dependencies {
     implementation(libs.kotlinx.serialization.json)
+    
+    // Firebase Auth - needed for hybrid use cases
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
 }

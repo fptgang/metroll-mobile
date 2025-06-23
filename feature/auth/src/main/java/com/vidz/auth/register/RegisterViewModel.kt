@@ -1,115 +1,131 @@
 package com.vidz.auth.register
 
 import androidx.lifecycle.viewModelScope
-import com.vidz.auth.register.RegisterViewModel.RegisterEvent
-import com.vidz.auth.register.RegisterViewModel.RegisterUiState
-import com.vidz.auth.register.RegisterViewModel.RegisterViewModelState
 import com.vidz.base.interfaces.ViewEvent
 import com.vidz.base.interfaces.ViewModelState
 import com.vidz.base.interfaces.ViewState
 import com.vidz.base.viewmodel.BaseViewModel
-import com.vidz.domain.Result.Init
-import com.vidz.domain.Result.ServerError
-import com.vidz.domain.Result.Success
-import com.vidz.domain.model.Account
-import com.vidz.domain.model.RegisterRequest
-import com.vidz.domain.usecase.RegisterUseCase
+import com.vidz.domain.Result
+import com.vidz.domain.model.User
+import com.vidz.domain.usecase.auth.HybridRegisterUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
-    private val registerUseCase: RegisterUseCase
-) : BaseViewModel<RegisterEvent, RegisterUiState, RegisterViewModelState>(
+    private val hybridRegisterUseCase: HybridRegisterUseCase
+) : BaseViewModel<RegisterViewModel.RegisterEvent, RegisterViewModel.RegisterViewState, RegisterViewModel.RegisterViewModelState>(
     initState = RegisterViewModelState()
 ) {
 
     override fun onTriggerEvent(event: RegisterEvent) {
         when (event) {
-            is RegisterEvent.UpdateEmail -> updateEmail(event.email)
-            is RegisterEvent.UpdatePassword -> updatePassword(event.password)
-            is RegisterEvent.UpdateConfirmPassword -> updateConfirmPassword(event.confirmPassword)
-            is RegisterEvent.UpdateFirstName -> updateFirstName(event.firstName)
-            is RegisterEvent.UpdateLastName -> updateLastName(event.lastName)
-            is RegisterEvent.Register -> register()
-            is RegisterEvent.ClearError -> clearError()
-            is RegisterEvent.ClearSuccess -> clearSuccess()
+            is RegisterEvent.EmailChanged -> {
+                viewModelState.value = viewModelState.value.copy(
+                    email = event.email,
+                    emailError = null
+                )
+            }
+            is RegisterEvent.DisplayNameChanged -> {
+                viewModelState.value = viewModelState.value.copy(
+                    displayName = event.displayName,
+                    displayNameError = null
+                )
+            }
+            is RegisterEvent.PasswordChanged -> {
+                viewModelState.value = viewModelState.value.copy(
+                    password = event.password,
+                    passwordError = null
+                )
+            }
+            is RegisterEvent.ConfirmPasswordChanged -> {
+                viewModelState.value = viewModelState.value.copy(
+                    confirmPassword = event.confirmPassword,
+                    confirmPasswordError = null
+                )
+            }
+            is RegisterEvent.PasswordVisibilityToggled -> {
+                viewModelState.value = viewModelState.value.copy(
+                    isPasswordVisible = !viewModelState.value.isPasswordVisible
+                )
+            }
+            is RegisterEvent.ConfirmPasswordVisibilityToggled -> {
+                viewModelState.value = viewModelState.value.copy(
+                    isConfirmPasswordVisible = !viewModelState.value.isConfirmPasswordVisible
+                )
+            }
+            is RegisterEvent.RegisterClicked -> {
+                performRegister()
+            }
+            is RegisterEvent.ErrorDismissed -> {
+                viewModelState.value = viewModelState.value.copy(
+                    errorMessage = null
+                )
+            }
         }
     }
 
-    private fun updateEmail(email: String) {
-        viewModelState.value = viewModelState.value.copy(
-            email = email,
-            emailError = null
-        )
-    }
-
-    private fun updatePassword(password: String) {
-        viewModelState.value = viewModelState.value.copy(
-            password = password,
-            passwordError = null
-        )
-    }
-
-    private fun updateConfirmPassword(confirmPassword: String) {
-        viewModelState.value = viewModelState.value.copy(
-            confirmPassword = confirmPassword,
-            confirmPasswordError = null
-        )
-    }
-
-    private fun updateFirstName(firstName: String) {
-        viewModelState.value = viewModelState.value.copy(
-            firstName = firstName,
-            firstNameError = null
-        )
-    }
-
-    private fun updateLastName(lastName: String) {
-        viewModelState.value = viewModelState.value.copy(
-            lastName = lastName,
-            lastNameError = null
-        )
-    }
-
-    private fun register() {
+    private fun performRegister() {
         val currentState = viewModelState.value
         
-        // Validate input
-        if (!validateInput(currentState)) {
+        // Validate inputs
+        var hasError = false
+        val updatedState = currentState.copy()
+        
+        if (currentState.email.isBlank()) {
+            updatedState.copy(emailError = "Email is required")
+            hasError = true
+        }
+        
+        if (currentState.displayName.isBlank()) {
+            updatedState.copy(displayNameError = "Display name is required")
+            hasError = true
+        }
+        
+        if (currentState.password.isBlank()) {
+            updatedState.copy(passwordError = "Password is required")
+            hasError = true
+        } else if (currentState.password.length < 6) {
+            updatedState.copy(passwordError = "Password must be at least 6 characters")
+            hasError = true
+        }
+        
+        if (currentState.confirmPassword.isBlank()) {
+            updatedState.copy(confirmPasswordError = "Please confirm your password")
+            hasError = true
+        } else if (currentState.password != currentState.confirmPassword) {
+            updatedState.copy(confirmPasswordError = "Passwords do not match")
+            hasError = true
+        }
+        
+        if (hasError) {
+            viewModelState.value = updatedState
             return
         }
 
-        viewModelState.value = currentState.copy(
-            isLoading = true,
-            error = null
-        )
-
         viewModelScope.launch {
-            registerUseCase(
-                RegisterRequest(
-                    email = currentState.email,
-                    password = currentState.password,
-                    firstName = currentState.firstName,
-                    lastName = currentState.lastName
-                )
+            hybridRegisterUseCase(
+                email = currentState.email,
+                password = currentState.password,
+                confirmPassword = currentState.confirmPassword,
+                displayName = currentState.displayName.takeIf { it.isNotBlank() }
             ).collect { result ->
                 when (result) {
-                    is Init -> {
+                    is Result.Init -> {
                         viewModelState.value = viewModelState.value.copy(isLoading = true)
                     }
-                    is Success<*> -> {
+                    is Result.Success -> {
                         viewModelState.value = viewModelState.value.copy(
                             isLoading = false,
                             isRegistrationSuccessful = true,
-                            registeredAccount = result.data as? Account
+                            user = result.data
                         )
                     }
-                    is ServerError -> {
+                    is Result.ServerError -> {
                         viewModelState.value = viewModelState.value.copy(
                             isLoading = false,
-                            error = result.message
+                            errorMessage = result.message
                         )
                     }
                 }
@@ -117,123 +133,63 @@ class RegisterViewModel @Inject constructor(
         }
     }
 
-    private fun validateInput(state: RegisterViewModelState): Boolean {
-        var isValid = true
-        var updatedState = state
-
-        if (state.firstName.isBlank()) {
-            updatedState = updatedState.copy(firstNameError = "First name is required")
-            isValid = false
-        }
-
-        if (state.lastName.isBlank()) {
-            updatedState = updatedState.copy(lastNameError = "Last name is required")
-            isValid = false
-        }
-
-        if (state.email.isBlank()) {
-            updatedState = updatedState.copy(emailError = "Email is required")
-            isValid = false
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(state.email).matches()) {
-            updatedState = updatedState.copy(emailError = "Please enter a valid email")
-            isValid = false
-        }
-
-        if (state.password.isBlank()) {
-            updatedState = updatedState.copy(passwordError = "Password is required")
-            isValid = false
-        } else if (state.password.length < 6) {
-            updatedState = updatedState.copy(passwordError = "Password must be at least 6 characters")
-            isValid = false
-        }
-
-        if (state.confirmPassword.isBlank()) {
-            updatedState = updatedState.copy(confirmPasswordError = "Please confirm your password")
-            isValid = false
-        } else if (state.password != state.confirmPassword) {
-            updatedState = updatedState.copy(confirmPasswordError = "Passwords do not match")
-            isValid = false
-        }
-
-        viewModelState.value = updatedState
-        return isValid
-    }
-
-    private fun clearError() {
-        viewModelState.value = viewModelState.value.copy(error = null)
-    }
-
-    private fun clearSuccess() {
-        viewModelState.value = viewModelState.value.copy(
-            isRegistrationSuccessful = false,
-            registeredAccount = null
+    data class RegisterViewModelState(
+        val email: String = "",
+        val displayName: String = "",
+        val password: String = "",
+        val confirmPassword: String = "",
+        val isPasswordVisible: Boolean = false,
+        val isConfirmPasswordVisible: Boolean = false,
+        val isLoading: Boolean = false,
+        val emailError: String? = null,
+        val displayNameError: String? = null,
+        val passwordError: String? = null,
+        val confirmPasswordError: String? = null,
+        val errorMessage: String? = null,
+        val isRegistrationSuccessful: Boolean = false,
+        val user: User? = null
+    ) : ViewModelState() {
+        override fun toUiState(): ViewState = RegisterViewState(
+            email = email,
+            displayName = displayName,
+            password = password,
+            confirmPassword = confirmPassword,
+            isPasswordVisible = isPasswordVisible,
+            isConfirmPasswordVisible = isConfirmPasswordVisible,
+            isLoading = isLoading,
+            emailError = emailError,
+            displayNameError = displayNameError,
+            passwordError = passwordError,
+            confirmPasswordError = confirmPasswordError,
+            errorMessage = errorMessage,
+            isRegistrationSuccessful = isRegistrationSuccessful
         )
     }
 
-// Events
-sealed class RegisterEvent : ViewEvent {
-    data class UpdateEmail(val email: String) : RegisterEvent()
-    data class UpdatePassword(val password: String) : RegisterEvent()
-    data class UpdateConfirmPassword(val confirmPassword: String) : RegisterEvent()
-    data class UpdateFirstName(val firstName: String) : RegisterEvent()
-    data class UpdateLastName(val lastName: String) : RegisterEvent()
-    object Register : RegisterEvent()
-    object ClearError : RegisterEvent()
-    object ClearSuccess : RegisterEvent()
-}
+    data class RegisterViewState(
+        val email: String,
+        val displayName: String,
+        val password: String,
+        val confirmPassword: String,
+        val isPasswordVisible: Boolean,
+        val isConfirmPasswordVisible: Boolean,
+        val isLoading: Boolean,
+        val emailError: String?,
+        val displayNameError: String?,
+        val passwordError: String?,
+        val confirmPasswordError: String?,
+        val errorMessage: String?,
+        val isRegistrationSuccessful: Boolean
+    ) : ViewState()
 
-// View Model State
-data class RegisterViewModelState(
-    val email: String = "",
-    val password: String = "",
-    val confirmPassword: String = "",
-    val firstName: String = "",
-    val lastName: String = "",
-    val emailError: String? = null,
-    val passwordError: String? = null,
-    val confirmPasswordError: String? = null,
-    val firstNameError: String? = null,
-    val lastNameError: String? = null,
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val isRegistrationSuccessful: Boolean = false,
-    val registeredAccount: Account? = null
-) : ViewModelState() {
-    override fun toUiState(): ViewState = RegisterUiState(
-        email = email,
-        password = password,
-        confirmPassword = confirmPassword,
-        firstName = firstName,
-        lastName = lastName,
-        emailError = emailError,
-        passwordError = passwordError,
-        confirmPasswordError = confirmPasswordError,
-        firstNameError = firstNameError,
-        lastNameError = lastNameError,
-        isLoading = isLoading,
-        error = error,
-        isRegistrationSuccessful = isRegistrationSuccessful,
-        isFormValid = firstName.isNotBlank() && lastName.isNotBlank() && 
-                      email.isNotBlank() && password.isNotBlank() && 
-                      confirmPassword.isNotBlank()
-    )
-}
-
-// UI State
-data class RegisterUiState(
-    val email: String,
-    val password: String,
-    val confirmPassword: String,
-    val firstName: String,
-    val lastName: String,
-    val emailError: String?,
-    val passwordError: String?,
-    val confirmPasswordError: String?,
-    val firstNameError: String?,
-    val lastNameError: String?,
-    val isLoading: Boolean,
-    val error: String?,
-    val isRegistrationSuccessful: Boolean,
-    val isFormValid: Boolean
-) : ViewState()
+    sealed class RegisterEvent : ViewEvent {
+        data class EmailChanged(val email: String) : RegisterEvent()
+        data class DisplayNameChanged(val displayName: String) : RegisterEvent()
+        data class PasswordChanged(val password: String) : RegisterEvent()
+        data class ConfirmPasswordChanged(val confirmPassword: String) : RegisterEvent()
+        object PasswordVisibilityToggled : RegisterEvent()
+        object ConfirmPasswordVisibilityToggled : RegisterEvent()
+        object RegisterClicked : RegisterEvent()
+        object ErrorDismissed : RegisterEvent()
+    }
 }

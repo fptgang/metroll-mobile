@@ -19,7 +19,7 @@ android {
             buildConfigField(
                 "String",
                 "BASE_URL",
-                "\"http://52.163.66.235:8080/api/v1/\""
+                "\"https://metroll.southeastasia.cloudapp.azure.com/\""
                 )
         }
         release {
@@ -37,7 +37,7 @@ android {
 dependencies {
 //    implementation(projects.app)
     implementation(projects.core.domain)
-//    implementation(projects.core.datastore)
+    implementation(projects.core.datastore)
     implementation(libs.okhttp.logging)
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.kotlin.serialization)
@@ -46,4 +46,8 @@ dependencies {
     implementation(libs.converter.gson)
     implementation (libs.moshi.kotlin)
     ksp (libs.moshi.kotlin.codegen)
+    
+    // Firebase Auth - needed for AuthInterceptor
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
 }

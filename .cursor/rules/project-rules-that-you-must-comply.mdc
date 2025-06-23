@@ -19,15 +19,13 @@ Local -->  datasource |
 when implementing viewmodel that viewmodel must apply this interface [BaseViewModel.kt](mdc:common/base/src/main/java/com/vidz/base/viewmodel/BaseViewModel.kt)
 
 here is an example implementation :
-[BlindboxAppViewModel.kt](mdc:app/src/main/java/com/vidz/blindboxapp/presentation/app/BlindboxAppViewModel.kt)
+[MetrollAppViewModel.kt](mdc:app/src/main/java/com/vidz/metroll_mobile/presentation/app/MetrollAppViewModel.kt)
 
 </rule>
 
 <rule>
 when implementing repository you must apply this  [RetrofitServer.kt](mdc:core/data/src/main/java/com/vidz/data/server/retrofit/RetrofitServer.kt) and [ServerFlow.kt](mdc:core/data/src/main/java/com/vidz/data/flow/ServerFlow.kt)
-here is an example implementation :
 
-[BlindBoxRepositoryImpl.kt](mdc:core/data/src/main/java/com/vidz/data/repository/BlindBoxRepositoryImpl.kt)
 
 </rule>
 

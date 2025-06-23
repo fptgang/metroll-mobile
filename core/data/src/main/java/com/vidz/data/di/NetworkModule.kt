@@ -2,6 +2,7 @@ package com.vidz.data.di
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import com.vidz.metroll.core.data.BuildConfig
 // import com.vidz.metroll.core.data.BuildConfig // TODO: Add proper BuildConfig
 // Removed direct API imports as RetrofitServer will provide them
 import dagger.Module
@@ -36,7 +37,7 @@ object NetworkModule {
             
         return Retrofit.Builder()
             .client(client)
-            .baseUrl("https://api.metroll.mock/") // Mock URL for development
+            .baseUrl(BuildConfig.BASE_URL) // Mock URL for development
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
     }
@@ -48,7 +49,4 @@ object NetworkModule {
             level = HttpLoggingInterceptor.Level.BODY
         }
     }
-
-    // API Providers are now handled by RetrofitServer
-    // No need for individual provideAuthApi, provideAccountApi, etc. here anymore
 }

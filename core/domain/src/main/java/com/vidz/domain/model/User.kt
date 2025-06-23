@@ -1,25 +1,20 @@
 package com.vidz.domain.model
 
-import java.util.Date
-
 data class User(
-    val id: String,
-    val email: String,
-    val firstName: String,
-    val lastName: String,
-    val phoneNumber: String? = null,
-    val profileImageUrl: String? = null,
-    val role: UserRole,
+    val uid: String,
+    val email: String?,
+    val displayName: String?,
+    val photoUrl: String?,
     val isEmailVerified: Boolean = false,
-    val createdAt: Date,
-    val lastLoginAt: Date? = null,
+    val createdAt: Long? = null,
+    val role: UserRole = UserRole.CUSTOMER,
     val preferences: UserPreferences = UserPreferences()
 ) {
     val fullName: String
-        get() = "$firstName $lastName"
+        get() = displayName ?: "Unknown User"
     
     val initials: String
-        get() = "${firstName.firstOrNull()?.uppercase()}${lastName.firstOrNull()?.uppercase()}"
+        get() = displayName?.split(" ")?.mapNotNull { it.firstOrNull()?.uppercase() }?.take(2)?.joinToString("") ?: "U"
 }
 
 enum class UserRole(val displayName: String) {

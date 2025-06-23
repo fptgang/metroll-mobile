@@ -7,9 +7,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import com.vidz.datastore.BlindBoxDatabase
 import com.vidz.datastore.TokenDataStore
-import com.vidz.datastore.TokenRepositoryImpl
-import com.vidz.domain.repository.TokenRepository
-import dagger.Binds
+import com.vidz.datastore.UserDataStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,12 +21,6 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 @InstallIn(SingletonComponent::class)
 abstract class DataStoreModule {
 
-    @Binds
-    @Singleton
-    abstract fun bindTokenRepository(
-        tokenRepositoryImpl: TokenRepositoryImpl
-    ): TokenRepository
-
     companion object {
         @Provides
         @Singleton
@@ -36,6 +28,14 @@ abstract class DataStoreModule {
             @ApplicationContext context: Context
         ): TokenDataStore {
             return TokenDataStore(context)
+        }
+
+        @Provides
+        @Singleton
+        fun provideUserDataStore(
+            @ApplicationContext context: Context
+        ): UserDataStore {
+            return UserDataStore(context)
         }
 
         @Provides
@@ -49,7 +49,5 @@ abstract class DataStoreModule {
                 BlindBoxDatabase.DATABASE_NAME
             ).build()
         }
-
-        // TODO: Add auth-related DAOs when needed
     }
 } 

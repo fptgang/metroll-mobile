@@ -1,0 +1,83 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# ViewModel Implementation Patterns
+
+## Base ViewModel Interface
+
+All ViewModels **MUST** implement the [BaseViewModel](mdc:common/base/src/main/java/com/vidz/base/viewmodel/BaseViewModel.kt) interface.
+
+Reference implementation: [MetrollAppViewModel.kt](mdc:app/src/main/java/com/vidz/metroll_mobile/presentation/app/MetrollAppViewModel.kt)
+
+## ViewModel Structure
+
+### Required Components
+
+```kotlin
+class FeatureViewModel @Inject constructor(
+    private val useCase: FeatureUseCase
+) : BaseViewModel<FeatureUiState, FeatureEvent>() {
+    
+    // State management
+    override val _uiState = MutableStateFlow(FeatureUiState())
+    override val uiState: StateFlow<FeatureUiState> = _uiState.asStateFlow()
+    
+    // Event handling
+    override fun onEvent(event: FeatureEvent) {
+        when (event) {
+            // Handle events
+        }
+    }
+}
+```
+
+### State Management Patterns
+
+1. **UI State**: Define a data class representing the entire screen state
+2. **Events**: Define sealed class/interface for user interactions
+3. **Side Effects**: Use StateFlow or SharedFlow for one-time events
+
+### Example State and Event Classes
+
+```kotlin
+data class FeatureUiState(
+    val isLoading: Boolean = false,
+    val data: List<Item> = emptyList(),
+    val error: String? = null
+)
+
+sealed interface FeatureEvent {
+    object LoadData : FeatureEvent
+    data class ItemClicked(val item: Item) : FeatureEvent
+    object Refresh : FeatureEvent
+}
+```
+
+## Dependency Injection
+
+- Use `@Inject constructor` for dependency injection
+- Inject use cases, not repositories directly
+- Follow single responsibility principle
+
+## Error Handling
+
+- Wrap network calls in try-catch blocks
+- Update UI state with error information
+- Provide user-friendly error messages
+- Log errors for debugging
+
+## Testing Considerations
+
+- Make ViewModels testable by injecting dependencies
+- Use test doubles for use cases and repositories
+- Test state changes and event handling
+- Verify side effects and error scenarios
+
+## Performance Guidelines
+
+- Use `viewModelScope` for coroutines
+- Cancel ongoing operations when appropriate
+- Avoid heavy computations on the main thread
+- Use proper coroutine dispatchers

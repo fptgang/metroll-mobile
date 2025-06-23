@@ -88,7 +88,7 @@ class AuthUseCase @Inject constructor(
     /**
      * Logout current user
      */
-    suspend fun logout(): Result<Unit> {
+    suspend fun logout(): Flow<Result<Unit>> {
         return authRepository.logout()
     }
     
@@ -102,7 +102,7 @@ class AuthUseCase @Inject constructor(
     /**
      * Get current user
      */
-    suspend fun getCurrentUser(): User? {
+    suspend fun getCurrentUser(): Flow<Result<User?>>{
         return authRepository.getCurrentUser()
     }
     
@@ -207,29 +207,8 @@ class AuthUseCase @Inject constructor(
         }
     }
     
-    /**
-     * Check if user has specific role
-     */
-    suspend fun hasRole(role: UserRole): Boolean {
-        val user = getCurrentUser()
-        return user?.role == role
-    }
-    
-    /**
-     * Check if current user is staff (staff or admin)
-     */
-    suspend fun isStaff(): Boolean {
-        val user = getCurrentUser()
-        return user?.role?.isStaff == true
-    }
-    
-    /**
-     * Check if current user is customer
-     */
-    suspend fun isCustomer(): Boolean {
-        val user = getCurrentUser()
-        return user?.role?.isCustomer == true
-    }
+
+
     
     // Private validation helpers
     private fun isValidEmail(email: String): Boolean {
