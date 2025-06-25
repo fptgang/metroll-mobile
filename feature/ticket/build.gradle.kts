@@ -9,7 +9,7 @@ android {
 }
 
 dependencies {
-//    implementation(projects.core.data)
+    implementation(projects.core.data)
     implementation(projects.common.base)
     implementation(projects.common.theme)
 

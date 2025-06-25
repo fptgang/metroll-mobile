@@ -12,7 +12,7 @@ import retrofit2.http.Query
 
 interface OrderApi {
 
-    @POST("checkout")
+    @POST("orders/checkout")
     suspend fun checkout(
         @Body request: CheckoutRequestDto
     ): Response<OrderDto>
@@ -29,7 +29,7 @@ interface OrderApi {
         @Path("orderId") orderId: String
     ): Response<OrderDto>
 
-    @GET("my-orders")
+    @GET("orders/my-orders")
     suspend fun getMyOrders(
         @Query("page") page: Int? = null,
         @Query("size") size: Int? = null,

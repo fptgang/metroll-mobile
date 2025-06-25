@@ -10,7 +10,9 @@ import com.vidz.domain.model.Order
 import com.vidz.domain.model.OrderDetail
 import com.vidz.domain.model.OrderStatus
 import com.vidz.domain.model.TicketType
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -19,6 +21,31 @@ import javax.inject.Singleton
 class OrderMapper @Inject constructor() : BaseRemoteMapper<Order, OrderDto> {
 
     private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+    
+    private fun parseTimestamp(timestamp: String): LocalDateTime {
+        return try {
+            // Try parsing as Unix timestamp (with decimal seconds)
+            val instant = Instant.ofEpochSecond(
+                timestamp.substringBefore('.').toLong(),
+                (timestamp.substringAfter('.', "0").take(9).padEnd(9, '0')).toLong()
+            )
+            val result = LocalDateTime.ofInstant(instant, ZoneOffset.UTC)
+            println("Parsed timestamp '$timestamp' as Unix timestamp: $result")
+            result
+        } catch (e: NumberFormatException) {
+            try {
+                // Fallback to ISO LocalDateTime format
+                val result = LocalDateTime.parse(timestamp, dateFormatter)
+                println("Parsed timestamp '$timestamp' as ISO LocalDateTime: $result")
+                result
+            } catch (e2: Exception) {
+                // Last resort: return current time
+                val result = LocalDateTime.now()
+                println("Failed to parse timestamp '$timestamp', using current time: $result")
+                result
+            }
+        }
+    }
 
     override fun toDomain(external: OrderDto): Order {
         return Order(
@@ -36,8 +63,8 @@ class OrderMapper @Inject constructor() : BaseRemoteMapper<Order, OrderDto> {
             paymentUrl = external.paymentUrl,
             qrCode = external.qrCode,
             orderDetails = external.orderDetails.map { orderDetailDtoToDomain(it) },
-            createdAt = LocalDateTime.parse(external.createdAt, dateFormatter),
-            updatedAt = LocalDateTime.parse(external.updatedAt, dateFormatter)
+            createdAt = parseTimestamp(external.createdAt),
+            updatedAt = parseTimestamp(external.updatedAt)
         )
     }
 
@@ -74,7 +101,7 @@ class OrderMapper @Inject constructor() : BaseRemoteMapper<Order, OrderDto> {
             baseTotal = dto.baseTotal,
             discountTotal = dto.discountTotal,
             finalTotal = dto.finalTotal,
-            createdAt = LocalDateTime.parse(dto.createdAt, dateFormatter)
+            createdAt = parseTimestamp(dto.createdAt)
         )
     }
 

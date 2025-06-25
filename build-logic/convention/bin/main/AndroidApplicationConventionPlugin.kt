@@ -1,5 +1,3 @@
-import org.gradle.api.Plugin
-import org.gradle.api.Project
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import com.android.build.gradle.BaseExtension
@@ -7,6 +5,8 @@ import com.vidz.convention.configureBadgingTasks
 import com.vidz.convention.configureGradleManagedDevices
 import com.vidz.convention.configureKotlinAndroid
 import com.vidz.convention.configurePrintApksTask
+import org.gradle.api.Plugin
+import org.gradle.api.Project
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.getByType

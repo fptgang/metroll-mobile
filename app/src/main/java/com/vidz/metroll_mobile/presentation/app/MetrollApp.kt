@@ -8,6 +8,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
@@ -218,7 +219,7 @@ val bottomNavItems = listOf(
         DestinationRoutes.CUSTOMER_HOME_SCREEN_ROUTE
     ),
     BottomNavItem(
-        "Tuyến đường",
+        "Tuyến",
         Icons.Filled.Search,
         DestinationRoutes.ROUTE_MANAGEMENT_SCREEN_ROUTE
     ),
@@ -226,6 +227,11 @@ val bottomNavItems = listOf(
         "Mua vé",
         Icons.AutoMirrored.Filled.List,
         DestinationRoutes.TICKET_PURCHASE_SCREEN_ROUTE
+    ),
+    BottomNavItem(
+        "Đơn hàng",
+        Icons.Filled.Receipt,
+        DestinationRoutes.MY_TICKETS_SCREEN_ROUTE
     ),
     BottomNavItem(
         "Tài khoản",

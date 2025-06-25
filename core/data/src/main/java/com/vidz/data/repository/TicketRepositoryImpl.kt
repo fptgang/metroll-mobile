@@ -12,6 +12,7 @@ import com.vidz.domain.model.TicketStatus
 import com.vidz.domain.model.TicketUpsertRequest
 import com.vidz.domain.repository.TicketRepository
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
 
 class TicketRepositoryImpl @Inject constructor(
     private val retrofitServer: RetrofitServer
@@ -117,5 +118,17 @@ class TicketRepositoryImpl @Inject constructor(
             flowResult.collect { result = it }
             result
         }
+    }
+
+    override suspend fun getTicketQRCode(ticketId: String): Flow<Result<String>> {
+        return ServerFlow(
+            getData = {
+                val response = retrofitServer.ticketApi.getTicketQRCode(ticketId)
+                response.body() ?: throw NullPointerException("QR code response body is null")
+            },
+            convert = { qrCodeString ->
+                qrCodeString
+            }
+        ).execute()
     }
 } 

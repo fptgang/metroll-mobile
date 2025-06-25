@@ -28,10 +28,13 @@ object DestinationRoutes {
 
     // Ticket Management (Mua vé, checkin)
     const val TICKET_PURCHASE_SCREEN_ROUTE = "${ROOT_TICKET_SCREEN_ROUTE}/purchase"
+    const val TICKET_CART_SCREEN_ROUTE = "${ROOT_TICKET_SCREEN_ROUTE}/cart"
     const val TICKET_SEARCH_SCREEN_ROUTE = "${ROOT_TICKET_SCREEN_ROUTE}/search"
     const val TICKET_PAYMENT_SCREEN_ROUTE = "${ROOT_TICKET_SCREEN_ROUTE}/payment"
     const val TICKET_CONFIRMATION_SCREEN_ROUTE = "${ROOT_TICKET_SCREEN_ROUTE}/confirmation"
     const val MY_TICKETS_SCREEN_ROUTE = "${ROOT_TICKET_SCREEN_ROUTE}/my_tickets"
+    const val ORDER_DETAIL_SCREEN_BASE_ROUTE = "${ROOT_TICKET_SCREEN_ROUTE}/order_detail"
+    const val ORDER_DETAIL_SCREEN_ROUTE = "$ORDER_DETAIL_SCREEN_BASE_ROUTE/{orderId}"
     const val TICKET_DETAIL_SCREEN_BASE_ROUTE = "${ROOT_TICKET_SCREEN_ROUTE}/ticket_detail"
     const val TICKET_DETAIL_SCREEN_ROUTE = "$TICKET_DETAIL_SCREEN_BASE_ROUTE/{ticketId}"
     const val CHECKIN_SCREEN_ROUTE = "${ROOT_TICKET_SCREEN_ROUTE}/checkin"
