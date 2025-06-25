@@ -46,7 +46,6 @@ fun QrScannerScreen(
             .padding(16.dp)
             .background(MaterialTheme.colorScheme.background)
     )
-    
     // TODO: Implement QR scanner using CameraX and ZXing
     // 1. Request camera permission using accompanist-permissions
     // 2. Set up CameraX preview with androidx.camera.view.PreviewView

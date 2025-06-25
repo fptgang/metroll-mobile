@@ -1,5 +1,175 @@
 ---
-description:
-globs:
-alwaysApply: false
+description: 
+globs: 
+alwaysApply: true
 ---
+# Feature Module Structure Guidelines
+
+## Module Organization
+
+Each feature module should follow this standardized structure:
+
+```
+feature/[feature-name]/
+├── src/main/java/com/vidz/[feature-name]/
+│   ├── data/
+│   │   ├── datasource/
+│   │   │   ├── local/
+│   │   │   └── remote/
+│   │   ├── repository/
+│   │   └── models/
+│   ├── domain/
+│   │   ├── usecase/
+│   │   ├── repository/
+│   │   └── models/
+│   ├── presentation/
+│   │   ├── components/
+│   │   ├── screens/
+│   │   └── viewmodels/
+│   └── di/
+│       └── FeatureModule.kt
+└── build.gradle.kts
+```
+
+## Available Feature Modules
+
+Based on the project structure:
+
+- **`auth/`** - Authentication and authorization
+- **`home/`** - Home screen and dashboard
+- **`membership/`** - Membership management and packages
+- **`account/`** - User account and profile
+- **`qr-scanner/`** - QR code scanning functionality
+- **`route-management/`** - Route planning and management
+- **`staff/`** - Staff-specific functionality
+- **`ticket/`** - Ticket booking and management
+- **`test/`** - Testing utilities and components
+
+## Feature Module Dependencies
+
+### Allowed Dependencies
+
+```kotlin
+// In feature module build.gradle.kts
+dependencies {
+    implementation(project(":core:domain"))
+    implementation(project(":core:data"))
+    implementation(project(":core:datastore"))
+    implementation(project(":common:base"))
+    implementation(project(":common:theme"))
+    
+    // External libraries
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.hilt.android)
+    // ... other external deps
+}
+```
+
+### Forbidden Dependencies
+
+- Feature modules **CANNOT** depend on other feature modules
+- Feature modules **CANNOT** depend on the `app` module
+- Keep feature modules independent and loosely coupled
+
+## Data Layer in Features
+
+### Repository Interfaces
+
+Place repository interfaces in `domain/repository/`:
+
+```kotlin
+interface FeatureRepository {
+    suspend fun getData(): Flow<Result<List<Item>>>
+    suspend fun saveData(data: List<Item>): Result<Unit>
+}
+```
+
+### Repository Implementation
+
+Place implementations in `data/repository/`:
+
+```kotlin
+class FeatureRepositoryImpl @Inject constructor(
+    // dependencies
+) : FeatureRepository {
+    // implementation
+}
+```
+
+## Presentation Layer
+
+### Screen Composables
+
+Place screen composables in `presentation/screens/`:
+
+```kotlin
+@Composable
+fun FeatureScreen(
+    navigateBack: () -> Unit,
+    viewModel: FeatureViewModel = hiltViewModel()
+) {
+    //region Define Var
+    //endregion
+    
+    //region Event Handler
+    //endregion
+    
+    //region ui
+      //region Dialog and Sheet
+      //endregion
+    //endregion
+}
+```
+
+### ViewModels
+
+Place ViewModels in `presentation/viewmodels/`:
+
+```kotlin
+@HiltViewModel
+class FeatureViewModel @Inject constructor(
+    private val useCase: FeatureUseCase
+) : BaseViewModel<FeatureUiState, FeatureEvent>() {
+    // implementation
+}
+```
+
+### Feature-Specific Components
+
+Place feature-specific components in `presentation/components/`:
+
+- Components that are only used within this feature
+- Do NOT place reusable components here (use `common/base/components/` instead)
+
+## Dependency Injection
+
+### Module Definition
+
+Each feature must have a DI module:
+
+```kotlin
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class FeatureModule {
+    
+    @Binds
+    abstract fun bindFeatureRepository(
+        repositoryImpl: FeatureRepositoryImpl
+    ): FeatureRepository
+}
+```
+
+### ViewModel Injection
+
+Use `@HiltViewModel` for ViewModels:
+
+```kotlin
+@HiltViewModel
+class FeatureViewModel @Inject constructor() : BaseViewModel<UiState, Event>()
+```
+
+## Navigation
+
+- Keep navigation logic in the `app` module
+- Feature modules should expose composable functions
+- Use navigation arguments for data passing between features

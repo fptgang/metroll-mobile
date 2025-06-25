@@ -1,5 +1,78 @@
 ---
-description:
-globs:
-alwaysApply: false
+description: 
+globs: 
+alwaysApply: true
 ---
+# Composable Development Guidelines
+
+## Screen-Level Composables Structure
+
+All screen-level composables must follow this strict region-based structure:
+
+```kotlin
+@Composable
+fun FeatureScreen() {
+    //region Define Var
+    // State variables, view model instances, navigation controllers
+    //endregion
+
+    //region Event Handler
+    // Event handling functions and callbacks
+    //endregion
+
+    //region ui
+    // Main UI content
+    
+      //region Dialog and Sheet
+      // Modal dialogs, bottom sheets, and overlays
+      //endregion
+    //endregion
+}
+```
+
+## Material Design 3 Requirements
+
+- **MUST** use Material Design 3 components exclusively
+- **MUST** follow Material Theme guidelines from [theme module](mdc:common/theme)
+- **MUST** use theme colors, typography, and spacing defined in the theme system
+
+### Preferred Components
+- `Card` over custom containers
+- `Button`, `OutlinedButton`, `TextButton` for actions
+- `TextField`, `OutlinedTextField` for input
+- `TopAppBar`, `BottomAppBar` for navigation
+- `NavigationBar`, `NavigationRail` for tab navigation
+
+## Reusable Components
+
+### Component Location Rules
+1. **Search First**: Always check [common/base/components/](mdc:common/base/src/main/java/com/vidz/base) for existing components
+2. **Create Only If Missing**: Only create new reusable components if they don't exist
+3. **Placement**: All reusable components go in `common/base/components/`
+
+### Component Design Principles
+- Keep components focused on a single responsibility
+- Make components stateless when possible
+- Use composition over inheritance
+- Follow Material Design 3 specifications
+
+## State Management
+
+- Use `remember` for simple local state
+- Use ViewModel for complex state and business logic
+- Follow unidirectional data flow patterns
+- Prefer immutable state objects
+
+## Naming Conventions
+
+- Screen composables: `FeatureNameScreen()`
+- Component composables: `FeatureNameComponent()`
+- Custom components: `CustomComponentName()`
+- Preview functions: `FeatureNamePreview()`
+
+## Performance Guidelines
+
+- Use `LazyColumn` and `LazyRow` for lists
+- Implement proper `key` parameters for dynamic lists
+- Use `derivedStateOf` for computed state
+- Minimize recomposition with stable parameters

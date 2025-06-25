@@ -13,5 +13,6 @@ dependencies {
 //    implementation(projects.core.data)
     implementation(projects.common.base)
     implementation(projects.common.theme)
+    implementation(projects.feature.test)
 
 }

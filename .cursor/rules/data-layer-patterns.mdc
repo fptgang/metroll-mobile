@@ -1,5 +1,124 @@
 ---
-description:
-globs:
-alwaysApply: false
+description: 
+globs: 
+alwaysApply: true
 ---
+# Data Layer Implementation Patterns
+
+## Repository Implementation
+
+All repositories **MUST** follow these patterns:
+
+### Required Components
+
+1. **Use [RetrofitServer.kt](mdc:core/data/src/main/java/com/vidz/data/server/retrofit/RetrofitServer.kt)** for all network operations
+2. **Implement [ServerFlow.kt](mdc:core/data/src/main/java/com/vidz/data/flow/ServerFlow.kt)** for data flow management
+3. **Follow Clean Architecture data flow**: Server/Local DataSource → Repository → UseCase → UI
+
+### Repository Structure
+
+```kotlin
+class FeatureRepositoryImpl @Inject constructor(
+    private val remoteDataSource: FeatureRemoteDataSource,
+    private val localDataSource: FeatureLocalDataSource,
+    private val serverFlow: ServerFlow
+) : FeatureRepository {
+    
+    override suspend fun getData(): Flow<Result<List<Item>>> = flow {
+        emit(Result.Loading)
+        try {
+            val result = serverFlow.execute {
+                remoteDataSource.getData()
+            }
+            emit(Result.Success(result))
+        } catch (e: Exception) {
+            emit(Result.Error(e.message ?: "Unknown error"))
+        }
+    }
+}
+```
+
+## Data Sources
+
+### Remote Data Source
+
+```kotlin
+class FeatureRemoteDataSource @Inject constructor(
+    private val retrofitServer: RetrofitServer
+) {
+    suspend fun getData(): List<ItemDto> {
+        return retrofitServer.execute { api ->
+            api.getData()
+        }
+    }
+}
+```
+
+### Local Data Source
+
+```kotlin
+class FeatureLocalDataSource @Inject constructor(
+    private val dao: FeatureDao
+) {
+    suspend fun getData(): Flow<List<ItemEntity>> {
+        return dao.getAllItems()
+    }
+    
+    suspend fun saveData(items: List<ItemEntity>) {
+        dao.insertAll(items)
+    }
+}
+```
+
+## Data Models
+
+### Use Case Structure
+
+```kotlin
+class GetFeatureDataUseCase @Inject constructor(
+    private val repository: FeatureRepository
+) {
+    suspend operator fun invoke(): Flow<Result<List<Item>>> {
+        return repository.getData()
+    }
+}
+```
+
+### Data Transfer Objects (DTOs)
+
+- Use for API responses
+- Keep separate from domain models
+- Implement mapping functions to domain models
+
+### Entities
+
+- Use for database storage
+- Map to/from domain models
+- Include database annotations (@Entity, @PrimaryKey, etc.)
+
+### Domain Models
+
+- Pure business logic models
+- No Android dependencies
+- Used throughout the app
+
+## Error Handling
+
+- Use `Result` sealed class for success/error states
+- Implement proper exception handling in data sources
+- Provide meaningful error messages
+- Log errors for debugging
+
+## Caching Strategy
+
+- Cache data locally when appropriate
+- Implement cache-first or network-first strategies
+- Handle offline scenarios
+- Use Room database for local storage
+
+## Testing
+
+- Mock external dependencies (network, database)
+- Test error scenarios
+- Verify data transformations
+- Use test databases and fake network responses

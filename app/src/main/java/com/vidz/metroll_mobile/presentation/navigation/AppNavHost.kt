@@ -8,10 +8,6 @@ import androidx.navigation.compose.navigation
 import com.vidz.account.addAccountNavGraph
 import com.vidz.auth.authGraph
 import com.vidz.base.navigation.DestinationRoutes
-import com.vidz.base.navigation.NavigationAnimations.enterTransition
-import com.vidz.base.navigation.NavigationAnimations.exitTransition
-import com.vidz.base.navigation.NavigationAnimations.popEnterTransition
-import com.vidz.base.navigation.NavigationAnimations.popExitTransition
 import com.vidz.home.addHomeNavGraph
 import com.vidz.membership.addMembershipNavGraph
 import com.vidz.qrscanner.addQrScannerNavGraph
@@ -29,10 +25,10 @@ fun AppNavHost(
         NavHost(
             navController = navController,
             startDestination = DestinationRoutes.ROOT_HOME_SCREEN_ROUTE,
-            enterTransition = enterTransition,
-            exitTransition = exitTransition,
-            popEnterTransition = popEnterTransition,
-            popExitTransition = popExitTransition
+//            enterTransition = enterTransition,
+//            exitTransition = exitTransition,
+//            popEnterTransition = popEnterTransition,
+//            popExitTransition = popExitTransition
         ) {
             // Home Navigation (includes Route Management)
             addHomeNavGraph(navController, onShowSnackbar)

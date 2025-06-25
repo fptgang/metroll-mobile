@@ -2,9 +2,11 @@ package com.vidz.data.server.retrofit
 
 import com.vidz.data.server.retrofit.api.AccountApi
 import com.vidz.data.server.retrofit.api.AuthApi
+import com.vidz.data.server.retrofit.api.MetroLineApi
 import com.vidz.data.server.retrofit.api.OrderApi
 import com.vidz.data.server.retrofit.api.P2PJourneyApi
 import com.vidz.data.server.retrofit.api.PaymentApi
+import com.vidz.data.server.retrofit.api.StationApi
 import com.vidz.data.server.retrofit.api.TicketApi
 import com.vidz.data.server.retrofit.api.TicketValidationApi
 import com.vidz.data.server.retrofit.api.TimedTicketPlanApi
@@ -22,4 +24,6 @@ class RetrofitServer @Inject constructor(private val retrofit: Retrofit) {
     val ticketValidationApi: TicketValidationApi by lazy { retrofit.create(TicketValidationApi::class.java) }
     val orderApi: OrderApi by lazy { retrofit.create(OrderApi::class.java) }
     val paymentApi: PaymentApi by lazy { retrofit.create(PaymentApi::class.java) }
+    val metroLineApi: MetroLineApi by lazy { retrofit.create(MetroLineApi::class.java) }
+    val stationApi: StationApi by lazy { retrofit.create(StationApi::class.java) }
 }

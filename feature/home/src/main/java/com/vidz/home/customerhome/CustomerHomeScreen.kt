@@ -62,6 +62,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.vidz.base.navigation.DestinationRoutes
+import com.vidz.test.ROOT_TEST_ROUTE
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,7 +92,8 @@ fun CustomerHomeScreen(
         QuickAction("Buy Tickets", Icons.Default.ConfirmationNumber, "Purchase journey tickets", "ticket_purchase"),
         QuickAction("Route Planner", Icons.Default.Map, "Plan your journey", "route_planner"),
         QuickAction("QR Scanner", Icons.Default.QrCodeScanner, "Scan QR codes", "qr_scanner"),
-        QuickAction("Membership", Icons.Default.CreditCard, "Manage membership", "membership")
+        QuickAction("Membership", Icons.Default.CreditCard, "Manage membership", "membership"),
+        QuickAction("API Test", Icons.Default.Support, "Test Order APIs", "order_api_test")
     )
     
     val recentJourneys = listOf(
@@ -115,6 +117,7 @@ fun CustomerHomeScreen(
             "route_planner" -> navController.navigate("route_management")
             "qr_scanner" -> navController.navigate("qr_scanner")
             "membership" -> navController.navigate("membership")
+            "order_api_test" -> navController.navigate(ROOT_TEST_ROUTE)
             else -> onShowSnackbar("Feature coming soon!")
         }
     }

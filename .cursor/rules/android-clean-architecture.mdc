@@ -1,5 +1,53 @@
 ---
-description:
-globs:
-alwaysApply: false
+description: 
+globs: 
+alwaysApply: true
 ---
+# Android Clean Architecture Guidelines
+
+## Project Structure
+
+This project follows Clean Architecture principles with a modular structure:
+
+### Module Organization
+
+- **`app/`** - Main application module with DI setup and presentation layer
+- **`common/`** - Shared components and base classes
+  - **`base/`** - Base classes for ViewModels, UI components, and interfaces
+  - **`theme/`** - Material Design 3 theming and typography
+- **`core/`** - Core business logic and data handling
+  - **`data/`** - Data layer with repositories, data sources, and network handling
+  - **`datastore/`** - Local data persistence with Room database
+  - **`domain/`** - Domain layer with use cases and business entities
+- **`feature/`** - Feature-specific modules (auth, home, membership, etc.)
+
+## Data Flow Architecture
+
+The application follows a unidirectional data flow:
+
+```
+Server --> DataSource |
+                      |--> Repository --> UseCase --> UI (ViewModel/Composable)
+Local  --> DataSource |
+```
+
+## Key Architectural Components
+
+### ViewModels
+- All ViewModels must implement [BaseViewModel.kt](mdc:common/base/src/main/java/com/vidz/base/viewmodel/BaseViewModel.kt)
+- Example implementation: [MetrollAppViewModel.kt](mdc:app/src/main/java/com/vidz/metroll_mobile/presentation/app/MetrollAppViewModel.kt)
+
+### Repositories
+- Must use [RetrofitServer.kt](mdc:core/data/src/main/java/com/vidz/data/server/retrofit/RetrofitServer.kt) for network calls
+- Must implement [ServerFlow.kt](mdc:core/data/src/main/java/com/vidz/data/flow/ServerFlow.kt) for data flow management
+
+### UI Components
+- Use Material Design 3 components exclusively
+- Follow Material theme guidelines
+- Reusable components go in `common/base/components/`
+
+## Module Dependencies
+
+- Feature modules depend on `core` and `common` modules
+- Core modules should not depend on feature modules
+- All modules can depend on `common/base` for shared utilities
