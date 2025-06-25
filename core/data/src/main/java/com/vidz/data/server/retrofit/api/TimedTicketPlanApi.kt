@@ -14,7 +14,7 @@ import retrofit2.http.Query
 
 interface TimedTicketPlanApi {
     
-    @GET("timed-ticket-plans/")
+    @GET("timed-ticket-plans")
     suspend fun getTimedTicketPlans(
         @Query("page") page: Int? = null,
         @Query("size") size: Int? = null,
@@ -26,7 +26,7 @@ interface TimedTicketPlanApi {
         @Path("id") id: String
     ): TimedTicketPlanDto
     
-    @POST("timed-ticket-plans/")
+    @POST("timed-ticket-plans")
     suspend fun createTimedTicketPlan(
         @Body request: TimedTicketPlanCreateRequestDto
     ): TimedTicketPlanDto

@@ -5,6 +5,9 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.vidz.base.navigation.DestinationRoutes
+import com.vidz.ticket.cart.TicketCartScreenRoot
+import com.vidz.ticket.detail.OrderDetailScreenRoot
+import com.vidz.ticket.management.TicketManagementScreenRoot
 import com.vidz.ticket.purchase.TicketPurchaseScreenRoot
 
 fun NavGraphBuilder.addTicketNavGraph(
@@ -24,8 +27,11 @@ fun NavGraphBuilder.addTicketNavGraph(
             )
         }
         
-        composable(DestinationRoutes.TICKET_SEARCH_SCREEN_ROUTE) {
-            // TODO: Implement TicketSearchScreenRoot
+        composable(DestinationRoutes.TICKET_CART_SCREEN_ROUTE) {
+            TicketCartScreenRoot(
+                navController = navController,
+                onShowSnackbar = onShowSnackbar,
+            )
         }
         
         composable(DestinationRoutes.TICKET_PAYMENT_SCREEN_ROUTE) {
@@ -37,7 +43,18 @@ fun NavGraphBuilder.addTicketNavGraph(
         }
         
         composable(DestinationRoutes.MY_TICKETS_SCREEN_ROUTE) {
-            // TODO: Implement MyTicketsScreenRoot
+            TicketManagementScreenRoot(
+                navController = navController,
+                onShowSnackbar = onShowSnackbar,
+            )
+        }
+        
+        composable(DestinationRoutes.ORDER_DETAIL_SCREEN_ROUTE) { backStackEntry ->
+            val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
+            OrderDetailScreenRoot(
+                navController = navController,
+                onShowSnackbar = onShowSnackbar,
+            )
         }
         
         composable(DestinationRoutes.CHECKIN_SCREEN_ROUTE) {

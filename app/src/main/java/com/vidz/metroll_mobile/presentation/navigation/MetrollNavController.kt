@@ -62,6 +62,16 @@ class BlindboxNavController(val navController: NavHostController) {
                 }
             }
 
+            DestinationRoutes.MY_TICKETS_SCREEN_ROUTE -> {
+                navController.navigate("$route?numberItemOfPage=$numberItemOfPage") {
+                    popUpTo(HOME_SCREEN_ROUTE) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
+
             DestinationRoutes.ACCOUNT_PROFILE_SCREEN_ROUTE -> {
                 navController.navigate("$route?numberItemOfPage=$numberItemOfPage") {
                     popUpTo(HOME_SCREEN_ROUTE) {

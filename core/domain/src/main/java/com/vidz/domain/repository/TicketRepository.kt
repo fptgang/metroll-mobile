@@ -5,6 +5,7 @@ import com.vidz.domain.model.PageDto
 import com.vidz.domain.model.Ticket
 import com.vidz.domain.model.TicketStatus
 import com.vidz.domain.model.TicketUpsertRequest
+import kotlinx.coroutines.flow.Flow
 
 interface TicketRepository {
     suspend fun getTickets(
@@ -26,4 +27,6 @@ interface TicketRepository {
     suspend fun createTickets(requests: List<TicketUpsertRequest>): Result<List<Ticket>>
     
     suspend fun updateTicketStatus(id: String, status: TicketStatus): Result<Unit>
+
+    suspend fun getTicketQRCode(ticketId: String): Flow<Result<String>>
 } 

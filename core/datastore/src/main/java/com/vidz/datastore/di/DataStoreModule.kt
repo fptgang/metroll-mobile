@@ -15,13 +15,21 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "token_preferences")
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "metroll_preferences")
 
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class DataStoreModule {
 
     companion object {
+        @Provides
+        @Singleton
+        fun provideDataStore(
+            @ApplicationContext context: Context
+        ): DataStore<Preferences> {
+            return context.dataStore
+        }
+
         @Provides
         @Singleton
         fun provideTokenDataStore(

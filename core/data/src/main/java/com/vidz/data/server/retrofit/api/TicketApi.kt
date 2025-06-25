@@ -9,6 +9,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.Response
 
 interface TicketApi {
     
@@ -54,4 +55,9 @@ interface TicketApi {
         @Path("id") id: String,
         @Query("status") status: String
     )
+
+    @GET("tickets/{id}/qrcode")
+    suspend fun getTicketQRCode(
+        @Path("id") ticketId: String
+    ): Response<String>
 } 
