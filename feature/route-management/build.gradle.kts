@@ -9,8 +9,13 @@ android {
 }
 
 dependencies {
-//    implementation(projects.core.data)
+    implementation(projects.core.data)
+    implementation(projects.core.domain)
     implementation(projects.common.base)
     implementation(projects.common.theme)
+    
+    // MapBox dependencies
+    implementation(libs.maps.android)
+    implementation(libs.maps.compose)
 
 } 

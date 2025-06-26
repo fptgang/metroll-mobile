@@ -8,22 +8,23 @@ object DestinationRoutes {
     const val ROOT_ACCOUNT_SCREEN_ROUTE = "root_account_screen_route"
     const val ROOT_MEMBERSHIP_SCREEN_ROUTE = "root_membership_screen_route"
     const val ROOT_STAFF_SCREEN_ROUTE = "root_staff_screen_route"
+    const val ROOT_ROUTE_MANAGEMENT_SCREEN_ROUTE = "root_route_management_screen_route"
 
     // Home/Dashboard routes
     const val HOME_SCREEN_ROUTE = "${ROOT_HOME_SCREEN_ROUTE}/home"
     const val CUSTOMER_HOME_SCREEN_ROUTE = "${ROOT_HOME_SCREEN_ROUTE}/customer_home"
     const val STAFF_HOME_SCREEN_ROUTE = "${ROOT_HOME_SCREEN_ROUTE}/staff_home"
-    const val ROUTE_MAP_SCREEN_ROUTE = "${ROOT_HOME_SCREEN_ROUTE}/route_map"
-    const val STATION_LIST_SCREEN_ROUTE = "${ROOT_HOME_SCREEN_ROUTE}/stations"
-    const val TRAIN_SCHEDULE_SCREEN_ROUTE = "${ROOT_HOME_SCREEN_ROUTE}/train_schedule"
 
     // Route Management (Quản lý tuyến - ga, tàu, tuyến)
-    const val ROUTE_MANAGEMENT_SCREEN_ROUTE = "${ROOT_HOME_SCREEN_ROUTE}/route_management"
-    const val STATION_DETAIL_SCREEN_BASE_ROUTE = "${ROOT_HOME_SCREEN_ROUTE}/station_detail"
+    const val ROUTE_MANAGEMENT_SCREEN_ROUTE = "${ROOT_ROUTE_MANAGEMENT_SCREEN_ROUTE}/route_management"
+    const val ROUTE_MAP_SCREEN_ROUTE = "${ROOT_ROUTE_MANAGEMENT_SCREEN_ROUTE}/route_map"
+    const val STATION_LIST_SCREEN_ROUTE = "${ROOT_ROUTE_MANAGEMENT_SCREEN_ROUTE}/stations"
+    const val TRAIN_SCHEDULE_SCREEN_ROUTE = "${ROOT_ROUTE_MANAGEMENT_SCREEN_ROUTE}/train_schedule"
+    const val STATION_DETAIL_SCREEN_BASE_ROUTE = "${ROOT_ROUTE_MANAGEMENT_SCREEN_ROUTE}/station_detail"
     const val STATION_DETAIL_SCREEN_ROUTE = "$STATION_DETAIL_SCREEN_BASE_ROUTE/{stationId}/{stationName}"
-    const val TRAIN_DETAIL_SCREEN_BASE_ROUTE = "${ROOT_HOME_SCREEN_ROUTE}/train_detail"
+    const val TRAIN_DETAIL_SCREEN_BASE_ROUTE = "${ROOT_ROUTE_MANAGEMENT_SCREEN_ROUTE}/train_detail"
     const val TRAIN_DETAIL_SCREEN_ROUTE = "$TRAIN_DETAIL_SCREEN_BASE_ROUTE/{trainId}/{trainNumber}"
-    const val ROUTE_DETAIL_SCREEN_BASE_ROUTE = "${ROOT_HOME_SCREEN_ROUTE}/route_detail"
+    const val ROUTE_DETAIL_SCREEN_BASE_ROUTE = "${ROOT_ROUTE_MANAGEMENT_SCREEN_ROUTE}/route_detail"
     const val ROUTE_DETAIL_SCREEN_ROUTE = "$ROUTE_DETAIL_SCREEN_BASE_ROUTE/{routeId}/{routeName}"
 
     // Ticket Management (Mua vé, checkin)
