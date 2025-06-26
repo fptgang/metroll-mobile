@@ -90,9 +90,11 @@ class OrderMapper @Inject constructor() : BaseRemoteMapper<Order, OrderDto> {
     }
 
     private fun orderDetailDtoToDomain(dto: OrderDetailDto): OrderDetail {
+        val ticketId = dto.ticketId.ifEmpty { "" }
         return OrderDetail(
             id = dto.id,
-            ticketOrderId = dto.ticketOrderId,
+            orderId = dto.orderId,
+            ticketId = ticketId,
             ticketType = TicketType.valueOf(dto.ticketType),
             p2pJourney = dto.p2pJourney,
             timedTicketPlan = dto.timedTicketPlan,
@@ -106,9 +108,11 @@ class OrderMapper @Inject constructor() : BaseRemoteMapper<Order, OrderDto> {
     }
 
     private fun orderDetailDomainToDto(domain: OrderDetail): OrderDetailDto {
+        val ticketId = domain.ticketId.ifEmpty { "" }
         return OrderDetailDto(
             id = domain.id,
-            ticketOrderId = domain.ticketOrderId,
+            orderId = domain.orderId,
+            ticketId = ticketId,
             ticketType = domain.ticketType.name,
             p2pJourney = domain.p2pJourney,
             timedTicketPlan = domain.timedTicketPlan,

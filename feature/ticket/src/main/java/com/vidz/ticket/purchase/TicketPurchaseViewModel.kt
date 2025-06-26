@@ -90,6 +90,8 @@ class TicketPurchaseViewModel @Inject constructor(
             is TicketPurchaseEvent.ClearError -> clearError()
             is TicketPurchaseEvent.ShowCartSheet -> showCartSheet(event.show)
             is TicketPurchaseEvent.ProcessPaymentUrl -> processPaymentUrl(event.url)
+            is TicketPurchaseEvent.OpenPayment -> openPayment()
+            is TicketPurchaseEvent.ClosePayment -> closePayment()
         }
     }
 
@@ -398,7 +400,8 @@ class TicketPurchaseViewModel @Inject constructor(
                                         isCheckingOut = false,
                                         checkoutResult = result.data,
                                         error = null,
-                                        paymentUrl = if (shouldShowPaymentWebView) result.data.paymentUrl else null
+                                        paymentUrl = if (shouldShowPaymentWebView) result.data.paymentUrl else null,
+                                        showPaymentWebView = shouldShowPaymentWebView
                                     )
                                 }
                             }
@@ -441,6 +444,14 @@ class TicketPurchaseViewModel @Inject constructor(
         updateState { copy(paymentUrl = url) }
     }
 
+    private fun openPayment() {
+        updateState { copy(showPaymentWebView = true) }
+    }
+
+    private fun closePayment() {
+        updateState { copy(showPaymentWebView = false, paymentUrl = null) }
+    }
+
     private fun updateState(update: TicketPurchaseViewModelState.() -> TicketPurchaseViewModelState) {
         viewModelState.value = viewModelState.value.update()
     }
@@ -461,6 +472,8 @@ class TicketPurchaseViewModel @Inject constructor(
         object ClearError : TicketPurchaseEvent
         data class ShowCartSheet(val show: Boolean) : TicketPurchaseEvent
         data class ProcessPaymentUrl(val url: String) : TicketPurchaseEvent
+        object OpenPayment : TicketPurchaseEvent
+        object ClosePayment : TicketPurchaseEvent
     }
 
     data class TicketPurchaseViewModelState(
@@ -475,7 +488,8 @@ class TicketPurchaseViewModel @Inject constructor(
         val error: String? = null,
         val p2pSortType: P2PSortType = P2PSortType.DEFAULT,
         val showCartSheet: Boolean = false,
-        val paymentUrl: String? = null
+        val paymentUrl: String? = null,
+        val showPaymentWebView: Boolean = false
     ) : ViewModelState() {
         override fun toUiState(): ViewState = TicketPurchaseUiState(
             isLoadingTimed = isLoadingTimed,
@@ -490,6 +504,7 @@ class TicketPurchaseViewModel @Inject constructor(
             p2pSortType = p2pSortType,
             showCartSheet = showCartSheet,
             paymentUrl = paymentUrl,
+            showPaymentWebView = showPaymentWebView,
             cartTotal = cartItems.sumOf { it.price * it.quantity },
             cartItemCount = cartItems.sumOf { it.quantity }
         )
@@ -508,6 +523,7 @@ class TicketPurchaseViewModel @Inject constructor(
         val p2pSortType: P2PSortType,
         val showCartSheet: Boolean,
         val paymentUrl: String?,
+        val showPaymentWebView: Boolean,
         val cartTotal: Double,
         val cartItemCount: Int
     ) : ViewState()

@@ -59,5 +59,5 @@ interface TicketApi {
     @GET("tickets/{id}/qrcode")
     suspend fun getTicketQRCode(
         @Path("id") ticketId: String
-    ): Response<String>
+    ): Response<okhttp3.ResponseBody>
 } 

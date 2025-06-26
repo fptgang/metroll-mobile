@@ -124,7 +124,8 @@ class TicketRepositoryImpl @Inject constructor(
         return ServerFlow(
             getData = {
                 val response = retrofitServer.ticketApi.getTicketQRCode(ticketId)
-                response.body() ?: throw NullPointerException("QR code response body is null")
+                val body = response.body() ?: throw NullPointerException("QR code response body is null")
+                body.string()
             },
             convert = { qrCodeString ->
                 qrCodeString

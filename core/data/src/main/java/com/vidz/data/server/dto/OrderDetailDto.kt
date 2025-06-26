@@ -5,7 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class OrderDetailDto(
     val id: String,
-    val ticketOrderId: String,
+    val orderId: String,
+    val ticketId: String ="",
     val ticketType: String,
     val p2pJourney: String? = null,
     val timedTicketPlan: String? = null,

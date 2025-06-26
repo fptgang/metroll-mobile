@@ -4,7 +4,8 @@ import java.time.LocalDateTime
 
 data class OrderDetail(
     val id: String,
-    val ticketOrderId: String,
+    val orderId: String,
+    val ticketId: String="",
     val ticketType: TicketType,
     val p2pJourney: String? = null,
     val timedTicketPlan: String? = null,

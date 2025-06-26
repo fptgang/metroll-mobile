@@ -39,6 +39,8 @@ class OrderDetailViewModel @Inject constructor(
             is OrderDetailEvent.LoadQRCode -> loadQRCode(event.ticketId)
             is OrderDetailEvent.CloseQRCode -> closeQRCode()
             is OrderDetailEvent.ClearError -> clearError()
+            is OrderDetailEvent.OpenPayment -> openPayment()
+            is OrderDetailEvent.ClosePayment -> closePayment()
         }
     }
 
@@ -119,6 +121,14 @@ class OrderDetailViewModel @Inject constructor(
         updateState { copy(qrError = null, orderError = null) }
     }
 
+    private fun openPayment() {
+        updateState { copy(showPaymentWebView = true) }
+    }
+
+    private fun closePayment() {
+        updateState { copy(showPaymentWebView = false) }
+    }
+
     private fun updateState(update: OrderDetailViewModelState.() -> OrderDetailViewModelState) {
         viewModelState.value = viewModelState.value.update()
     }
@@ -128,6 +138,8 @@ class OrderDetailViewModel @Inject constructor(
         data class LoadQRCode(val ticketId: String) : OrderDetailEvent
         object CloseQRCode : OrderDetailEvent
         object ClearError : OrderDetailEvent
+        object OpenPayment : OrderDetailEvent
+        object ClosePayment : OrderDetailEvent
     }
 
     data class OrderDetailViewModelState(
@@ -137,7 +149,8 @@ class OrderDetailViewModel @Inject constructor(
         val isLoadingQR: Boolean = false,
         val qrCodeData: String? = null,
         val showQRDialog: Boolean = false,
-        val qrError: String? = null
+        val qrError: String? = null,
+        val showPaymentWebView: Boolean = false
     ) : ViewModelState() {
         override fun toUiState(): ViewState = OrderDetailUiState(
             order = order,
@@ -146,7 +159,8 @@ class OrderDetailViewModel @Inject constructor(
             isLoadingQR = isLoadingQR,
             qrCodeData = qrCodeData,
             showQRDialog = showQRDialog,
-            qrError = qrError
+            qrError = qrError,
+            showPaymentWebView = showPaymentWebView
         )
     }
 
@@ -157,6 +171,7 @@ class OrderDetailViewModel @Inject constructor(
         val isLoadingQR: Boolean,
         val qrCodeData: String?,
         val showQRDialog: Boolean,
-        val qrError: String?
+        val qrError: String?,
+        val showPaymentWebView: Boolean
     ) : ViewState()
 } 
