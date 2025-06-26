@@ -74,8 +74,7 @@ class AuthInterceptor @Inject constructor(
 
     private fun shouldSkipAuth(request: Request): Boolean {
         val url = request.url.toString()
-        return url.contains("/accounts/login") ||
-               url.contains("/auth/register") || 
+        return url.contains("/auth/register") ||
                url.contains("/auth/refresh-token") ||
                url.contains("/auth/forgot-password") ||
                url.contains("/auth/reset-password")

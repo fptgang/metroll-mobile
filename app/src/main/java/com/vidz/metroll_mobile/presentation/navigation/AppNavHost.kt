@@ -1,7 +1,7 @@
-
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.navigation
@@ -15,6 +15,7 @@ import com.vidz.routemanagement.addRouteManagementNavGraph
 import com.vidz.staff.addStaffNavGraph
 import com.vidz.test.addTestNavGraph
 import com.vidz.ticket.addTicketNavGraph
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -22,6 +23,8 @@ fun AppNavHost(
     navController: NavHostController,
     onShowSnackbar: (String) -> Unit
 ) {
+    val scope = rememberCoroutineScope()
+    
     SharedTransitionLayout {
         NavHost(
             navController = navController,
@@ -61,12 +64,22 @@ fun AppNavHost(
                 startDestination = "auth"
             ) {
                 authGraph(navController, onShowSnackbar) {
-                    // Navigate to home after successful authentication
-                    navController.navigate(DestinationRoutes.ROOT_HOME_SCREEN_ROUTE) {
-                        popUpTo(DestinationRoutes.ROOT_AUTH_SCREEN_ROUTE) { inclusive = true }
+                    // Navigate to appropriate home screen based on user role after successful authentication
+                    scope.launch {
+                        navigateBasedOnRole(navController)
                     }
                 }
             }
         }
+    }
+}
+
+/**
+ * Navigate to appropriate home screen based on user role
+ */
+private suspend fun navigateBasedOnRole(navController: NavHostController) {
+    // For now, navigate to customer home and let the app handle role-based UI
+    navController.navigate(DestinationRoutes.ROOT_HOME_SCREEN_ROUTE) {
+        popUpTo(DestinationRoutes.ROOT_AUTH_SCREEN_ROUTE) { inclusive = true }
     }
 }

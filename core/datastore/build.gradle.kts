@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.metroll.hilt)
     alias(libs.plugins.metroll.android.room)
     id("kotlinx-serialization")
+    alias(libs.plugins.protobuf)
 }
 
 android {
@@ -18,7 +19,27 @@ android {
 dependencies {
     implementation(projects.core.domain)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.dataStore.core)
+    implementation(libs.protobuf.kotlin.lite)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.21.12"
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                create("java") {
+                    option("lite")
+                }
+                create("kotlin") {
+                    option("lite")
+                }
+            }
+        }
+    }
 }

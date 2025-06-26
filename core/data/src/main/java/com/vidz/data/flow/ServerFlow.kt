@@ -1,8 +1,11 @@
 package com.vidz.data.flow
 
+import android.util.Log
 import com.vidz.domain.Result
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import retrofit2.HttpException
 import java.net.ConnectException
 
@@ -19,6 +22,7 @@ class ServerFlow<T, R>(
                 val data = getData()
                 val duration = System.currentTimeMillis() - startTime
                 emit(Result.Success(convert(data)))
+                Log.d("ServerFlow", "Data fetched successfully in ${duration}ms")
             } catch (connectException: ConnectException) {
                 // Handle network connectivity issues
                 emit(Result.ServerError.Internet("No internet connection. Please check your network and try again."))
@@ -43,6 +47,6 @@ class ServerFlow<T, R>(
                 // Handle any other unexpected exceptions
                 emit(Result.ServerError.General("Unexpected error: ${exception.message}"))
             }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 }

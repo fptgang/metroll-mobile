@@ -20,7 +20,7 @@ interface AccountApi {
 
     @GET("accounts/{accountId}")
     suspend fun getAccountById(
-        @Path("accountId") accountId: Long
+        @Path("accountId") accountId: String
     ): Response<AccountDto>
 
     @GET("accounts")
@@ -34,12 +34,12 @@ interface AccountApi {
 
     @PUT("accounts/{accountId}")
     suspend fun updateAccount(
-        @Path("accountId") accountId: Long,
+        @Path("accountId") accountId: String,
         @Body accountDto: AccountDto
     ): Response<AccountDto>
 
     @DELETE("accounts/{accountId}")
     suspend fun deleteAccount(
-        @Path("accountId") accountId: Long
+        @Path("accountId") accountId: String
     ): Response<Unit>
 } 

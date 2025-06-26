@@ -6,7 +6,9 @@ import com.vidz.base.interfaces.ViewModelState
 import com.vidz.base.interfaces.ViewState
 import com.vidz.base.viewmodel.BaseViewModel
 import com.vidz.domain.Result
+import com.vidz.domain.model.Account
 import com.vidz.domain.model.User
+import com.vidz.domain.usecase.account.ObserveLocalAccountInfoUseCase
 import com.vidz.domain.usecase.auth.HybridLoginUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -14,10 +16,25 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val hybridLoginUseCase: HybridLoginUseCase
+    private val hybridLoginUseCase: HybridLoginUseCase,
+    private val observeLocalAccountInfoUseCase: ObserveLocalAccountInfoUseCase
 ) : BaseViewModel<LoginViewModel.LoginEvent, LoginViewModel.LoginViewState, LoginViewModel.LoginViewModelState>(
     initState = LoginViewModelState()
 ) {
+
+    init {
+        // Observe local account info changes
+        viewModelScope.launch {
+            observeLocalAccountInfoUseCase().collect { account ->
+                if (account != null) {
+                    viewModelState.value = viewModelState.value.copy(
+                        localAccount = account,
+                        isLoginSuccessful = true
+                    )
+                }
+            }
+        }
+    }
 
     override fun onTriggerEvent(event: LoginEvent) {
         when (event) {
@@ -96,7 +113,8 @@ class LoginViewModel @Inject constructor(
         val passwordError: String? = null,
         val errorMessage: String? = null,
         val isLoginSuccessful: Boolean = false,
-        val user: User? = null
+        val user: User? = null,
+        val localAccount: Account? = null
     ) : ViewModelState() {
         override fun toUiState(): ViewState = LoginViewState(
             email = email,
@@ -106,7 +124,8 @@ class LoginViewModel @Inject constructor(
             emailError = emailError,
             passwordError = passwordError,
             errorMessage = errorMessage,
-            isLoginSuccessful = isLoginSuccessful
+            isLoginSuccessful = isLoginSuccessful,
+            localAccount = localAccount
         )
     }
 
@@ -118,7 +137,8 @@ class LoginViewModel @Inject constructor(
         val emailError: String?,
         val passwordError: String?,
         val errorMessage: String?,
-        val isLoginSuccessful: Boolean
+        val isLoginSuccessful: Boolean,
+        val localAccount: Account?
     ) : ViewState()
 
     sealed class LoginEvent : ViewEvent {

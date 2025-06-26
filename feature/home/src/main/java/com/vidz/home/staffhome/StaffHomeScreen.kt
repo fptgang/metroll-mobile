@@ -3,21 +3,13 @@ package com.vidz.home.staffhome
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -26,6 +18,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -33,8 +27,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.vidz.base.navigation.DestinationRoutes
 
@@ -43,11 +37,13 @@ import com.vidz.base.navigation.DestinationRoutes
 fun StaffHomeScreenRoot(
     navController: NavController,
     modifier: Modifier = Modifier,
-    onShowSnackbar: ((String) -> Unit)? = null
+    onShowSnackbar: ((String) -> Unit)? = null,
+    viewModel: StaffHomeViewModel = hiltViewModel()
 ) {
     StaffHomeScreen(
         navController = navController,
-        onShowSnackbar = onShowSnackbar ?: {}
+        onShowSnackbar = onShowSnackbar ?: {},
+        viewModel = viewModel
     )
 }
 
@@ -55,12 +51,13 @@ fun StaffHomeScreenRoot(
 @Composable
 fun StaffHomeScreen(
     navController: NavController,
-    onShowSnackbar: (String) -> Unit
+    onShowSnackbar: (String) -> Unit,
+    viewModel: StaffHomeViewModel
 ) {
     val haptic = LocalHapticFeedback.current
     
     //region Define Var
-    val staffName = "Staff Member" // TODO: Get from auth state
+    val uiState = viewModel.uiState.collectAsState().value
     //endregion
     
     //region Event Handler
@@ -76,11 +73,27 @@ fun StaffHomeScreen(
     
     val onLogoutClick: () -> Unit = {
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        navController.navigate(DestinationRoutes.ROOT_AUTH_SCREEN_ROUTE) {
-            popUpTo(0) { inclusive = true }
-        }
+        viewModel.onTriggerEvent(StaffHomeViewModel.StaffHomeEvent.LogoutClicked)
     }
     //endregion
+    
+    // Handle logout success - navigate to auth screen when logout is complete
+    LaunchedEffect(uiState.logoutSuccessful) {
+        if (uiState.logoutSuccessful) {
+            navController.navigate(DestinationRoutes.ROOT_AUTH_SCREEN_ROUTE) {
+                popUpTo(0) { inclusive = true }
+            }
+            viewModel.onTriggerEvent(StaffHomeViewModel.StaffHomeEvent.LogoutSuccessAcknowledged)
+        }
+    }
+    
+    // Handle error messages
+    LaunchedEffect(uiState.snackbarMessage) {
+        uiState.snackbarMessage?.let { message ->
+            onShowSnackbar(message)
+            viewModel.onTriggerEvent(StaffHomeViewModel.StaffHomeEvent.DismissSnackbar)
+        }
+    }
     
     //region UI
     Column(
@@ -124,119 +137,29 @@ fun StaffHomeScreen(
                 .fillMaxSize()
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.Center
         ) {
-            
-            // Welcome Section
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Badge,
-                        contentDescription = "Staff Badge",
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Text(
-                        text = "Welcome back,",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                    
-                    Text(
-                        text = staffName,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Text(
-                        text = "Ready to help passengers today",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-            
-            // Main Actions
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                                 // QR Scanner Button
-                 com.vidz.base.components.MetrollActionCard(
-                     title = "Scan QR Code",
-                     description = "Scan passenger tickets and passes",
-                     icon = Icons.Default.QrCodeScanner,
-                     onClick = onQRScannerClick,
-                     isPrimary = true
-                 )
-                 
-                 // Settings Button
-                 com.vidz.base.components.MetrollActionCard(
-                     title = "Settings",
-                     description = "Manage your account and preferences",
-                     icon = Icons.Default.Settings,
-                     onClick = onSettingsClick,
-                     isPrimary = false
-                 )
-            }
-            
-            Spacer(modifier = Modifier.weight(1f))
-            
-            // Quick Info
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+                // Scan Ticket Button
+                com.vidz.base.components.MetrollActionCard(
+                    title = "Scan Ticket",
+                    description = "Scan passenger tickets and passes",
+                    icon = Icons.Default.QrCodeScanner,
+                    onClick = onQRScannerClick,
+                    isPrimary = true
                 )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = "Info",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = "Staff Mode",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        
-                        Text(
-                            text = "Limited access for security purposes",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                        )
-                    }
-                }
+
+                // Settings Button
+                com.vidz.base.components.MetrollActionCard(
+                    title = "Settings",
+                    description = "Manage your account and preferences",
+                    icon = Icons.Default.Settings,
+                    onClick = onSettingsClick,
+                    isPrimary = false
+                )
             }
         }
     }
