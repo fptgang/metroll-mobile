@@ -1,10 +1,13 @@
 package com.vidz.ticket.detail
 
+import android.annotation.SuppressLint
 import android.app.Activity
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Base64
 import android.view.WindowManager
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +28,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -45,6 +47,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -63,6 +66,7 @@ import com.vidz.domain.model.OrderStatus
 import com.vidz.domain.model.TicketType
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.OptIn
 
 @Composable
 fun OrderDetailScreenRoot(
@@ -91,11 +95,22 @@ fun OrderDetailScreen(
 
     //region Event Handler
     val onQRCodeClick = { orderDetail: OrderDetail ->
-        viewModel.onTriggerEvent(OrderDetailViewModel.OrderDetailEvent.LoadQRCode(orderDetail.ticketOrderId))
+        if (orderDetail.ticketId.isEmpty()) {
+            onShowSnackbar("No QR code available for this ticket")
+        }else
+            viewModel.onTriggerEvent(OrderDetailViewModel.OrderDetailEvent.LoadQRCode(orderDetail.ticketId))
     }
 
     val onCloseQRCode = {
         viewModel.onTriggerEvent(OrderDetailViewModel.OrderDetailEvent.CloseQRCode)
+    }
+
+    val onContinuePayment = {
+        viewModel.onTriggerEvent(OrderDetailViewModel.OrderDetailEvent.OpenPayment)
+    }
+
+    val onClosePayment = {
+        viewModel.onTriggerEvent(OrderDetailViewModel.OrderDetailEvent.ClosePayment)
     }
     //endregion
 
@@ -168,7 +183,10 @@ fun OrderDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     item {
-                        OrderSummaryCard(order = uiState.order!!)
+                        OrderSummaryCard(
+                            order = uiState.order!!,
+                            onContinuePayment = onContinuePayment
+                        )
                     }
 
                     item {
@@ -187,8 +205,7 @@ fun OrderDetailScreen(
                         )
                     }
                 }
-            }
-            else -> {
+            } else -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -227,11 +244,22 @@ fun OrderDetailScreen(
             onDismiss = onCloseQRCode
         )
     }
+
+    // Full-screen Payment WebView
+    if (uiState.showPaymentWebView && uiState.order?.paymentUrl != null) {
+        FullScreenPaymentWebView(
+            url = uiState.order!!.paymentUrl!!,
+            onClose = onClosePayment
+        )
+    }
     //endregion
 }
 
 @Composable
-private fun OrderSummaryCard(order: Order) {
+private fun OrderSummaryCard(
+    order: Order,
+    onContinuePayment: () -> Unit = {}
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -304,6 +332,17 @@ private fun OrderSummaryCard(order: Order) {
                     )
                 }
             }
+
+            // Show payment button for pending orders with payment URL
+            if (order.status == OrderStatus.PENDING && !order.paymentUrl.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                MetrollButton(
+                    text = "Continue Payment",
+                    onClick = onContinuePayment,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }
@@ -364,7 +403,7 @@ private fun OrderDetailCard(
                 MetrollButton(
                     text = if (isLoadingQR) "" else "QR",
                     onClick = onQRCodeClick,
-                    enabled = !isLoadingQR,
+                    enabled = !isLoadingQR && orderDetail.ticketId.isNotEmpty(),
                     isLoading = isLoadingQR,
                     modifier = Modifier.width(80.dp)
                 )
@@ -546,4 +585,99 @@ private fun QRCodeDialog(
             }
         }
     )
-} 
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+private fun FullScreenPaymentWebView(
+    url: String,
+    onClose: () -> Unit
+) {
+    // Full screen overlay covering the entire screen
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Top app bar with close button
+            CenterAlignedTopAppBar(
+                title = { 
+                    Text(
+                        text = "Complete Payment",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onClose) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            )
+
+            // WebView taking the rest of the screen
+            AndroidView(
+                factory = { context ->
+                    WebView(context).apply {
+                        webViewClient = object : WebViewClient() {
+                            override fun onPageFinished(view: WebView?, url: String?) {
+                                super.onPageFinished(view, url)
+                                // Check if payment is complete based on URL patterns
+                                url?.let { currentUrl ->
+                                    when {
+                                        currentUrl.contains("success") || 
+                                        currentUrl.contains("complete") ||
+                                        currentUrl.contains("payment_status=success") ||
+                                        currentUrl.contains("status=success") -> {
+                                            // Payment successful, close WebView
+                                            onClose()
+                                        }
+                                        currentUrl.contains("failed") || 
+                                        currentUrl.contains("error") ||
+                                        currentUrl.contains("payment_status=failed") ||
+                                        currentUrl.contains("status=failed") ||
+                                        currentUrl.contains("cancel") -> {
+                                            // Payment failed, close WebView
+                                            onClose()
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                                request?.url?.toString()?.let { currentUrl ->
+                                    when {
+                                        currentUrl.startsWith("metroll://") -> {
+                                            // Handle app deep link for payment completion
+                                            onClose()
+                                            return true
+                                        }
+                                    }
+                                }
+                                return false
+                            }
+                        }
+                        settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = true
+                        settings.loadWithOverviewMode = true
+                        settings.useWideViewPort = true
+                        settings.setSupportZoom(true)
+                        settings.builtInZoomControls = true
+                        settings.displayZoomControls = false
+                        loadUrl(url)
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
+}

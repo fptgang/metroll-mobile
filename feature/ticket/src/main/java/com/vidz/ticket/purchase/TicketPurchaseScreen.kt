@@ -336,9 +336,8 @@ private fun TimedTicketsContent(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
             
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(horizontal = 4.dp)
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(tickets) { ticket ->
                     TimedTicketCard(
@@ -471,7 +470,7 @@ private fun TimedTicketCard(
 ) {
     Card(
         modifier = Modifier
-            .width(200.dp)
+            .fillMaxWidth()
             .animateContentSize(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(

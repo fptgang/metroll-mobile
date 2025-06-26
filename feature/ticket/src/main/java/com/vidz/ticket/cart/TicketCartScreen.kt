@@ -1,5 +1,6 @@
 package com.vidz.ticket.cart
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -47,9 +49,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.vidz.base.components.MetrollButton
+import android.annotation.SuppressLint
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.compose.ui.viewinterop.AndroidView
 import com.vidz.ticket.purchase.CartItem
-import com.vidz.ticket.purchase.PaymentWebView
 import com.vidz.ticket.purchase.TicketPurchaseViewModel
+import kotlin.OptIn
 
 @Composable
 fun TicketCartScreenRoot(
@@ -96,6 +103,10 @@ fun TicketCartScreen(
         } else {
             onShowSnackbar("Cart is empty")
         }
+    }
+
+    val onClosePayment = {
+        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ClosePayment)
     }
     //endregion
 
@@ -170,22 +181,18 @@ fun TicketCartScreen(
         }
     }
 
-    // WebView for payment - Only for PAYOS payments
-    uiState.paymentUrl?.let { url ->
-        LaunchedEffect(url) {
+    // Full-screen Payment WebView
+    if (uiState.showPaymentWebView && uiState.paymentUrl != null) {
+        LaunchedEffect(uiState.paymentUrl) {
             onShowSnackbar("Opening payment page...")
         }
         
-        PaymentWebView(
-            url = url,
-            onPaymentComplete = {
-                viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ProcessPaymentUrl(""))
-                onShowSnackbar("Payment completed successfully!")
+        FullScreenPaymentWebView(
+            url = uiState.paymentUrl!!,
+            onClose = {
+                onClosePayment()
+                onShowSnackbar("Payment completed!")
                 navController.popBackStack()
-            },
-            onPaymentFailed = {
-                viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ProcessPaymentUrl(""))
-                onShowSnackbar("Payment failed. Please try again.")
             }
         )
     }
@@ -419,6 +426,101 @@ private fun CartBottomBar(
                 enabled = !isLoading,
                 isLoading = isLoading,
                 modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+private fun FullScreenPaymentWebView(
+    url: String,
+    onClose: () -> Unit
+) {
+    // Full screen overlay covering the entire screen
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Top app bar with close button
+            CenterAlignedTopAppBar(
+                title = { 
+                    Text(
+                        text = "Complete Payment",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onClose) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            )
+
+            // WebView taking the rest of the screen
+            AndroidView(
+                factory = { context ->
+                    WebView(context).apply {
+                        webViewClient = object : WebViewClient() {
+                            override fun onPageFinished(view: WebView?, url: String?) {
+                                super.onPageFinished(view, url)
+                                // Check if payment is complete based on URL patterns
+                                url?.let { currentUrl ->
+                                    when {
+                                        currentUrl.contains("success") || 
+                                        currentUrl.contains("complete") ||
+                                        currentUrl.contains("payment_status=success") ||
+                                        currentUrl.contains("status=success") -> {
+                                            // Payment successful, close WebView
+                                            onClose()
+                                        }
+                                        currentUrl.contains("failed") || 
+                                        currentUrl.contains("error") ||
+                                        currentUrl.contains("payment_status=failed") ||
+                                        currentUrl.contains("status=failed") ||
+                                        currentUrl.contains("cancel") -> {
+                                            // Payment failed, close WebView
+                                            onClose()
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                                request?.url?.toString()?.let { currentUrl ->
+                                    when {
+                                        currentUrl.startsWith("metroll://") -> {
+                                            // Handle app deep link for payment completion
+                                            onClose()
+                                            return true
+                                        }
+                                    }
+                                }
+                                return false
+                            }
+                        }
+                        settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = true
+                        settings.loadWithOverviewMode = true
+                        settings.useWideViewPort = true
+                        settings.setSupportZoom(true)
+                        settings.builtInZoomControls = true
+                        settings.displayZoomControls = false
+                        loadUrl(url)
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
             )
         }
     }
