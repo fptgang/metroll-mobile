@@ -9,6 +9,7 @@ import com.vidz.data.repository.P2PJourneyRepositoryImpl
 import com.vidz.data.repository.PaymentRepositoryImpl
 import com.vidz.data.repository.StationRepositoryImpl
 import com.vidz.data.repository.TicketRepositoryImpl
+import com.vidz.data.repository.TicketValidationRepositoryImpl
 import com.vidz.data.repository.TimedTicketPlanRepositoryImpl
 import com.vidz.data.repository.UserRepositoryImpl
 import com.vidz.domain.repository.AccountManagementRepository
@@ -20,6 +21,7 @@ import com.vidz.domain.repository.P2PJourneyRepository
 import com.vidz.domain.repository.PaymentRepository
 import com.vidz.domain.repository.StationRepository
 import com.vidz.domain.repository.TicketRepository
+import com.vidz.domain.repository.TicketValidationRepository
 import com.vidz.domain.repository.TimedTicketPlanRepository
 import com.vidz.domain.repository.UserRepository
 import dagger.Binds
@@ -97,4 +99,11 @@ abstract class RepositoryModule {
     abstract fun bindTicketRepository(
         ticketRepositoryImpl: TicketRepositoryImpl
     ): TicketRepository
+
+
+    @Binds
+    @Singleton
+    abstract fun bindTicketValidationRepository(
+        ticketRepositoryImpl: TicketValidationRepositoryImpl
+    ): TicketValidationRepository
 }

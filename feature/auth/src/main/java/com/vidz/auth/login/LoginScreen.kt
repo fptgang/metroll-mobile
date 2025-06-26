@@ -196,8 +196,6 @@ fun LoginScreen(
         }
     }
     //endregion
-
-    //region Dialog and Sheet
     // No dialogs or sheets needed for this screen
     //endregion
 } 

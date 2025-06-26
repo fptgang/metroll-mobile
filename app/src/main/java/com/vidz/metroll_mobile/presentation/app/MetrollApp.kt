@@ -186,7 +186,7 @@ fun MetrollApp(
                 navController = navController.navController,
                 onShowSnackbar = { message ->
                     scope.launch {
-                        snackbarHostState.showSnackbar(message)
+                        snackbarHostState.showSnackbar(message, withDismissAction = true)
                     }
                 }
             )

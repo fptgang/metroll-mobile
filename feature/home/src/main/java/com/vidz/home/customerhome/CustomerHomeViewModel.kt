@@ -1,4 +1,4 @@
-package com.vidz.home.staffhome
+package com.vidz.home.customerhome
 
 import androidx.lifecycle.viewModelScope
 import com.vidz.base.interfaces.ViewEvent
@@ -14,11 +14,11 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class StaffHomeViewModel @Inject constructor(
+class CustomerHomeViewModel @Inject constructor(
     private val observeLocalAccountInfoUseCase: ObserveLocalAccountInfoUseCase,
     private val logoutUseCase: LogoutUseCase
-) : BaseViewModel<StaffHomeViewModel.StaffHomeEvent, StaffHomeViewModel.StaffHomeViewState, StaffHomeViewModel.StaffHomeViewModelState>(
-    initState = StaffHomeViewModelState()
+) : BaseViewModel<CustomerHomeViewModel.CustomerHomeEvent, CustomerHomeViewModel.CustomerHomeViewState, CustomerHomeViewModel.CustomerHomeViewModelState>(
+    initState = CustomerHomeViewModelState()
 ) {
 
     init {
@@ -30,7 +30,7 @@ class StaffHomeViewModel @Inject constructor(
             observeLocalAccountInfoUseCase().collect { account ->
                 viewModelState.value = viewModelState.value.copy(
                     localAccount = account,
-                    staffName = account?.fullName ?: "Staff Member",
+                    customerName = account?.fullName ?: "Guest User",
                     isLoggedIn = account != null
                 )
             }
@@ -65,22 +65,22 @@ class StaffHomeViewModel @Inject constructor(
         }
     }
 
-    override fun onTriggerEvent(event: StaffHomeEvent) {
+    override fun onTriggerEvent(event: CustomerHomeEvent) {
         when (event) {
-            is StaffHomeEvent.ShowSnackbar -> {
+            is CustomerHomeEvent.ShowSnackbar -> {
                 viewModelState.value = viewModelState.value.copy(
                     snackbarMessage = event.message
                 )
             }
-            is StaffHomeEvent.DismissSnackbar -> {
+            is CustomerHomeEvent.DismissSnackbar -> {
                 viewModelState.value = viewModelState.value.copy(
                     snackbarMessage = null
                 )
             }
-            is StaffHomeEvent.LogoutClicked -> {
+            is CustomerHomeEvent.LogoutClicked -> {
                 logout()
             }
-            is StaffHomeEvent.LogoutSuccessAcknowledged -> {
+            is CustomerHomeEvent.LogoutSuccessAcknowledged -> {
                 viewModelState.value = viewModelState.value.copy(
                     logoutSuccessful = false
                 )
@@ -88,17 +88,17 @@ class StaffHomeViewModel @Inject constructor(
         }
     }
 
-    data class StaffHomeViewModelState(
+    data class CustomerHomeViewModelState(
         val localAccount: Account? = null,
-        val staffName: String = "Staff Member",
+        val customerName: String = "Guest User",
         val isLoggedIn: Boolean = false,
         val isLoggingOut: Boolean = false,
         val logoutSuccessful: Boolean = false,
         val snackbarMessage: String? = null
     ) : ViewModelState() {
-        override fun toUiState(): ViewState = StaffHomeViewState(
+        override fun toUiState(): ViewState = CustomerHomeViewState(
             localAccount = localAccount,
-            staffName = staffName,
+            customerName = customerName,
             isLoggedIn = isLoggedIn,
             isLoggingOut = isLoggingOut,
             logoutSuccessful = logoutSuccessful,
@@ -106,19 +106,19 @@ class StaffHomeViewModel @Inject constructor(
         )
     }
 
-    data class StaffHomeViewState(
+    data class CustomerHomeViewState(
         val localAccount: Account?,
-        val staffName: String,
+        val customerName: String,
         val isLoggedIn: Boolean,
         val isLoggingOut: Boolean,
         val logoutSuccessful: Boolean,
         val snackbarMessage: String?
     ) : ViewState()
 
-    sealed class StaffHomeEvent : ViewEvent {
-        data class ShowSnackbar(val message: String) : StaffHomeEvent()
-        object DismissSnackbar : StaffHomeEvent()
-        object LogoutClicked : StaffHomeEvent()
-        object LogoutSuccessAcknowledged : StaffHomeEvent()
+    sealed class CustomerHomeEvent : ViewEvent {
+        data class ShowSnackbar(val message: String) : CustomerHomeEvent()
+        object DismissSnackbar : CustomerHomeEvent()
+        object LogoutClicked : CustomerHomeEvent()
+        object LogoutSuccessAcknowledged : CustomerHomeEvent()
     }
-}
+} 

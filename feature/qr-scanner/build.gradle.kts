@@ -12,6 +12,7 @@ dependencies {
 //    implementation(projects.core.data)
     implementation(projects.common.base)
     implementation(projects.common.theme)
+    implementation(projects.core.domain)
     
     // CameraX dependencies
     implementation(libs.androidx.camera.core)
@@ -22,5 +23,7 @@ dependencies {
     // QR code scanning dependencies
     implementation(libs.zxing.core)
     implementation(libs.zxing.android.embedded)
+    implementation(libs.accompanist.permissions)
+    implementation(libs.kotlinx.serialization.json)
 
 } 

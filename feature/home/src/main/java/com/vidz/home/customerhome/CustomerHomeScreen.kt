@@ -49,6 +49,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -60,6 +62,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.vidz.base.navigation.DestinationRoutes
 import com.vidz.test.ROOT_TEST_ROUTE
@@ -69,11 +72,13 @@ import com.vidz.test.ROOT_TEST_ROUTE
 fun CustomerHomeScreenRoot(
     navController: NavController,
     modifier: Modifier = Modifier,
-    onShowSnackbar: ((String) -> Unit)? = null
+    onShowSnackbar: ((String) -> Unit)? = null,
+    viewModel: CustomerHomeViewModel = hiltViewModel()
 ) {
     CustomerHomeScreen(
         navController = navController,
-        onShowSnackbar = onShowSnackbar ?: {}
+        onShowSnackbar = onShowSnackbar ?: {},
+        viewModel = viewModel
     )
 }
 
@@ -81,13 +86,15 @@ fun CustomerHomeScreenRoot(
 @Composable
 fun CustomerHomeScreen(
     navController: NavController,
-    onShowSnackbar: (String) -> Unit
+    onShowSnackbar: (String) -> Unit,
+    viewModel: CustomerHomeViewModel
 ) {
     val haptic = LocalHapticFeedback.current
     val scrollState = rememberScrollState()
     
     //region Define Var
-    val customerName = "John Doe" // TODO: Get from auth state
+    val uiState = viewModel.uiState.collectAsState().value
+    val customerName = uiState.localAccount?.fullName
     val quickActions = listOf(
         QuickAction("Buy Tickets", Icons.Default.ConfirmationNumber, "Purchase journey tickets", "ticket_purchase"),
         QuickAction("Route Planner", Icons.Default.Map, "Plan your journey", "route_planner"),
@@ -134,11 +141,27 @@ fun CustomerHomeScreen(
     
     val onLogoutClick: () -> Unit = {
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        navController.navigate(DestinationRoutes.ROOT_AUTH_SCREEN_ROUTE) {
-            popUpTo(0) { inclusive = true }
-        }
+        viewModel.onTriggerEvent(CustomerHomeViewModel.CustomerHomeEvent.LogoutClicked)
     }
     //endregion
+    
+    // Handle logout success - navigate to auth screen when logout is complete
+    LaunchedEffect(uiState.logoutSuccessful) {
+        if (uiState.logoutSuccessful) {
+            navController.navigate(DestinationRoutes.ROOT_AUTH_SCREEN_ROUTE) {
+                popUpTo(0) { inclusive = true }
+            }
+            viewModel.onTriggerEvent(CustomerHomeViewModel.CustomerHomeEvent.LogoutSuccessAcknowledged)
+        }
+    }
+    
+    // Handle error messages
+    LaunchedEffect(uiState.snackbarMessage) {
+        uiState.snackbarMessage?.let { message ->
+            onShowSnackbar(message)
+            viewModel.onTriggerEvent(CustomerHomeViewModel.CustomerHomeEvent.DismissSnackbar)
+        }
+    }
     
     //region UI
     Column(
@@ -250,14 +273,23 @@ fun CustomerHomeScreen(
                         )
                         
                         Text(
-                            text = customerName,
+                            text = customerName.toString(),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
                         
+                        // Show user email if available
+                        uiState.localAccount?.email?.let { email ->
+                            Text(
+                                text = email,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                        }
+                        
                         Text(
-                            text = "Ready for your next journey?",
+                            text = if (uiState.isLoggedIn) "Ready for your next journey?" else "Please log in to continue",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )

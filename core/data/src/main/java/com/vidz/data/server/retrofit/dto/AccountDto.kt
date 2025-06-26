@@ -4,6 +4,19 @@ import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
 data class AccountDto(
+    val id: String = "",
+    val email: String = "",
+    val fullName: String = "",
+    val phoneNumber: String = "",
+    val role: String = "CUSTOMER",
+    val active: Boolean = true,
+    val createdAt: Double = 0.0,
+    val updatedAt: Double = 0.0
+)
+
+// Legacy DTO for backward compatibility
+@JsonClass(generateAdapter = true)
+data class LegacyAccountDto(
     val id: Long = 0L,
     val firstName: String = "",
     val lastName: String = "",
