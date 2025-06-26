@@ -14,5 +14,6 @@ dependencies {
     implementation(projects.common.base)
     implementation(projects.common.theme)
     implementation(projects.feature.test)
+    implementation(projects.feature.account)
 
 }

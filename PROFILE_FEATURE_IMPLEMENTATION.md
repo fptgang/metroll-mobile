@@ -38,6 +38,9 @@ None - All implementation completed!
 - [x] Implemented getAccountById method in AccountManagementRepositoryImpl
 - [x] Removed mock data from AccountProfileViewModel
 - [x] Connected edit profile functionality to real API endpoint
+- [x] **Added staff profile access via StaffHomeScreen Settings**
+- [x] **Implemented Settings bottom sheet with profile actions for staff**
+- [x] **Integrated staff profile management with existing account features**
 
 ## Future Tasks
 
@@ -58,6 +61,14 @@ The user profile feature follows Clean Architecture with:
 ```
 Server (/auth/me) --> AccountManagementRepositoryImpl --> GetMeUseCase --> AccountProfileViewModel --> AccountProfileScreen
 ```
+
+### Staff Integration
+Staff members can access profile management directly from their home screen:
+- **Settings Button**: Opens bottom sheet modal with profile actions
+- **View Profile**: Direct navigation to AccountProfileScreen 
+- **Edit Profile**: Direct navigation to EditProfileScreen
+- **Sign Out**: Logout functionality with loading states
+- **Seamless UX**: Material Design 3 bottom sheet for quick access
 
 ### UI Components
 1. **Profile Header**: Avatar, name, email, role chip
@@ -85,6 +96,10 @@ Server (/auth/me) --> AccountManagementRepositoryImpl --> GetMeUseCase --> Accou
 - ✅ `feature/account/src/main/java/com/vidz/account/AccountNavigation.kt` - Navigation setup
 - ✅ `feature/account/build.gradle.kts` - Dependencies configuration
 
+#### Feature Home (Staff Integration)
+- ✅ `feature/home/src/main/java/com/vidz/home/staffhome/StaffHomeScreen.kt` - Staff home with Settings bottom sheet
+- ✅ `feature/home/build.gradle.kts` - Home module dependencies (added account feature)
+
 #### Navigation
 - ✅ `common/base/src/main/java/com/vidz/base/navigation/HomeNavigationRoute.kt` - Navigation routes
 
@@ -106,7 +121,10 @@ Server (/auth/me) --> AccountManagementRepositoryImpl --> GetMeUseCase --> Accou
 The profile screen is accessible via:
 - Route: `DestinationRoutes.ACCOUNT_PROFILE_SCREEN_ROUTE`
 - Navigation: Integrated in account navigation graph
-- Entry point: Account tab in bottom navigation
+- Entry points: 
+  - Account tab in bottom navigation (for customers)
+  - Settings button → Profile & Settings in StaffHomeScreen (for staff)
+  - Settings bottom sheet with "View Profile" and "Edit Profile" actions (for staff)
 
 ### Error Scenarios Handled
 
