@@ -6,10 +6,13 @@ import android.graphics.PointF
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.view.ViewGroup
+import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
+import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
@@ -19,22 +22,28 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.FlashOff
+import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -65,6 +74,7 @@ import com.google.zxing.common.HybridBinarizer
 import com.vidz.base.components.PermissionManager
 import com.vidz.base.components.PermissionState
 import com.vidz.base.components.PermissionStatus
+import kotlinx.coroutines.delay
 import java.util.concurrent.Executors
 import kotlin.math.max
 
@@ -107,6 +117,10 @@ fun QrScannerScreen(
     // Used later for scaling bounding box
     var previewWidth by remember { mutableStateOf(1) }
     var previewHeight by remember { mutableStateOf(1) }
+    
+    // Camera control states
+    var camera by remember { mutableStateOf<Camera?>(null) }
+    var isFlashlightOn by remember { mutableStateOf(false) }
     //endregion
 
     //region Event Handler
@@ -130,6 +144,30 @@ fun QrScannerScreen(
                     @Suppress("DEPRECATION")
                     it.vibrate(200)
                 }
+            }
+        }
+    }
+
+    // Handle flashlight toggle
+    LaunchedEffect(isFlashlightOn, camera) {
+        camera?.cameraControl?.enableTorch(isFlashlightOn)
+    }
+
+    // Aggressive autofocus on center
+    LaunchedEffect(camera) {
+        camera?.let { cam ->
+            while (true) {
+                try {
+                    val factory = SurfaceOrientedMeteringPointFactory(1.0f, 1.0f)
+                    val centerPoint = factory.createPoint(0.5f, 0.5f)
+                    val action = FocusMeteringAction.Builder(centerPoint)
+                        .setAutoCancelDuration(1, java.util.concurrent.TimeUnit.SECONDS)
+                        .build()
+                    cam.cameraControl.startFocusAndMetering(action)
+                } catch (e: Exception) {
+                    // Ignore focus errors
+                }
+                delay(1500) // Focus every 1.5 seconds
             }
         }
     }
@@ -161,6 +199,10 @@ fun QrScannerScreen(
                         previewHeight = height
                     },
                     lifecycleOwner = lifecycleOwner,
+                    camera = camera,
+                    onCameraReady = { camera = it },
+                    isFlashlightOn = isFlashlightOn,
+                    onFlashlightToggle = { isFlashlightOn = !isFlashlightOn },
                     modifier = modifier
                 )
             }
@@ -220,10 +262,14 @@ private fun ScannerScreenContent(
     previewHeight: Int,
     onPreviewSizeChanged: (Int, Int) -> Unit,
     lifecycleOwner: androidx.lifecycle.LifecycleOwner,
+    camera: Camera?,
+    onCameraReady: (Camera) -> Unit,
+    isFlashlightOn: Boolean,
+    onFlashlightToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxSize()) {
-        // Top Bar with Back Button
+    Column(modifier = modifier.fillMaxSize().padding(top= WindowInsets.statusBars.asPaddingValues().calculateTopPadding())) {
+        // Top Bar with Back Button and Flashlight
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -243,6 +289,22 @@ private fun ScannerScreenContent(
                 Text(
                     text = "Scan QR Code",
                     style = MaterialTheme.typography.titleMedium
+                )
+            }
+
+            // Flashlight toggle
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = if (isFlashlightOn) Icons.Default.FlashOn else Icons.Default.FlashOff,
+                    contentDescription = "Flashlight",
+                    tint = if (isFlashlightOn) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                )
+                Switch(
+                    checked = isFlashlightOn,
+                    onCheckedChange = { onFlashlightToggle() }
                 )
             }
         }
@@ -315,12 +377,13 @@ private fun ScannerScreenContent(
                             }
                         try {
                             cameraProvider.unbindAll()
-                            cameraProvider.bindToLifecycle(
+                            val cameraInstance = cameraProvider.bindToLifecycle(
                                 lifecycleOwner,
                                 CameraSelector.DEFAULT_BACK_CAMERA,
                                 preview,
                                 analysis
                             )
+                            onCameraReady(cameraInstance)
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }
