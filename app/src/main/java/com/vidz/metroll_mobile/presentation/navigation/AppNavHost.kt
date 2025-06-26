@@ -11,6 +11,7 @@ import com.vidz.base.navigation.DestinationRoutes
 import com.vidz.home.addHomeNavGraph
 import com.vidz.membership.addMembershipNavGraph
 import com.vidz.qrscanner.addQrScannerNavGraph
+import com.vidz.routemanagement.addRouteManagementNavGraph
 import com.vidz.staff.addStaffNavGraph
 import com.vidz.test.addTestNavGraph
 import com.vidz.ticket.addTicketNavGraph
@@ -33,8 +34,11 @@ fun AppNavHost(
 //            popEnterTransition = popEnterTransition,
 //            popExitTransition = popExitTransition
         ) {
-            // Home Navigation (includes Route Management)
+            // Home Navigation
             addHomeNavGraph(navController, onShowSnackbar)
+            
+            // Route Management Navigation
+            addRouteManagementNavGraph(navController, onShowSnackbar)
             
             // Ticket Management Navigation
             addTicketNavGraph(navController, onShowSnackbar)
