@@ -97,6 +97,7 @@ fun Segment.toRequestDto(): SegmentRequestDto {
 
 // LineStationInfo Mappers
 fun LineStationInfoDto.toDomain(): LineStationInfo {
+    val lineCode = lineCode?.ifEmpty { "" }
     return LineStationInfo(
         lineCode = lineCode,
         code = code,
@@ -105,6 +106,7 @@ fun LineStationInfoDto.toDomain(): LineStationInfo {
 }
 
 fun LineStationInfo.toDto(): LineStationInfoDto {
+    val lineCode = lineCode?.ifEmpty { "" }
     return LineStationInfoDto(
         lineCode = lineCode,
         code = code,

@@ -2,6 +2,7 @@ package com.vidz.domain.usecase.p2pjourney
 
 import com.vidz.domain.Result
 import com.vidz.domain.model.P2PJourney
+import com.vidz.domain.model.PageDto
 import com.vidz.domain.repository.P2PJourneyRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -11,9 +12,11 @@ class GetP2PJourneyByStationsUseCase @Inject constructor(
     private val repository: P2PJourneyRepository
 ) {
     suspend operator fun invoke(
+        page: Int,
+        size: Int,
         startStationId: String,
         endStationId: String
-    ): Flow<Result<P2PJourney>> = flow {
+    ): Flow<Result<PageDto<P2PJourney>>> = flow {
         try {
             emit(Result.Init)
             
@@ -32,7 +35,7 @@ class GetP2PJourneyByStationsUseCase @Inject constructor(
                 }
             }
             
-            val result = repository.getP2PJourneyByStations(startStationId, endStationId)
+            val result = repository.getP2PJourneyByStations(page,size,startStationId, endStationId)
             emit(result)
         } catch (e: Exception) {
             emit(Result.ServerError.General(e.message ?: "Failed to get P2P journey by stations"))

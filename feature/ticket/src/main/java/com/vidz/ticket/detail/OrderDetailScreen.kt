@@ -379,7 +379,7 @@ private fun OrderDetailCard(
                     )
                     
                     Text(
-                        text = "Ticket ID: ${orderDetail.id.take(8)}",
+                        text = "Ord detail ID: ${orderDetail.id.take(8)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -10,6 +10,7 @@ import com.vidz.domain.model.CheckoutItem
 import com.vidz.domain.model.CheckoutRequest
 import com.vidz.domain.model.Order
 import com.vidz.domain.model.P2PJourney
+import com.vidz.domain.model.Station
 import com.vidz.domain.model.TicketType
 import com.vidz.domain.model.TimedTicketPlan
 import com.vidz.domain.usecase.auth.GetCurrentUserUseCase
@@ -21,6 +22,8 @@ import com.vidz.domain.usecase.cart.UpdateCartItemQuantityUseCase
 import com.vidz.domain.usecase.order.CheckoutUseCase
 import com.vidz.domain.usecase.p2pjourney.GetP2PJourneyByIdUseCase
 import com.vidz.domain.usecase.p2pjourney.GetP2PJourneysUseCase
+import com.vidz.domain.usecase.p2pjourney.GetP2PJourneyByStationsUseCase
+import com.vidz.domain.usecase.station.GetStationsUseCase
 import com.vidz.domain.usecase.timedticketplan.GetTimedTicketPlanByIdUseCase
 import com.vidz.domain.usecase.timedticketplan.GetTimedTicketPlansUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -53,6 +56,8 @@ enum class P2PSortType(val displayName: String) {
 class TicketPurchaseViewModel @Inject constructor(
     private val getTimedTicketPlansUseCase: GetTimedTicketPlansUseCase,
     private val getP2PJourneysUseCase: GetP2PJourneysUseCase,
+    private val getP2PJourneyByStationsUseCase: GetP2PJourneyByStationsUseCase,
+    private val getStationsUseCase: GetStationsUseCase,
     private val getTimedTicketPlanByIdUseCase: GetTimedTicketPlanByIdUseCase,
     private val getP2PJourneyByIdUseCase: GetP2PJourneyByIdUseCase,
     private val checkoutUseCase: CheckoutUseCase,
@@ -92,12 +97,18 @@ class TicketPurchaseViewModel @Inject constructor(
             is TicketPurchaseEvent.ProcessPaymentUrl -> processPaymentUrl(event.url)
             is TicketPurchaseEvent.OpenPayment -> openPayment()
             is TicketPurchaseEvent.ClosePayment -> closePayment()
+            is TicketPurchaseEvent.LoadStations -> loadStations()
+            is TicketPurchaseEvent.SelectFromStation -> selectFromStation(event.station)
+            is TicketPurchaseEvent.SelectToStation -> selectToStation(event.station)
+            is TicketPurchaseEvent.SearchJourneyByStations -> searchJourneyByStations()
+            is TicketPurchaseEvent.ClearStationSelection -> clearStationSelection()
         }
     }
 
     private fun loadInitialData() {
         loadTimedTickets()
-        loadP2PJourneys()
+        loadP2PJourneys() // Load all P2P journeys initially
+        loadStations()
     }
 
     private fun observeCartItems() {
@@ -116,7 +127,7 @@ class TicketPurchaseViewModel @Inject constructor(
                         )
                     }
                     updateState { copy(cartItems = placeholderCartItems) }
-                    
+
                     // Fetch detailed information for each item
                     fetchCartItemDetails(checkoutItems)
                 }
@@ -213,7 +224,7 @@ class TicketPurchaseViewModel @Inject constructor(
     }
 
     private fun updateCartItemWithDetails(id: String, cartItem: CartItem) {
-        updateState { 
+        updateState {
             copy(
                 cartItems = cartItems.map { existing ->
                     if (existing.id == id) cartItem else existing
@@ -373,7 +384,7 @@ class TicketPurchaseViewModel @Inject constructor(
                             is Result.Success -> {
                                 val checkoutRequest = CheckoutRequest(
                                     items = checkoutItems,
-                                    paymentMethod = "PAYOS",
+                                    paymentMethod = "CASH",
                                     customerId = user.data?.uid
                                 )
 
@@ -387,14 +398,14 @@ class TicketPurchaseViewModel @Inject constructor(
                                                                         is Result.Success -> {
                                 // Clear cart after successful checkout
                                 clearCartUseCase()
-                                
+
                                 // Only set paymentUrl if payment method is PAYOS and paymentUrl exists
-                                val shouldShowPaymentWebView = result.data.paymentMethod == "PAYOS" && 
+                                val shouldShowPaymentWebView = result.data.paymentMethod == "PAYOS" &&
                                                               !result.data.paymentUrl.isNullOrEmpty()
-                                
+
                                 // Debug logging
                                 println("Checkout successful - Payment Method: ${result.data.paymentMethod}, PaymentUrl: ${result.data.paymentUrl}, ShouldShow: $shouldShowPaymentWebView")
-                                
+
                                 updateState {
                                     copy(
                                         isCheckingOut = false,
@@ -452,6 +463,130 @@ class TicketPurchaseViewModel @Inject constructor(
         updateState { copy(showPaymentWebView = false, paymentUrl = null) }
     }
 
+    private fun loadStations() {
+        viewModelScope.launch {
+            getStationsUseCase(page = 0, size = 100)
+                .onEach { result ->
+                    when (result) {
+                        is Result.Init -> {
+                            updateState { copy(isLoadingStations = true) }
+                        }
+                        is Result.Success -> {
+                            updateState {
+                                copy(
+                                    isLoadingStations = false,
+                                    stations = result.data.content,
+                                    error = null
+                                )
+                            }
+                        }
+                        is Result.ServerError -> {
+                            updateState {
+                                copy(
+                                    isLoadingStations = false,
+                                    error = result.message
+                                )
+                            }
+                        }
+                    }
+                }
+                .launchIn(this)
+        }
+    }
+
+    private fun selectFromStation(station: Station?) {
+        updateState {
+            copy(
+                selectedFromStation = station,
+                selectedToStation = if (selectedToStation?.id == station?.id) null else selectedToStation
+            )
+        }
+
+        // Always try to search when any station is selected
+        if (station != null) {
+            searchJourneyByStations()
+        } else {
+            // From station cleared, reload all journeys
+            loadP2PJourneys()
+        }
+    }
+
+    private fun selectToStation(station: Station?) {
+        updateState {
+            copy(
+                selectedToStation = station,
+                selectedFromStation = if (selectedFromStation?.id == station?.id) null else selectedFromStation
+            )
+        }
+
+        // Always try to search when any station is selected
+        if (station != null) {
+            searchJourneyByStations()
+        } else {
+            // To station cleared, reload all journeys
+            loadP2PJourneys()
+        }
+    }
+
+    private fun searchJourneyByStations() {
+        val fromStation = viewModelState.value.selectedFromStation
+        val toStation = viewModelState.value.selectedToStation
+
+        // If one stations are selected, search by stations using codes
+        if (fromStation != null || toStation != null) {
+            viewModelScope.launch {
+                getP2PJourneyByStationsUseCase(page = 0, size = 50, fromStation?.code.orEmpty(), toStation?.code.orEmpty()
+                )
+                    .onEach { result ->
+                        when (result) {
+                            is Result.Init -> {
+                                updateState { copy(isLoadingP2P = true) }
+                            }
+                            is Result.Success -> {
+                                val sortedJourneys = sortJourneysByType(
+                                    result.data.content,
+                                    viewModelState.value.p2pSortType
+                                )
+                                updateState {
+                                    copy(
+                                        isLoadingP2P = false,
+                                        p2pJourneys = sortedJourneys,
+                                        error = null
+                                    )
+                                }
+                            }
+                            is Result.ServerError -> {
+                                updateState {
+                                    copy(
+                                        isLoadingP2P = false,
+                                        p2pJourneys = emptyList(),
+                                        error = result.message
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    .launchIn(this)
+            }
+        } else {
+            // If only one or no stations selected, load all P2P journeys
+            loadP2PJourneys()
+        }
+    }
+
+    private fun clearStationSelection() {
+        updateState {
+            copy(
+                selectedFromStation = null,
+                selectedToStation = null
+            )
+        }
+        // Reload all P2P journeys when clearing stations
+        loadP2PJourneys()
+    }
+
+
+
     private fun updateState(update: TicketPurchaseViewModelState.() -> TicketPurchaseViewModelState) {
         viewModelState.value = viewModelState.value.update()
     }
@@ -474,6 +609,11 @@ class TicketPurchaseViewModel @Inject constructor(
         data class ProcessPaymentUrl(val url: String) : TicketPurchaseEvent
         object OpenPayment : TicketPurchaseEvent
         object ClosePayment : TicketPurchaseEvent
+        object LoadStations : TicketPurchaseEvent
+        data class SelectFromStation(val station: Station?) : TicketPurchaseEvent
+        data class SelectToStation(val station: Station?) : TicketPurchaseEvent
+        object SearchJourneyByStations : TicketPurchaseEvent
+        object ClearStationSelection : TicketPurchaseEvent
     }
 
     data class TicketPurchaseViewModelState(
@@ -489,7 +629,11 @@ class TicketPurchaseViewModel @Inject constructor(
         val p2pSortType: P2PSortType = P2PSortType.DEFAULT,
         val showCartSheet: Boolean = false,
         val paymentUrl: String? = null,
-        val showPaymentWebView: Boolean = false
+        val showPaymentWebView: Boolean = false,
+        val isLoadingStations: Boolean = false,
+        val stations: List<Station> = emptyList(),
+        val selectedFromStation: Station? = null,
+        val selectedToStation: Station? = null
     ) : ViewModelState() {
         override fun toUiState(): ViewState = TicketPurchaseUiState(
             isLoadingTimed = isLoadingTimed,
@@ -505,6 +649,10 @@ class TicketPurchaseViewModel @Inject constructor(
             showCartSheet = showCartSheet,
             paymentUrl = paymentUrl,
             showPaymentWebView = showPaymentWebView,
+            isLoadingStations = isLoadingStations,
+            stations = stations,
+            selectedFromStation = selectedFromStation,
+            selectedToStation = selectedToStation,
             cartTotal = cartItems.sumOf { it.price * it.quantity },
             cartItemCount = cartItems.sumOf { it.quantity }
         )
@@ -524,6 +672,10 @@ class TicketPurchaseViewModel @Inject constructor(
         val showCartSheet: Boolean,
         val paymentUrl: String?,
         val showPaymentWebView: Boolean,
+        val isLoadingStations: Boolean,
+        val stations: List<Station>,
+        val selectedFromStation: Station?,
+        val selectedToStation: Station?,
         val cartTotal: Double,
         val cartItemCount: Int
     ) : ViewState()

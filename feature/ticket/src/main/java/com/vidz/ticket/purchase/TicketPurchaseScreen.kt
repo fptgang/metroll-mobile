@@ -27,6 +27,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -40,6 +41,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -78,6 +81,7 @@ import com.vidz.base.components.MetrollActionCard
 import com.vidz.base.components.MetrollButton
 import com.vidz.base.components.MetrollTextField
 import com.vidz.domain.model.P2PJourney
+import com.vidz.domain.model.Station
 import com.vidz.domain.model.TicketType
 import com.vidz.domain.model.TimedTicketPlan
 
@@ -262,13 +266,26 @@ fun TicketPurchaseScreen(
                     )
                 }
                 TicketType.P2P -> {
-                    P2PJourneysContent(
-                        journeys = uiState.p2pJourneys,
-                        isLoading = uiState.isLoadingP2P,
-                        currentSort = uiState.p2pSortType,
-                        onAddToCart = onP2PJourneyAddToCart,
-                        onSortChange = onSortChange
-                    )
+                                    P2PJourneysContent(
+                    journeys = uiState.p2pJourneys,
+                    isLoading = uiState.isLoadingP2P,
+                    currentSort = uiState.p2pSortType,
+                    stations = uiState.stations,
+                    isLoadingStations = uiState.isLoadingStations,
+                    selectedFromStation = uiState.selectedFromStation,
+                    selectedToStation = uiState.selectedToStation,
+                    onAddToCart = onP2PJourneyAddToCart,
+                    onSortChange = onSortChange,
+                    onFromStationSelect = { station ->
+                        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectFromStation(station))
+                    },
+                    onToStationSelect = { station ->
+                        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectToStation(station))
+                    },
+                    onClearStations = {
+                        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ClearStationSelection)
+                    }
+                )
                 }
             }
         }
@@ -350,16 +367,24 @@ private fun TimedTicketsContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun P2PJourneysContent(
     journeys: List<P2PJourney>,
     isLoading: Boolean,
     currentSort: P2PSortType,
+    stations: List<Station>,
+    isLoadingStations: Boolean,
+    selectedFromStation: Station?,
+    selectedToStation: Station?,
     onAddToCart: (P2PJourney) -> Unit,
-    onSortChange: (P2PSortType) -> Unit
+    onSortChange: (P2PSortType) -> Unit,
+    onFromStationSelect: (Station?) -> Unit,
+    onToStationSelect: (Station?) -> Unit,
+    onClearStations: () -> Unit
 ) {
-    var fromStation by remember { mutableStateOf("") }
-    var toStation by remember { mutableStateOf("") }
+    var showFromDropdown by remember { mutableStateOf(false) }
+    var showToDropdown by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
     
     if (isLoading) {
@@ -373,33 +398,170 @@ private fun P2PJourneysContent(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // Search Section
+            // Station Selection Section
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Select Journey Route",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                if (selectedFromStation != null || selectedToStation != null) {
+                    IconButton(
+                        onClick = onClearStations,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Clear,
+                            contentDescription = "Clear stations",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
-                OutlinedTextField(
-                    value = fromStation,
-                    onValueChange = { fromStation = it },
-                    label = { Text("From", style = MaterialTheme.typography.bodySmall) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
-                    singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyMedium
-                )
+                // From Station Dropdown
+                ExposedDropdownMenuBox(
+                    expanded = showFromDropdown,
+                    onExpandedChange = { showFromDropdown = it },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    OutlinedTextField(
+                        value = selectedFromStation?.name ?: "",
+                        onValueChange = { },
+                        readOnly = true,
+                        label = { Text("From Station") },
+                        placeholder = { Text("From Station") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = showFromDropdown)
+                        },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth(),
+                        singleLine = true
+                    )
+                    
+                    ExposedDropdownMenu(
+                        expanded = showFromDropdown,
+                        onDismissRequest = { showFromDropdown = false }
+                    ) {
+                        if (isLoadingStations) {
+                            DropdownMenuItem(
+                                text = { Text("Loading stations...") },
+                                onClick = { }
+                            )
+                        } else if (stations.isEmpty()) {
+                            DropdownMenuItem(
+                                text = { Text("No stations available") },
+                                onClick = { }
+                            )
+                        } else {
+                            stations.forEach { station ->
+                                DropdownMenuItem(
+                                    text = { 
+                                        Column {
+                                            Text(
+                                                text = station.name,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                            Text(
+                                                text = station.code,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        onFromStationSelect(station)
+                                        showFromDropdown = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
                 
-                OutlinedTextField(
-                    value = toStation,
-                    onValueChange = { toStation = it },
-                    label = { Text("To", style = MaterialTheme.typography.bodySmall) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
-                    singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyMedium
-                )
+                // To Station Dropdown
+                ExposedDropdownMenuBox(
+                    expanded = showToDropdown,
+                    onExpandedChange = { showToDropdown = it },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    OutlinedTextField(
+                        value = selectedToStation?.name ?: "",
+                        onValueChange = { },
+                        readOnly = true,
+                        label = { Text("To Station") },
+                        placeholder = { Text("To Station") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = showToDropdown)
+                        },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth(),
+                        singleLine = true
+                    )
+                    
+                    ExposedDropdownMenu(
+                        expanded = showToDropdown,
+                        onDismissRequest = { showToDropdown = false }
+                    ) {
+                        if (isLoadingStations) {
+                            DropdownMenuItem(
+                                text = { Text("Loading stations...") },
+                                onClick = { }
+                            )
+                        } else if (stations.isEmpty()) {
+                            DropdownMenuItem(
+                                text = { Text("No stations available") },
+                                onClick = { }
+                            )
+                        } else {
+                            // Filter out the selected from station
+                            val availableToStations = stations.filter { it.id != selectedFromStation?.id }
+                            
+                            if (availableToStations.isEmpty()) {
+                                DropdownMenuItem(
+                                    text = { Text("Please select departure station first") },
+                                    onClick = { }
+                                )
+                            } else {
+                                availableToStations.forEach { station ->
+                                    DropdownMenuItem(
+                                        text = { 
+                                            Column {
+                                                Text(
+                                                    text = station.name,
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                )
+                                                Text(
+                                                    text = station.code,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        },
+                                        onClick = {
+                                            onToStationSelect(station)
+                                            showToDropdown = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -454,6 +616,7 @@ private fun P2PJourneysContent(
                 items(journeys) { journey ->
                     P2PJourneyCard(
                         journey = journey,
+                        stations = stations,
                         onAddToCart = { onAddToCart(journey) }
                     )
                 }
@@ -529,6 +692,7 @@ private fun TimedTicketCard(
 @Composable
 private fun P2PJourneyCard(
     journey: P2PJourney,
+    stations: List<Station>,
     onAddToCart: () -> Unit
 ) {
     Card(
@@ -549,24 +713,33 @@ private fun P2PJourneyCard(
                 verticalAlignment = Alignment.Top
             ) {
                 Column(modifier = Modifier.weight(1f)) {
+                    val fromStation = stations.find { it.id == journey.startStationId }
+                    val toStation = stations.find { it.id == journey.endStationId }
+                    
                     Text(
-                        text = "Journey Route",
+                        text = "${fromStation?.name ?: journey.startStationId} → ${toStation?.name ?: journey.endStationId}",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                     
                     Spacer(modifier = Modifier.height(4.dp))
                     
                     Text(
-                        text = "From: ${journey.startStationId}",
+                        text = "From: ${fromStation?.name ?: journey.startStationId} (${fromStation?.code ?: ""})",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     
                     Text(
-                        text = "To: ${journey.endStationId}",
+                        text = "To: ${toStation?.name ?: journey.endStationId} (${toStation?.code ?: ""})",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
                 
