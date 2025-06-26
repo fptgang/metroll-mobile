@@ -5,6 +5,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.vidz.account.profile.AccountProfileScreenRoot
+import com.vidz.account.profile.EditProfileScreenRoot
 import com.vidz.base.navigation.DestinationRoutes
 
 fun NavGraphBuilder.addAccountNavGraph(
@@ -25,7 +26,10 @@ fun NavGraphBuilder.addAccountNavGraph(
         }
         
         composable(DestinationRoutes.EDIT_PROFILE_SCREEN_ROUTE) {
-            // TODO: Implement EditProfileScreenRoot
+            EditProfileScreenRoot(
+                navController = navController,
+                onShowSnackbar = onShowSnackbar
+            )
         }
         
         composable(DestinationRoutes.ACCOUNT_SETTINGS_SCREEN_ROUTE) {

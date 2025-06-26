@@ -1,17 +1,35 @@
 package com.vidz.account.profile
 
-import android.annotation.SuppressLint
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.vidz.base.components.TopAppBarWithBack
+import com.vidz.domain.model.Account
+import com.vidz.domain.model.AccountRole
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun AccountProfileScreenRoot(
@@ -23,31 +41,541 @@ fun AccountProfileScreenRoot(
     val accountProfileUiState = accountProfileViewModel.uiState.collectAsStateWithLifecycle()
     AccountProfileScreen(
         navController = navController,
-        accountProfileUiState = accountProfileUiState
+        accountProfileUiState = accountProfileUiState,
+        onRefresh = { accountProfileViewModel.onTriggerEvent(AccountProfileViewModel.AccountProfileViewEvent.RefreshProfile) },
+        onEditProfile = { navController.navigate(com.vidz.base.navigation.DestinationRoutes.EDIT_PROFILE_SCREEN_ROUTE) },
+        onLogout = { accountProfileViewModel.onTriggerEvent(AccountProfileViewModel.AccountProfileViewEvent.Logout) },
+        onShowSnackbar = onShowSnackbar
     )
 }
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountProfileScreen(
     navController: NavController,
-    accountProfileUiState: State<AccountProfileViewModel.AccountProfileViewState>
+    accountProfileUiState: State<AccountProfileViewModel.AccountProfileViewState>,
+    onRefresh: () -> Unit,
+    onEditProfile: () -> Unit,
+    onLogout: () -> Unit,
+    onShowSnackbar: (String) -> Unit
 ) {
     //region Define Var
+    val uiState = accountProfileUiState.value
+    val scrollState = rememberScrollState()
+    
+    // Handle logout success - navigate to auth
+    LaunchedEffect(uiState.logoutSuccess) {
+        if (uiState.logoutSuccess) {
+            onShowSnackbar("Logged out successfully")
+            // Navigate to auth screen (clearing back stack)
+            navController.navigate(com.vidz.base.navigation.DestinationRoutes.ROOT_AUTH_SCREEN_ROUTE) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+    
+    // Handle logout error
+    LaunchedEffect(uiState.logoutError) {
+        uiState.logoutError?.let { error ->
+            onShowSnackbar(error)
+        }
+    }
     //endregion
 
     //region Event Handler
+    val handleBackClick = {
+        navController.popBackStack()
+        Unit
+    }
     //endregion
 
     //region ui
-    Text(
-        text = "Account Profile Screen - Quản lý tài khoản",
-        modifier = Modifier
-            .padding(16.dp)
-            .background(MaterialTheme.colorScheme.background)
-    )
+    Scaffold(
+        topBar = {
+            TopAppBarWithBack(
+                title = "Profile",
+                onBackClick = handleBackClick
+            )
+        }
+    ) { paddingValues ->
+        
+        when {
+            uiState.isLoading -> {
+                LoadingScreen(modifier = Modifier.padding(paddingValues))
+            }
+            uiState.error != null -> {
+                ErrorScreen(
+                    error = uiState.error,
+                    onRetry = onRefresh,
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+            uiState.account != null -> {
+                ProfileContent(
+                    account = uiState.account,
+                    onRefresh = onRefresh,
+                    onEditProfile = onEditProfile,
+                    onLogout = onLogout,
+                    isLoggingOut = uiState.isLoggingOut,
+                    modifier = Modifier
+                        .padding(paddingValues)
+                        .verticalScroll(scrollState)
+                )
+            }
+        }
+    }
     
     //region Dialog and Sheet
     //endregion
     //endregion
+}
+
+@Composable
+private fun LoadingScreen(
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            CircularProgressIndicator()
+            Text(
+                text = "Loading your profile...",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun ErrorScreen(
+    error: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(32.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(64.dp)
+            )
+            Text(
+                text = "Failed to load profile",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = error,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            Button(
+                onClick = onRetry,
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Try Again")
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileContent(
+    account: Account,
+    onRefresh: () -> Unit,
+    onEditProfile: () -> Unit,
+    onLogout: () -> Unit,
+    isLoggingOut: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .padding(bottom = 80.dp), // Add extra bottom padding for bottom navigation
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        // Profile Header
+        ProfileHeader(account = account)
+        
+        // Profile Information Card
+        ProfileInformationCard(account = account)
+        
+        // Account Status Card
+        AccountStatusCard(account = account)
+        
+        // Actions
+        ActionsSection(
+            onRefresh = onRefresh, 
+            onEditProfile = onEditProfile, 
+            onLogout = onLogout,
+            isLoggingOut = isLoggingOut
+        )
+        
+        // Add spacer to ensure content is above bottom navigation
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun ProfileHeader(
+    account: Account,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Profile Avatar
+            Surface(
+                modifier = Modifier.size(80.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = account.fullName.take(2).uppercase(),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+            
+            // Profile Name and Email
+            Text(
+                text = account.fullName.ifEmpty { "Unknown User" },
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center
+            )
+            
+            Text(
+                text = account.email,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            
+            // Role Chip
+            RoleChip(role = account.role)
+        }
+    }
+}
+
+@Composable
+private fun ProfileInformationCard(
+    account: Account,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Personal Information",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium
+            )
+            
+            ProfileInfoRow(
+                icon = Icons.Default.Person,
+                label = "Full Name",
+                value = account.fullName.ifEmpty { "Not provided" }
+            )
+            
+            ProfileInfoRow(
+                icon = Icons.Default.Email,
+                label = "Email",
+                value = account.email
+            )
+            
+            ProfileInfoRow(
+                icon = Icons.Default.Phone,
+                label = "Phone Number",
+                value = account.phoneNumber.ifEmpty { "Not provided" }
+            )
+            
+            ProfileInfoRow(
+                icon = Icons.Default.Security,
+                label = "Account ID",
+                value = account.id.ifEmpty { "Unknown" }
+            )
+        }
+    }
+}
+
+@Composable
+private fun AccountStatusCard(
+    account: Account,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Account Status",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium
+            )
+            
+            // Account Status
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Status",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                StatusChip(isActive = account.active)
+            }
+            
+            // Created Date
+            if (account.createdAt.isNotEmpty()) {
+                ProfileInfoRow(
+                    icon = Icons.Default.Person,
+                    label = "Member Since",
+                    value = formatDate(account.createdAt)
+                )
+            }
+            
+            // Last Updated
+            if (account.updatedAt.isNotEmpty()) {
+                ProfileInfoRow(
+                    icon = Icons.Default.Refresh,
+                    label = "Last Updated",
+                    value = formatDate(account.updatedAt)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActionsSection(
+    onRefresh: () -> Unit,
+    onEditProfile: () -> Unit,
+    onLogout: () -> Unit,
+    isLoggingOut: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Actions",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium
+            )
+            
+            Button(
+                onClick = onEditProfile,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Edit Profile")
+            }
+            
+            OutlinedButton(
+                onClick = onRefresh,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Refresh Profile")
+            }
+            
+            // Logout Button
+            OutlinedButton(
+                onClick = onLogout,
+                enabled = !isLoggingOut,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (isLoggingOut) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Logging out...")
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.ExitToApp,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Logout")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileInfoRow(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
+        
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+private fun RoleChip(
+    role: AccountRole,
+    modifier: Modifier = Modifier
+) {
+    val (text, color) = when (role) {
+        AccountRole.ADMIN -> "Admin" to MaterialTheme.colorScheme.error
+        AccountRole.STAFF -> "Staff" to MaterialTheme.colorScheme.primary
+        AccountRole.CUSTOMER -> "Customer" to MaterialTheme.colorScheme.secondary
+    }
+    
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.small,
+        color = color.copy(alpha = 0.1f)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.labelMedium,
+            color = color,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+private fun StatusChip(
+    isActive: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val (text, color) = if (isActive) {
+        "Active" to MaterialTheme.colorScheme.primary
+    } else {
+        "Inactive" to MaterialTheme.colorScheme.error
+    }
+    
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.small,
+        color = color.copy(alpha = 0.1f)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.labelMedium,
+            color = color,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+private fun formatDate(dateString: String): String {
+    return try {
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+        val date = inputFormat.parse(dateString)
+        date?.let { outputFormat.format(it) } ?: dateString
+    } catch (e: Exception) {
+        dateString
+    }
 } 
