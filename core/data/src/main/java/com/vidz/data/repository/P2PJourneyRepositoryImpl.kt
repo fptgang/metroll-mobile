@@ -48,15 +48,19 @@ class P2PJourneyRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getP2PJourneyByStations(
+        page: Int?,
+        size: Int?,
         startStationId: String,
         endStationId: String
-    ): Result<P2PJourney> {
-        val flow: IFlow<P2PJourney> = ServerFlow(
-            getData = { retrofitServer.p2pJourneyApi.getP2PJourneyByStations(startStationId, endStationId) },
-            convert = { it.toDomain() }
+    ): Result<PageDto<P2PJourney>> {
+        val flow: IFlow<PageDto<P2PJourney>> = ServerFlow(
+            getData = { retrofitServer.p2pJourneyApi.getP2PJourneyByStations(page, size,startStationId, endStationId) },
+            convert = { response: com.vidz.data.server.dto.PageDto<com.vidz.data.server.dto.P2PJourneyDto> ->
+                response.toDomain { dto -> dto.toDomain() }
+            }
         )
         return flow.execute().let { flowResult ->
-            var result: Result<P2PJourney> = Result.Init
+            var result: Result<PageDto<P2PJourney>> = Result.Init
             flowResult.collect { result = it }
             result
         }

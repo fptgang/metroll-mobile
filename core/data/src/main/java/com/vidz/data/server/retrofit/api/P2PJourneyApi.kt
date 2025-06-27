@@ -28,9 +28,11 @@ interface P2PJourneyApi {
     
     @GET("p2p-journeys/stations")
     suspend fun getP2PJourneyByStations(
+        @Query("page") page: Int? = null,
+        @Query("size") size: Int? = null,
         @Query("startStationId") startStationId: String,
         @Query("endStationId") endStationId: String
-    ): P2PJourneyDto
+    ): PageDto<P2PJourneyDto>
     
     @POST("p2p-journeys")
     suspend fun createP2PJourney(
