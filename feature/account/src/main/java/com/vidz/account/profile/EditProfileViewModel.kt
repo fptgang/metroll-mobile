@@ -7,33 +7,33 @@ import com.vidz.base.interfaces.ViewState
 import com.vidz.base.viewmodel.BaseViewModel
 import com.vidz.domain.Result
 import com.vidz.domain.model.Account
+import com.vidz.domain.model.AccountUpdateRequest
 import com.vidz.domain.usecase.account.GetMeUseCase
-import com.vidz.domain.usecase.auth.LogoutUseCase
+import com.vidz.domain.usecase.account.UpdateAccountUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class AccountProfileViewModel @Inject constructor(
+class EditProfileViewModel @Inject constructor(
     private val getMeUseCase: GetMeUseCase,
-    private val logoutUseCase: LogoutUseCase,
+    private val updateAccountUseCase: UpdateAccountUseCase,
     private val ioDispatcher: CoroutineDispatcher
-) : BaseViewModel<AccountProfileViewModel.AccountProfileViewEvent,
-        AccountProfileViewModel.AccountProfileViewState,
-        AccountProfileViewModel.AccountProfileViewModelState>(
-    initState = AccountProfileViewModelState()
+) : BaseViewModel<EditProfileViewModel.EditProfileViewEvent,
+        EditProfileViewModel.EditProfileViewState,
+        EditProfileViewModel.EditProfileViewModelState>(
+    initState = EditProfileViewModelState()
 ) {
 
     init {
         loadUserProfile()
     }
 
-    override fun onTriggerEvent(event: AccountProfileViewEvent) {
+    override fun onTriggerEvent(event: EditProfileViewEvent) {
         when (event) {
-            is AccountProfileViewEvent.LoadProfile -> loadUserProfile()
-            is AccountProfileViewEvent.RefreshProfile -> refreshProfile()
-            is AccountProfileViewEvent.Logout -> logout()
+            is EditProfileViewEvent.LoadProfile -> loadUserProfile()
+            is EditProfileViewEvent.SaveProfile -> saveProfile(event.fullName, event.phoneNumber)
         }
     }
 
@@ -44,7 +44,7 @@ class AccountProfileViewModel @Inject constructor(
             getMeUseCase().collect { result ->
                 when (result) {
                     is Result.Init -> {
-                        // Do nothing, keep loading state
+                        // Keep loading state
                     }
                     is Result.Success -> {
                         viewModelState.value = viewModelState.value.copy(
@@ -69,35 +69,46 @@ class AccountProfileViewModel @Inject constructor(
         }
     }
 
-    private fun refreshProfile() {
-        loadUserProfile()
-    }
-
-    private fun logout() {
+    private fun saveProfile(fullName: String, phoneNumber: String) {
         viewModelScope.launch(ioDispatcher) {
-            viewModelState.value = viewModelState.value.copy(isLoggingOut = true, logoutError = null)
+            val currentAccount = viewModelState.value.account ?: return@launch
             
-            logoutUseCase().collect { result ->
+            viewModelState.value = viewModelState.value.copy(
+                isUpdating = true,
+                updateError = null,
+                isUpdateSuccess = false
+            )
+            
+            val updateRequest = AccountUpdateRequest(
+                fullName = fullName.ifBlank { null },
+                phoneNumber = phoneNumber.ifBlank { null },
+                role = currentAccount.role
+            )
+            
+            updateAccountUseCase(currentAccount.id, updateRequest).collect { result ->
                 when (result) {
                     is Result.Init -> {
-                        // Keep loading state
+                        // Keep updating state
                     }
                     is Result.Success -> {
                         viewModelState.value = viewModelState.value.copy(
-                            isLoggingOut = false,
-                            logoutSuccess = true,
-                            logoutError = null
+                            isUpdating = false,
+                            account = result.data,
+                            isUpdateSuccess = true,
+                            updateError = null
                         )
                     }
                     is Result.ServerError -> {
                         viewModelState.value = viewModelState.value.copy(
-                            isLoggingOut = false,
-                            logoutError = when (result) {
+                            isUpdating = false,
+                            updateError = when (result) {
                                 is Result.ServerError.Internet -> "No internet connection"
-                                is Result.ServerError.General -> result.message ?: "Logout failed"
-                                else -> "Failed to logout"
+                                is Result.ServerError.Token -> "Session expired, please login again"
+                                is Result.ServerError.General -> result.message ?: "Unknown error occurred"
+                                is Result.ServerError.MissingParam -> "Invalid input: ${result.message}"
+                                else -> "Failed to update profile"
                             },
-                            logoutSuccess = false
+                            isUpdateSuccess = false
                         )
                     }
                 }
@@ -105,36 +116,35 @@ class AccountProfileViewModel @Inject constructor(
         }
     }
 
-    data class AccountProfileViewModelState(
+    data class EditProfileViewModelState(
         val isLoading: Boolean = false,
         val account: Account? = null,
         val error: String? = null,
-        val isLoggingOut: Boolean = false,
-        val logoutSuccess: Boolean = false,
-        val logoutError: String? = null
+        val isUpdating: Boolean = false,
+        val updateError: String? = null,
+        val isUpdateSuccess: Boolean = false
     ) : ViewModelState() {
-        override fun toUiState(): ViewState = AccountProfileViewState(
+        override fun toUiState(): ViewState = EditProfileViewState(
             isLoading = isLoading,
             account = account,
             error = error,
-            isLoggingOut = isLoggingOut,
-            logoutSuccess = logoutSuccess,
-            logoutError = logoutError
+            isUpdating = isUpdating,
+            updateError = updateError,
+            isUpdateSuccess = isUpdateSuccess
         )
     }
 
-    data class AccountProfileViewState(
+    data class EditProfileViewState(
         val isLoading: Boolean,
         val account: Account?,
         val error: String?,
-        val isLoggingOut: Boolean,
-        val logoutSuccess: Boolean,
-        val logoutError: String?
+        val isUpdating: Boolean,
+        val updateError: String?,
+        val isUpdateSuccess: Boolean
     ) : ViewState()
 
-    sealed class AccountProfileViewEvent : ViewEvent {
-        object LoadProfile : AccountProfileViewEvent()
-        object RefreshProfile : AccountProfileViewEvent()
-        object Logout : AccountProfileViewEvent()
+    sealed class EditProfileViewEvent : ViewEvent {
+        object LoadProfile : EditProfileViewEvent()
+        data class SaveProfile(val fullName: String, val phoneNumber: String) : EditProfileViewEvent()
     }
 } 

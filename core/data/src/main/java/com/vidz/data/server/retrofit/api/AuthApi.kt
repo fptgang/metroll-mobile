@@ -9,7 +9,7 @@ import retrofit2.http.POST
 
 interface AuthApi {
 
-    @GET("auth/me")
+    @GET("accounts/me/")
     suspend fun getCurrentUser(): Response<AccountDto>
 
     @POST("accounts/login/")

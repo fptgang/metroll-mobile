@@ -21,7 +21,13 @@ class AccountManagementRepositoryImpl @Inject constructor(
 ) : AccountManagementRepository {
 
     override fun getAccountById(id: String): Flow<Result<Account>> {
-        TODO("Not implemented")
+        return ServerFlow(
+            getData = { retrofitServer.accountApi.getAccountById(id) },
+            convert = { response ->
+                val body = response.body() ?: throw NullPointerException("Body is null")
+                accountMapper.toDomain(body)
+            }
+        ).execute()
     }
 
     override fun listAccounts(params: AccountListParams): Flow<Result<PageDto<Account>>> {
@@ -36,7 +42,20 @@ class AccountManagementRepositoryImpl @Inject constructor(
         id: String,
         request: AccountUpdateRequest
     ): Flow<Result<Account>> {
-        TODO("Not implemented")
+        return ServerFlow(
+            getData = { 
+                val accountDto = com.vidz.data.server.retrofit.dto.AccountDto(
+                    fullName = request.fullName ?: "",
+                    phoneNumber = request.phoneNumber ?: "",
+                    role = request.role?.name ?: "CUSTOMER"
+                )
+                retrofitServer.accountApi.updateAccount(id, accountDto)
+            },
+            convert = { response ->
+                val body = response.body() ?: throw NullPointerException("Body is null")
+                accountMapper.toDomain(body)
+            }
+        ).execute()
     }
 
     override fun deactivateAccount(id: String): Flow<Result<Unit>> {
