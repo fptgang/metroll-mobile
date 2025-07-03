@@ -5,6 +5,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,12 +19,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AvTimer
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Train
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -31,6 +37,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,13 +46,18 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -57,6 +69,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -155,9 +168,14 @@ fun TicketPurchaseScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Purchase Tickets") },
+                title = {
+                    Text(
+                        "Purchase Tickets",
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
                 actions = {
-                    IconButton(onClick = { 
+                    IconButton(onClick = {
                         navController.navigate(com.vidz.base.navigation.DestinationRoutes.TICKET_CART_SCREEN_ROUTE)
                     }) {
                         if (uiState.cartItemCount > 0) {
@@ -168,20 +186,21 @@ fun TicketPurchaseScreen(
                                     ) {
                                         Text(
                                             text = uiState.cartItemCount.toString(),
-                                            style = MaterialTheme.typography.labelSmall
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onError
                                         )
                                     }
                                 }
                             ) {
                                 Icon(
-                                    Icons.Default.ShoppingCart, 
+                                    Icons.Default.ShoppingCart,
                                     contentDescription = "Cart",
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                             }
                         } else {
                             Icon(
-                                Icons.Default.ShoppingCart, 
+                                Icons.Default.ShoppingCart,
                                 contentDescription = "Cart",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -189,7 +208,7 @@ fun TicketPurchaseScreen(
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             )
         },
@@ -198,20 +217,24 @@ fun TicketPurchaseScreen(
                 ExtendedFloatingActionButton(
                     onClick = onShowCart,
                     containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ) {
-                    BadgedBox(
-                        badge = {
-                            Badge {
-                                Text(uiState.cartItemCount.toString())
-                            }
-                        }
-                    ) {
-                        Icon(Icons.Default.ShoppingCart, contentDescription = "Cart")
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.ShoppingCart,
+                            contentDescription = "Cart"
+                        )
+                    },
+                    text = {
+                        Text(
+                            "View Cart • ₫${
+                                String.format(
+                                    "%,.0f",
+                                    uiState.cartTotal
+                                )
+                            }"
+                        )
                     }
-                    Spacer(Modifier.width(8.dp))
-                    Text("Cart • $${String.format("%.2f", uiState.cartTotal)}")
-                }
+                )
             }
         }
     ) { paddingValues ->
@@ -221,21 +244,33 @@ fun TicketPurchaseScreen(
                 .padding(paddingValues)
         ) {
             // Tab Row
-            ScrollableTabRow(
-                selectedTabIndex = if (uiState.selectedTicketType == TicketType.TIMED) 0 else 1,
-                modifier = Modifier.fillMaxWidth(),
-                edgePadding = 16.dp
-            ) {
-                Tab(
-                    selected = uiState.selectedTicketType == TicketType.TIMED,
-                    onClick = { onTabSelected(TicketType.TIMED) },
-                    text = { Text("Timed Tickets") }
-                )
-                Tab(
-                    selected = uiState.selectedTicketType == TicketType.P2P,
-                    onClick = { onTabSelected(TicketType.P2P) },
-                    text = { Text("Point-to-Point") }
-                )
+            Column(modifier = Modifier.fillMaxWidth()) {
+                ScrollableTabRow(
+                    selectedTabIndex = if (uiState.selectedTicketType == TicketType.TIMED) 0 else 1,
+                    modifier = Modifier.fillMaxWidth(),
+                    edgePadding = 16.dp,
+                    indicator = { tabPositions ->
+                        TabRowDefaults.Indicator(
+                            modifier = Modifier
+                                .tabIndicatorOffset(tabPositions[if (uiState.selectedTicketType == TicketType.TIMED) 0 else 1])
+                                .height(3.dp)
+                                .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                ) {
+                    Tab(
+                        selected = uiState.selectedTicketType == TicketType.TIMED,
+                        onClick = { onTabSelected(TicketType.TIMED) },
+                        text = { Text("Timed Tickets") }
+                    )
+                    Tab(
+                        selected = uiState.selectedTicketType == TicketType.P2P,
+                        onClick = { onTabSelected(TicketType.P2P) },
+                        text = { Text("Point-to-Point") }
+                    )
+                }
+                Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
             }
 
             // Content
@@ -248,26 +283,26 @@ fun TicketPurchaseScreen(
                     )
                 }
                 TicketType.P2P -> {
-                                    P2PJourneysContent(
-                    journeys = uiState.p2pJourneys,
-                    isLoading = uiState.isLoadingP2P,
-                    currentSort = uiState.p2pSortType,
-                    stations = uiState.stations,
-                    isLoadingStations = uiState.isLoadingStations,
-                    selectedFromStation = uiState.selectedFromStation,
-                    selectedToStation = uiState.selectedToStation,
-                    onAddToCart = onP2PJourneyAddToCart,
-                    onSortChange = onSortChange,
-                    onFromStationSelect = { station ->
-                        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectFromStation(station))
-                    },
-                    onToStationSelect = { station ->
-                        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectToStation(station))
-                    },
-                    onClearStations = {
-                        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ClearStationSelection)
-                    }
-                )
+                    P2PJourneysContent(
+                        journeys = uiState.p2pJourneys,
+                        isLoading = uiState.isLoadingP2P,
+                        currentSort = uiState.p2pSortType,
+                        stations = uiState.stations,
+                        isLoadingStations = uiState.isLoadingStations,
+                        selectedFromStation = uiState.selectedFromStation,
+                        selectedToStation = uiState.selectedToStation,
+                        onAddToCart = onP2PJourneyAddToCart,
+                        onSortChange = onSortChange,
+                        onFromStationSelect = { station ->
+                            viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectFromStation(station))
+                        },
+                        onToStationSelect = { station ->
+                            viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectToStation(station))
+                        },
+                        onClearStations = {
+                            viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ClearStationSelection)
+                        }
+                    )
                 }
             }
         }
@@ -307,7 +342,6 @@ fun TicketPurchaseScreen(
             }
         )
     }
-    //endregion
     //endregion
 }
 
@@ -388,7 +422,7 @@ private fun P2PJourneysContent(
             ) {
                 Text(
                     text = "Select Journey Route",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 
@@ -431,7 +465,12 @@ private fun P2PJourneysContent(
                         modifier = Modifier
                             .menuAnchor()
                             .fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                        )
                     )
                     
                     ExposedDropdownMenu(
@@ -492,7 +531,12 @@ private fun P2PJourneysContent(
                         modifier = Modifier
                             .menuAnchor()
                             .fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                        )
                     )
                     
                     ExposedDropdownMenu(
@@ -617,56 +661,70 @@ private fun TimedTicketCard(
         modifier = Modifier
             .fillMaxWidth()
             .animateContentSize(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = ticket.name,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "${ticket.validDuration} days",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Surface(
+                modifier = Modifier.size(48.dp),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                shape = CircleShape
             ) {
+                Icon(
+                    imageVector = Icons.Default.AvTimer,
+                    contentDescription = "Timed Ticket",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(12.dp)
+                )
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "$${String.format("%.2f", ticket.basePrice)}",
+                    text = ticket.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "${ticket.validDuration} days validity",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "₫${String.format("%,.0f", ticket.basePrice)}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
-                
-                IconButton(
-                    onClick = onAddToCart,
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add to Cart",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "per pass",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
+
+        MetrollButton(
+            text = "Add to Cart",
+            onClick = onAddToCart,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+        )
     }
 }
 
@@ -682,90 +740,67 @@ private fun P2PJourneyCard(
             .fillMaxWidth()
             .animateContentSize(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            val fromStation = stations.find { it.id == journey.startStationId }
+            val toStation = stations.find { it.id == journey.endStationId }
+
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    val fromStation = stations.find { it.id == journey.startStationId }
-                    val toStation = stations.find { it.id == journey.endStationId }
-                    
-                    Text(
-                        text = "${fromStation?.name ?: journey.startStationId} → ${toStation?.name ?: journey.endStationId}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    Text(
-                        text = "From: ${fromStation?.name ?: journey.startStationId} (${fromStation?.code ?: ""})",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    
-                    Text(
-                        text = "To: ${toStation?.name ?: journey.endStationId} (${toStation?.code ?: ""})",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                Surface(
+                    modifier = Modifier.size(48.dp),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    shape = CircleShape
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Train,
+                        contentDescription = "Journey",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(12.dp)
                     )
                 }
-                
-                Text(
-                    text = "$${String.format("%.2f", journey.basePrice)}",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "${fromStation?.name ?: "..."} → ${toStation?.name ?: "..."}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = "${journey.distance} km • ${journey.travelTime} min",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = "${journey.distance} km",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "${journey.travelTime} min",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                
-                IconButton(
-                    onClick = onAddToCart,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add to Cart",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                Text(
+                    text = "₫${String.format("%,.0f", journey.basePrice)}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                MetrollButton(
+                    text = "Add to Cart",
+                    onClick = onAddToCart
+                )
             }
         }
     }
@@ -783,11 +818,30 @@ private fun CartBottomSheet(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp)
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.DragHandle,
+                contentDescription = "Drag handle",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                modifier = Modifier
+                    .background(
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        CircleShape
+                    )
+                    .padding(horizontal = 16.dp, vertical = 2.dp)
+            )
+        }
+
         Text(
             text = "Shopping Cart",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 16.dp)
         )
@@ -799,16 +853,25 @@ private fun CartBottomSheet(
                     .height(200.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "Your cart is empty",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Default.ShoppingCart,
+                        contentDescription = "Empty Cart",
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Your cart is empty",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         } else {
             LazyColumn(
                 modifier = Modifier.weight(1f, false),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(cartItems) { item ->
                     CartItemCard(
@@ -824,12 +887,15 @@ private fun CartBottomSheet(
             // Total and Checkout
             Card(
                 modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
                 )
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -841,17 +907,15 @@ private fun CartBottomSheet(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "$${String.format("%.2f", cartTotal)}",
+                            text = "₫${String.format("%,.0f", cartTotal)}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
                     
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
                     MetrollButton(
-                        text = if (isCheckingOut) "Processing..." else "Checkout",
+                        text = if (isCheckingOut) "Processing..." else "Proceed to Checkout",
                         onClick = onCheckout,
                         enabled = !isCheckingOut,
                         isLoading = isCheckingOut,
@@ -874,19 +938,20 @@ private fun CartItemCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = item.name,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium
                 )
                 
@@ -899,34 +964,60 @@ private fun CartItemCard(
                 }
                 
                 Text(
-                    text = "$${String.format("%.2f", item.price)} each",
-                    style = MaterialTheme.typography.bodySmall,
+                    text = "₫${String.format("%,.0f", item.price)} each",
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                IconButton(
-                    onClick = { onQuantityChange(item.quantity - 1) },
-                    enabled = item.quantity > 1
+            Column(horizontalAlignment = Alignment.End) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Icon(Icons.Default.Remove, contentDescription = "Decrease")
+                    IconButton(
+                        onClick = { onQuantityChange(item.quantity - 1) },
+                        enabled = item.quantity > 1,
+                        modifier = Modifier.size(32.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                    ) {
+                        Icon(
+                            Icons.Default.Remove,
+                            contentDescription = "Decrease",
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+
+                    Text(
+                        text = item.quantity.toString(),
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.width(32.dp)
+                    )
+
+                    IconButton(
+                        onClick = { onQuantityChange(item.quantity + 1) },
+                        modifier = Modifier.size(32.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "Increase",
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
-                
-                Text(
-                    text = item.quantity.toString(),
-                    style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.width(32.dp)
-                )
-                
-                IconButton(
-                    onClick = { onQuantityChange(item.quantity + 1) }
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Increase")
+                TextButton(onClick = onRemove) {
+                    Text(
+                        "Remove",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
             }
         }
@@ -974,6 +1065,7 @@ internal fun PaymentWebView(
                                                 currentUrl.contains("success") || 
                                                 currentUrl.contains("complete") ||
                                                 currentUrl.contains("payment_status=success") ||
+                                                currentUrl.contains("vnp_ResponseCode=00") ||
                                                 currentUrl.contains("status=success") -> {
                                                     println("Payment success detected")
                                                     showDialog = false
@@ -982,6 +1074,7 @@ internal fun PaymentWebView(
                                                 currentUrl.contains("failed") || 
                                                 currentUrl.contains("error") ||
                                                 currentUrl.contains("payment_status=failed") ||
+                                                currentUrl.contains("vnp_ResponseCode") ||
                                                 currentUrl.contains("status=failed") ||
                                                 currentUrl.contains("cancel") -> {
                                                     println("Payment failure detected")
@@ -999,7 +1092,7 @@ internal fun PaymentWebView(
                                             when {
                                                 currentUrl.startsWith("metroll://") -> {
                                                     // Handle app deep link for payment completion
-                                                    if (currentUrl.contains("success")) {
+                                                    if (currentUrl.contains("success") || currentUrl.contains("vnp_ResponseCode=00")) {
                                                         showDialog = false
                                                         onPaymentComplete()
                                                     } else {
@@ -1037,7 +1130,7 @@ internal fun PaymentWebView(
                         onPaymentComplete() 
                     }
                 ) {
-                    Text("Payment Complete")
+                    Text("Close")
                 }
             },
             dismissButton = {
@@ -1047,7 +1140,7 @@ internal fun PaymentWebView(
                         onPaymentFailed()
                     }
                 ) {
-                    Text("Cancel")
+                    Text("Cancel Payment")
                 }
             }
         )
