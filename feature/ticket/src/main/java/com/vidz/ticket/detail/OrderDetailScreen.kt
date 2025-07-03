@@ -2,8 +2,7 @@ package com.vidz.ticket.detail
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.graphics.BitmapFactory
-import android.util.Base64
+
 import android.view.WindowManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -26,9 +25,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -40,17 +39,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
+
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -60,6 +58,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.vidz.base.components.MetrollButton
+import com.vidz.base.navigation.DestinationRoutes
 import com.vidz.domain.model.Order
 import com.vidz.domain.model.OrderDetail
 import com.vidz.domain.model.OrderStatus
@@ -96,14 +95,13 @@ fun OrderDetailScreen(
     //region Event Handler
     val onQRCodeClick = { orderDetail: OrderDetail ->
         if (orderDetail.ticketId.isEmpty()) {
-            onShowSnackbar("No QR code available for this ticket")
-        }else
-            viewModel.onTriggerEvent(OrderDetailViewModel.OrderDetailEvent.LoadQRCode(orderDetail.ticketId))
+            onShowSnackbar("No ticket ID available")
+        } else {
+            navController.navigate("${DestinationRoutes.QR_TICKET_SCREEN_ROUTE}/${orderDetail.ticketId}")
+        }
     }
 
-    val onCloseQRCode = {
-        viewModel.onTriggerEvent(OrderDetailViewModel.OrderDetailEvent.CloseQRCode)
-    }
+
 
     val onContinuePayment = {
         viewModel.onTriggerEvent(OrderDetailViewModel.OrderDetailEvent.OpenPayment)
@@ -200,7 +198,6 @@ fun OrderDetailScreen(
                     items(uiState.order!!.orderDetails) { orderDetail ->
                         OrderDetailCard(
                             orderDetail = orderDetail,
-                            isLoadingQR = uiState.isLoadingQR,
                             onQRCodeClick = { onQRCodeClick(orderDetail) }
                         )
                     }
@@ -223,12 +220,6 @@ fun OrderDetailScreen(
     }
 
     // Error handling
-    uiState.qrError?.let { error ->
-        LaunchedEffect(error) {
-            onShowSnackbar(error)
-            viewModel.onTriggerEvent(OrderDetailViewModel.OrderDetailEvent.ClearError)
-        }
-    }
 
     uiState.orderError?.let { error ->
         LaunchedEffect(error) {
@@ -237,13 +228,7 @@ fun OrderDetailScreen(
         }
     }
 
-    // QR Code Dialog with brightness control
-    if (uiState.showQRDialog && uiState.qrCodeData != null) {
-        QRCodeDialog(
-            qrCodeData = uiState.qrCodeData!!,
-            onDismiss = onCloseQRCode
-        )
-    }
+
 
     // Full-screen Payment WebView
     if (uiState.showPaymentWebView && uiState.order?.paymentUrl != null) {
@@ -351,7 +336,6 @@ private fun OrderSummaryCard(
 @Composable
 private fun OrderDetailCard(
     orderDetail: OrderDetail,
-    isLoadingQR: Boolean,
     onQRCodeClick: () -> Unit
 ) {
     OutlinedCard(
@@ -400,13 +384,21 @@ private fun OrderDetailCard(
                 }
                 
                 // QR Code Button
-                MetrollButton(
-                    text = if (isLoadingQR) "" else "QR",
-                    onClick = onQRCodeClick,
-                    enabled = !isLoadingQR && orderDetail.ticketId.isNotEmpty(),
-                    isLoading = isLoadingQR,
-                    modifier = Modifier.width(80.dp)
-                )
+//                MetrollButton(
+//                    text = "View",
+//                    onClick = onQRCodeClick,
+//                    enabled = orderDetail.ticketId.isNotEmpty(),
+//                    modifier = Modifier.width(80.dp)
+//                )
+               if (orderDetail.ticketId.isNotEmpty()) {
+                   IconButton(onClick = onQRCodeClick) {
+                       Icon(
+                           Icons.Default.RemoveRedEye,
+                           contentDescription = "View QR Code",
+                           tint = MaterialTheme.colorScheme.primary
+                       )
+                   }
+               }
             }
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -470,122 +462,7 @@ private fun OrderStatusChip(status: OrderStatus) {
     }
 }
 
-@Composable
-private fun QRCodeDialog(
-    qrCodeData: String,
-    onDismiss: () -> Unit
-) {
-    val context = LocalContext.current
-    val activity = context as? Activity
-    
-    // Brightness control
-    DisposableEffect(Unit) {
-        val window = activity?.window
-        val originalBrightness = window?.attributes?.screenBrightness ?: -1f
-        
-        // Set to maximum brightness
-        window?.attributes = window?.attributes?.apply {
-            screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
-        }
-        window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        
-        onDispose {
-            // Restore original brightness
-            window?.attributes = window?.attributes?.apply {
-                screenBrightness = originalBrightness
-            }
-            window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        }
-    }
-    
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Ticket QR Code",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Close")
-                }
-            }
-        },
-        text = {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "Present this QR code for validation",
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-                
-                // QR Code Image
-                val qrBitmap = remember(qrCodeData) {
-                    try {
-                        val decodedBytes = Base64.decode(qrCodeData, Base64.DEFAULT)
-                        BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-                    } catch (e: Exception) {
-                        null
-                    }
-                }
-                
-                if (qrBitmap != null) {
-                    Card(
-                        modifier = Modifier.size(280.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Image(
-                                bitmap = qrBitmap.asImageBitmap(),
-                                contentDescription = "QR Code",
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier.size(280.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            CircularProgressIndicator()
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "Failed to load QR code",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
-            }
-        }
-    )
-}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("SetJavaScriptEnabled")
@@ -613,7 +490,7 @@ private fun FullScreenPaymentWebView(
                 navigationIcon = {
                     IconButton(onClick = onClose) {
                         Icon(
-                            imageVector = Icons.Default.Close,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Close",
                             tint = MaterialTheme.colorScheme.onSurface
                         )

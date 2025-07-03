@@ -9,6 +9,7 @@ import com.vidz.ticket.cart.TicketCartScreenRoot
 import com.vidz.ticket.detail.OrderDetailScreenRoot
 import com.vidz.ticket.management.TicketManagementScreenRoot
 import com.vidz.ticket.purchase.TicketPurchaseScreenRoot
+import com.vidz.ticket.qr.QRDisplayScreenRoot
 
 fun NavGraphBuilder.addTicketNavGraph(
     navController: NavController,
@@ -61,8 +62,13 @@ fun NavGraphBuilder.addTicketNavGraph(
             // TODO: Implement CheckinScreenRoot
         }
         
-        composable(DestinationRoutes.QR_TICKET_SCREEN_ROUTE) {
-            // TODO: Implement QrTicketScreenRoot
+        composable("${DestinationRoutes.QR_TICKET_SCREEN_ROUTE}/{ticketId}") { backStackEntry ->
+            val ticketId = backStackEntry.arguments?.getString("ticketId") ?: ""
+            QRDisplayScreenRoot(
+                navController = navController,
+                ticketId = ticketId,
+                onShowSnackbar = onShowSnackbar
+            )
         }
         
         // Parametrized routes

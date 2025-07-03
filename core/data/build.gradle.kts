@@ -50,4 +50,5 @@ dependencies {
     // Firebase Auth - needed for AuthInterceptor
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.database)
 }
