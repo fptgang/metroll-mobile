@@ -15,8 +15,6 @@ data class TicketValidationDto(
 
 @Serializable
 data class TicketValidationCreateRequestDto(
-    val stationId: String,
     val ticketId: String,
-    val validationType: String,
-    val deviceId: String
+    val validationType: String
 ) 

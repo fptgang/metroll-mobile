@@ -11,7 +11,8 @@ data class Account(
     val role: AccountRole = AccountRole.CUSTOMER,
     val active: Boolean = true,
     val createdAt: String = "",
-    val updatedAt: String = ""
+    val updatedAt: String = "",
+    val assignedStation: String = ""
 )
 
 @Serializable
@@ -26,6 +27,7 @@ data class AccountCreateRequest(
     val email: String,
     val fullName: String,
     val phoneNumber: String,
+    val assignedStation: String = "",
     val role: AccountRole
 )
 
@@ -33,6 +35,7 @@ data class AccountCreateRequest(
 data class AccountUpdateRequest(
     val fullName: String? = null,
     val phoneNumber: String? = null,
+    val assignedStation: String? = null,
     val role: AccountRole? = null
 )
 

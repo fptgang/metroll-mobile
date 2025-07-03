@@ -17,16 +17,8 @@ class ValidateTicketUseCase @Inject constructor(
             
             // Validate request
             when {
-                request.stationId.isBlank() -> {
-                    emit(Result.ServerError.MissingParam("Station ID is required"))
-                    return@flow
-                }
                 request.ticketId.isBlank() -> {
                     emit(Result.ServerError.MissingParam("Ticket ID is required"))
-                    return@flow
-                }
-                request.deviceId.isBlank() -> {
-                    emit(Result.ServerError.MissingParam("Device ID is required"))
                     return@flow
                 }
             }

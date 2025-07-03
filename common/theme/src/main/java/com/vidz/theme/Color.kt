@@ -4,273 +4,212 @@ import androidx.compose.ui.graphics.Color
 
 /**
  * Created by FPL on 08/01/2025.
- * Updated with Shopee Vietnam style colors
+ * Updated with HCMC Metro brand colors - Material Design 3 compliant
  */
 
 val White = Color(0xFFFFFFFF)
 val Black = Color(0xFF000000)
 
-// Shopee Vietnam Brand Colors
-val ShopeeOrange = Color(0xFFFF5722) // Primary brand color
-val ShopeeOrangeLight = Color(0xFFFF7043)
-val ShopeeOrangeDark = Color(0xFFE64A19)
-val ShopeeRed = Color(0xFFE91E63) // For promotions/sales
-val ShopeeRedLight = Color(0xFFEC407A)
-val ShopeeRedDark = Color(0xFFC2185B)
-val ShopeeBlue = Color(0xFF2196F3) // For trust/security
-val ShopeeGreen = Color(0xFF4CAF50) // For success/orders
-val ShopeeYellow = Color(0xFFFFC107) // For ratings/highlights
-val ShopeePurple = Color(0xFF9C27B0) // For premium features
+// HCMC Metro Brand Colors
+val MetroNavyBlue = Color(0xFF1E3A8A) // Primary brand color - deep royal navy blue
+val MetroLightBlue = Color(0xFF3B82F6) // Secondary - lighter blue accent
+val MetroRed = Color(0xFFEF4444) // Accent - bright red logo highlight
+val MetroWhite = Color(0xFFFFFFFF) // Neutral - clean white contrast
+val MetroGray = Color(0xFFF3F4F6) // Supporting - light gray backgrounds
+
+// Extended Metro Color Palette
+val MetroNavyBlueDark = Color(0xFF1E40AF) // Darker navy variant
+val MetroNavyBlueLight = Color(0xFF3B82F6) // Lighter navy variant
+val MetroRedLight = Color(0xFFF87171) // Lighter red variant
+val MetroRedDark = Color(0xFFDC2626) // Darker red variant
+val MetroBlueAccent = Color(0xFF60A5FA) // Additional blue accent
+val MetroGrayDark = Color(0xFFE5E7EB) // Darker gray variant
+val MetroGrayLight = Color(0xFFF9FAFB) // Lighter gray variant
 
 //val DarkSystemUiBackgroundColor = Color(0xFF0D0D0C)
 val DarkSystemUiBackgroundColor = Color(0xFF000000)
-val LightSystemUiBackgroundColor = Color(0xFFFFFBF5) // Warmer white for e-commerce
+val LightSystemUiBackgroundColor = Color(0xFFFFFBFF) // Clean white for metro theme
 
-// Base - Updated for Shopee style
-val LightPrimaryColor = ShopeeOrange // Shopee brand orange
-val DarkPrimaryColor = ShopeeOrangeLight
+// Base - HCMC Metro Brand Colors
+val LightPrimaryColor = MetroNavyBlue // Deep royal navy blue
+val DarkPrimaryColor = MetroLightBlue // Lighter blue for dark mode
 
-val LightOnPrimaryColor = Color(0xFFFFFFFF)
-val DarkOnPrimaryColor = Color(0xFF0D0D0C)
+val LightOnPrimaryColor = MetroWhite
+val DarkOnPrimaryColor = Color(0xFF0F172A) // Dark navy for contrast
 
-val LightPrimaryContainerColor = Color(0xFFFFF3E0) // Light orange container
-val DarkPrimaryContainerColor = Color(0xFF4E2A1A) // Dark orange container
+val LightPrimaryContainerColor = Color(0xFFEFF6FF) // Light blue container
+val DarkPrimaryContainerColor = Color(0xFF1E293B) // Dark blue container
 
-val LightOnPrimaryContainerColor = ShopeeOrangeDark
-val DarkOnPrimaryContainerColor = Color(0xFFFFF3E0)
+val LightOnPrimaryContainerColor = Color(0xFF0F172A)
+val DarkOnPrimaryContainerColor = Color(0xFFEFF6FF)
 
-val LightSecondaryColor = ShopeeRed // Secondary action color
-val DarkSecondaryColor = ShopeeRedLight
+val LightSecondaryColor = MetroLightBlue // Lighter blue accent
+val DarkSecondaryColor = MetroBlueAccent
 
-val LightOnSecondaryColor = Color(0xFFFFFFFF)
-val DarkOnSecondaryColor = Color(0xFFFFFFFF)
+val LightOnSecondaryColor = MetroWhite
+val DarkOnSecondaryColor = MetroWhite
 
-val LightSecondaryContainerColor = Color(0xFFFCE4EC) // Light pink container
-val DarkSecondaryContainerColor = Color(0xFF4A1C2C)
+val LightSecondaryContainerColor = Color(0xFFDEECFF) // Light blue container
+val DarkSecondaryContainerColor = Color(0xFF1E3A5F)
 
-val LightOnSecondaryContainerColor = ShopeeRedDark
-val DarkOnSecondaryContainerColor = Color(0xFFFCE4EC)
+val LightOnSecondaryContainerColor = Color(0xFF0F172A)
+val DarkOnSecondaryContainerColor = Color(0xFFDEECFF)
 
-val LightTertiaryColor = ShopeeYellow // For highlights and ratings
-val DarkTertiaryColor = ShopeeYellow
+val LightTertiaryColor = MetroRed // Bright red accent
+val DarkTertiaryColor = MetroRedLight
 
-val LightOnTertiaryColor = Color(0xFF0D0D0C)
-val DarkOnTertiaryColor = Color(0xFF0D0D0C)
+val LightOnTertiaryColor = MetroWhite
+val DarkOnTertiaryColor = MetroWhite
 
-val LightTertiaryContainerColor = Color(0xFFFFF8E1) // Light yellow container
-val DarkTertiaryContainerColor = Color(0xFF3E2723)
+val LightTertiaryContainerColor = Color(0xFFFEF2F2) // Light red container
+val DarkTertiaryContainerColor = Color(0xFF4C1D1D)
 
-val LightOnTertiaryContainerColor = Color(0xFF3E2723)
-val DarkOnTertiaryContainerColor = Color(0xFFFFF8E1)
+val LightOnTertiaryContainerColor = Color(0xFF7F1D1D)
+val DarkOnTertiaryContainerColor = Color(0xFFFEF2F2)
 
-val LightErrorColor = Color(0xFFD32F2F) // Brighter error color
-val DarkErrorColor = Color(0xFFE57373)
+val LightErrorColor = Color(0xFFDC2626) // Metro red for errors
+val DarkErrorColor = Color(0xFFF87171)
 
-val LightOnErrorColor = Color(0xFFFFFFFF)
-val DarkOnErrorColor = Color(0xFFFFFFFF)
+val LightOnErrorColor = MetroWhite
+val DarkOnErrorColor = MetroWhite
 
-val LightErrorContainerColor = Color(0xFFFFEBEE)
-val DarkErrorContainerColor = Color(0xFF4A0E0E)
+val LightErrorContainerColor = Color(0xFFFEF2F2)
+val DarkErrorContainerColor = Color(0xFF4C1D1D)
 
-val LightOnErrorContainerColor = Color(0xFFB71C1C)
-val DarkOnErrorContainerColor = Color(0xFFFFEBEE)
+val LightOnErrorContainerColor = Color(0xFF7F1D1D)
+val DarkOnErrorContainerColor = Color(0xFFFEF2F2)
 
-val LightInverseSurfaceColor = Color(0xFF2C2B2B)
-val DarkInverseSurfaceColor = Color(0xFFFFFFFF)
+val LightInverseSurfaceColor = Color(0xFF1E293B)
+val DarkInverseSurfaceColor = Color(0xFFF8FAFC)
 
-val LightOnInverseSurfaceColor = Color(0xFFFFFFFF)
-val DarkOnInverseSurfaceColor = Color(0xFF0D0D0C)
+val LightOnInverseSurfaceColor = Color(0xFFF8FAFC)
+val DarkOnInverseSurfaceColor = Color(0xFF1E293B)
 
-val LightInversePrimaryColor = Color(0xFFFFF3E0)
-val DarkInversePrimaryColor = ShopeeOrangeDark
+val LightInversePrimaryColor = Color(0xFFEFF6FF)
+val DarkInversePrimaryColor = Color(0xFF1E3A8A)
 
-val LightOutlineColor = Color(0xFFBDBDBD) // Softer outline
-val DarkOutlineColor = Color(0xFF757575)
+val LightOutlineColor = Color(0xFFCBD5E1) // Metro gray outline
+val DarkOutlineColor = Color(0xFF64748B)
 
-val LightOutlineVariantColor = Color(0xFFEEEEEE)
-val DarkOutlineVariantColor = Color(0xFF424242)
+val LightOutlineVariantColor = Color(0xFFE2E8F0)
+val DarkOutlineVariantColor = Color(0xFF475569)
 
-val LightSurfaceColor = Color(0xFFFFFBF5) // Warm white surface
-val DarkSurfaceColor = Color(0xFF121212)
+val LightSurfaceColor = MetroWhite // Clean white surface
+val DarkSurfaceColor = Color(0xFF0F172A)
 
-val LightSurfaceDimColor = Color(0xFFF5F5F5)
-val DarkSurfaceDimColor = Color(0xFF0D0D0C)
+val LightSurfaceDimColor = Color(0xFFF8FAFC)
+val DarkSurfaceDimColor = Color(0xFF0D1117)
 
-val LightSurfaceBrightColor = Color(0xFFFFFFFF)
-val DarkSurfaceBrightColor = Color(0xFF2C2B2B)
+val LightSurfaceBrightColor = MetroWhite
+val DarkSurfaceBrightColor = Color(0xFF1E293B)
 
-val LightSurfaceContainerColor = Color(0xFFFFF8F0) // Slightly tinted surface
-val DarkSurfaceContainerColor = Color(0xFF1A1A1A)
+val LightSurfaceContainerColor = MetroGray // Light gray background
+val DarkSurfaceContainerColor = Color(0xFF1A202C)
 
-val LightSurfaceContainerHighColor = Color(0xFFFFFFFF)
-val DarkSurfaceContainerHighColor = Color(0xFF2A2A2A)
+val LightSurfaceContainerHighColor = MetroWhite
+val DarkSurfaceContainerHighColor = Color(0xFFF1F5F9)
 
-val LightOnSurfaceColor = Color(0xFF212121) // Darker for better contrast
-val DarkOnSurfaceColor = Color(0xFFEEEEEE)
+val LightOnSurfaceColor = Color(0xFF1E293B) // Dark for contrast
+val DarkOnSurfaceColor = Color(0xFFF1F5F9)
 
-val LightOnSurfaceVariantColor = Color(0xFF616161) // Medium gray
-val DarkOnSurfaceVariantColor = Color(0xFFBDBDBD)
+val LightOnSurfaceVariantColor = Color(0xFF64748B) // Medium gray
+val DarkOnSurfaceVariantColor = Color(0xFFCBD5E1)
 
-// Shopee-specific colors for UI elements
-val ShopeeSuccess = ShopeeGreen
-val ShopeeWarning = Color(0xFFFF9800)
-val ShopeeInfo = ShopeeBlue
-val ShopeeDanger = ShopeeRed
+// HCMC Metro specific UI colors
+val MetroSuccess = Color(0xFF059669) // Green for success states
+val MetroWarning = Color(0xFFD97706) // Orange for warnings
+val MetroInfo = MetroLightBlue // Info uses secondary blue
+val MetroDanger = MetroRed // Danger uses accent red
 
-// E-commerce specific colors
-val DiscountRed = Color(0xFFFF1744) // For discount badges
-val SalePrice = Color(0xFFE91E63) // For sale prices
-val OriginalPrice = Color(0xFF9E9E9E) // For crossed-out original prices
-val FreeShipping = Color(0xFF4CAF50) // For free shipping badges
-val Rating = Color(0xFFFFC107) // For star ratings
-val Stock = Color(0xFFFF5722) // For stock indicators
+// Transit-specific colors
+val RouteActive = MetroNavyBlue // For active routes
+val RouteInactive = Color(0xFF9CA3AF) // For inactive routes
+val StationPrimary = MetroNavyBlue // For station indicators
+val StationSecondary = MetroLightBlue // For station highlights
+val TicketValid = Color(0xFF059669) // For valid tickets
+val TicketExpired = MetroRed // For expired tickets
+val TicketPending = Color(0xFFD97706) // For pending tickets
 
-// Define custom light and dark mode colors - Updated for Shopee
-val LightPrimaryFixedColor = ShopeeOrange
-val DarkPrimaryFixedColor = ShopeeOrangeLight
+// Define custom light and dark mode colors - HCMC Metro
+val LightPrimaryFixedColor = MetroNavyBlue
+val DarkPrimaryFixedColor = MetroLightBlue
 
-val LightPrimaryFixedDimColor = ShopeeOrangeDark
-val DarkPrimaryFixedDimColor = ShopeeOrangeDark
+val LightPrimaryFixedDimColor = Color(0xFF1E40AF)
+val DarkPrimaryFixedDimColor = Color(0xFF1E40AF)
 
-val LightOnPrimaryFixedColor = Color(0xFFFFFFFF)
-val DarkOnPrimaryFixedColor = Color(0xFFFFFFFF)
+val LightOnPrimaryFixedColor = MetroWhite
+val DarkOnPrimaryFixedColor = MetroWhite
 
-val LightOnPrimaryFixedVariantColor = Color(0xFFFFF3E0)
-val DarkOnPrimaryFixedVariantColor = Color(0xFFFFF3E0)
+val LightOnPrimaryFixedVariantColor = Color(0xFFEFF6FF)
+val DarkOnPrimaryFixedVariantColor = Color(0xFFEFF6FF)
 
-val LightSecondaryFixedColor = ShopeeRed
-val DarkSecondaryFixedColor = ShopeeRedLight
+val LightSecondaryFixedColor = MetroLightBlue
+val DarkSecondaryFixedColor = MetroBlueAccent
 
-val LightOnSecondaryFixedColor = Color(0xFFFFFFFF)
-val DarkOnSecondaryFixedColor = Color(0xFFFFFFFF)
+val LightOnSecondaryFixedColor = MetroWhite
+val DarkOnSecondaryFixedColor = MetroWhite
 
-val LightSecondaryFixedDimColor = ShopeeRedDark
-val DarkSecondaryFixedDimColor = ShopeeRedDark
+val LightSecondaryFixedDimColor = Color(0xFF2563EB)
+val DarkSecondaryFixedDimColor = Color(0xFF2563EB)
 
-val LightSecondaryFixedVariantColor = Color(0xFFFCE4EC)
-val DarkSecondaryFixedVariantColor = Color(0xFF4A1C2C)
+val LightSecondaryFixedVariantColor = Color(0xFFDEECFF)
+val DarkSecondaryFixedVariantColor = Color(0xFF1E3A5F)
 
-val LightTertiaryFixedColor = ShopeeYellow
-val DarkTertiaryFixedColor = ShopeeYellow
+val LightTertiaryFixedColor = MetroRed
+val DarkTertiaryFixedColor = MetroRedLight
 
-val LightTertiaryFixedDimColor = Color(0xFFFFB300)
-val DarkTertiaryFixedDimColor = Color(0xFFFFB300)
+val LightTertiaryFixedDimColor = Color(0xFFDC2626)
+val DarkTertiaryFixedDimColor = Color(0xFFDC2626)
 
-val LightOnTertiaryFixedColor = Color(0xFF0D0D0C)
-val DarkOnTertiaryFixedColor = Color(0xFF0D0D0C)
+val LightOnTertiaryFixedColor = MetroWhite
+val DarkOnTertiaryFixedColor = MetroWhite
 
-val LightOnTertiaryFixedVariantColor = Color(0xFF3E2723)
-val DarkOnTertiaryFixedVariantColor = Color(0xFF3E2723)
+val LightOnTertiaryFixedVariantColor = Color(0xFF7F1D1D)
+val DarkOnTertiaryFixedVariantColor = Color(0xFF7F1D1D)
 
-val LightOnInverseSurfaceVariantColor = Color(0xFFF5F5F5)
-val DarkOnInverseSurfaceVariantColor = Color(0xFF616161)
+val LightOnInverseSurfaceVariantColor = Color(0xFFF8FAFC)
+val DarkOnInverseSurfaceVariantColor = Color(0xFF64748B)
 
-// Keep existing utility colors
-val SkeletonColor = Color(0xFFF2F2F2)
-val ChipColor = Color(0xFFFFF8F0) // Slightly tinted for warmth
+// Keep existing utility colors with metro theme
+val SkeletonColor = Color(0xFFF1F5F9) // Light metro gray
+val ChipColor = Color(0xFFEFF6FF) // Light blue for chips
 
 /*
-Opacity Hex
+HCMC Metro Brand Color Usage Guidelines:
 
+Primary Colors:
+- Metro Navy Blue (#1E3A8A): Main brand color, primary actions, headers
+- Metro Light Blue (#3B82F6): Secondary actions, links, highlights
+- Metro Red (#EF4444): Accent color, alerts, important indicators
+
+Neutral Colors:
+- Metro White (#FFFFFF): Backgrounds, text on dark surfaces
+- Metro Gray (#F3F4F6): Light backgrounds, dividers
+
+Transit-Specific Usage:
+- Active routes: Metro Navy Blue
+- Station indicators: Metro Navy Blue with white text
+- Valid tickets: Green success color
+- Expired tickets: Metro Red
+- Information displays: Metro Light Blue
+
+Material Design 3 Compliance:
+- Bold color usage ✓
+- Geometric shapes ✓
+- Clear typography hierarchy ✓
+- Functional iconography ✓
+- Public transportation optimized ✓
+
+Opacity Hex Values:
 100% — FF
-99% — FC
-98% — FA
-97% — F7
-96% — F5
-95% — F2
-94% — F0
-93% — ED
-92% — EB
-91% — E8
 90% — E6
-89% — E3
-88% — E0
-87% — DE
-86% — DB
-85% — D9
-84% — D6
-83% — D4
-82% — D1
-81% — CF
 80% — CC
-79% — C9
-78% — C7
-77% — C4
-76% — C2
-75% — BF
-74% — BD
-73% — BA
-72% — B8
-71% — B5
 70% — B3
-69% — B0
-68% — AD
-67% — AB
-66% — A8
-65% — A6
-64% — A3
-63% — A1
-62% — 9E
-61% — 9C
 60% — 99
-59% — 96
-58% — 94
-57% — 91
-56% — 8F
-55% — 8C
-54% — 8A
-53% — 87
-52% — 85
-51% — 82
 50% — 80
-49% — 7D
-48% — 7A
-47% — 78
-46% — 75
-45% — 73
-44% — 70
-43% — 6E
-42% — 6B
-41% — 69
 40% — 66
-39% — 63
-38% — 61
-37% — 5E
-36% — 5C
-35% — 59
-34% — 57
-33% — 54
-32% — 52
-31% — 4F
 30% — 4D
-29% — 4A
-28% — 47
-27% — 45
-26% — 42
-25% — 40
-24% — 3D
-23% — 3B
-22% — 38
-21% — 36
 20% — 33
-19% — 30
-18% — 2E
-17% — 2B
-16% — 29
-15% — 26
-14% — 24
-13% — 21
-12% — 1F
-11% — 1C
 10% — 1A
-9% — 17
-8% — 14
-7% — 12
-6% — 0F
-5% — 0D
-4% — 0A
-3% — 08
-2% — 05
-1% — 03
 0% — 00
 */

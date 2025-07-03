@@ -30,10 +30,19 @@ class MetrollAppViewModel @Inject constructor(
     private fun observeUserRole() {
         viewModelScope.launch {
             observeLocalAccountInfoUseCase().collect { account ->
+                val isAccountValid = account != null && account.id.isNotBlank()
+                val startDestination = if (isAccountValid) {
+                    DestinationRoutes.ROOT_HOME_SCREEN_ROUTE
+                } else {
+                    DestinationRoutes.ROOT_AUTH_SCREEN_ROUTE
+                }
+                
                 viewModelState.update { 
                     it.copy(
                         userRole = account?.role ?: AccountRole.CUSTOMER,
-                        isLoggedIn = account != null
+                        isLoggedIn = isAccountValid,
+                        startDestination = startDestination,
+                        isInitialized = true // Mark as initialized once we have determined the start destination
                     )
                 }
             }
@@ -50,21 +59,27 @@ class MetrollAppViewModel @Inject constructor(
         val shouldShowBottomBar: Boolean = true,
         val currentNavIndex: Int = 0,
         val userRole: AccountRole = AccountRole.CUSTOMER,
-        val isLoggedIn: Boolean = false
+        val isLoggedIn: Boolean = false,
+        val startDestination: String = DestinationRoutes.ROOT_AUTH_SCREEN_ROUTE,
+        val isInitialized: Boolean = false
     ) : ViewState()
 
     data class MetrollViewModelState(
         val shouldShowBottomBar: Boolean = true,
         val currentNavIndex: Int = 0,
         val userRole: AccountRole = AccountRole.CUSTOMER,
-        val isLoggedIn: Boolean = false
+        val isLoggedIn: Boolean = false,
+        val startDestination: String = DestinationRoutes.ROOT_AUTH_SCREEN_ROUTE,
+        val isInitialized: Boolean = false
     ) : ViewModelState() {
         override fun toUiState(): ViewState {
             return MetrollViewState(
                 shouldShowBottomBar = shouldShowBottomBar,
                 currentNavIndex = currentNavIndex,
                 userRole = userRole,
-                isLoggedIn = isLoggedIn
+                isLoggedIn = isLoggedIn,
+                startDestination = startDestination,
+                isInitialized = isInitialized
             )
         }
     }

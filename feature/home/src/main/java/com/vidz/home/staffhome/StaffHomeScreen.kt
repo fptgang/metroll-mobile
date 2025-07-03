@@ -16,8 +16,11 @@ import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.WavingHand
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -82,7 +85,7 @@ fun StaffHomeScreen(
     //region Event Handler
     val onQRScannerClick: () -> Unit = {
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        navController.navigate("qr_scanner")
+        navController.navigate(DestinationRoutes.QR_SCANNER_SCREEN_ROUTE)
     }
     
     val onSettingsClick: () -> Unit = {
@@ -92,7 +95,7 @@ fun StaffHomeScreen(
     
     val onViewProfileClick: () -> Unit = {
         showSettingsBottomSheet = false
-        navController.navigate(DestinationRoutes.ACCOUNT_PROFILE_SCREEN_ROUTE)
+        navController.navigate(DestinationRoutes.STAFF_PROFILE_SCREEN_ROUTE)
     }
     
     val onEditProfileClick: () -> Unit = {
@@ -168,6 +171,14 @@ fun StaffHomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // Welcome Message Card
+            WelcomeMessageCard(
+                staffName = uiState.staffName,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp)
+            )
+            
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -305,6 +316,61 @@ private fun StaffSettingsBottomSheetContent(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Sign Out")
+            }
+        }
+    }
+}
+
+@Composable
+private fun WelcomeMessageCard(
+    staffName: String,
+    modifier: Modifier = Modifier
+) {
+    // Get current time for greeting
+    val currentHour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
+    val greeting = when (currentHour) {
+        in 5..11 -> "Good Morning"
+        in 12..16 -> "Good Afternoon"
+        in 17..21 -> "Good Evening"
+        else -> "Good Night"
+    }
+    
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.WavingHand,
+                contentDescription = "Welcome",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(32.dp)
+            )
+            
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "$greeting, $staffName!",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    text = "Ready to start your shift?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                )
             }
         }
     }

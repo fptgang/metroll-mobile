@@ -18,7 +18,8 @@ class AccountMapper @Inject constructor() : BaseRemoteMapper<Account, AccountDto
             role = mapStringToAccountRole(external.role),
             active = external.active,
             createdAt = external.createdAt.toString(),
-            updatedAt = external.updatedAt.toString()
+            updatedAt = external.updatedAt.toString(),
+            assignedStation = external.assignedStation
         )
     }
 
@@ -31,7 +32,8 @@ class AccountMapper @Inject constructor() : BaseRemoteMapper<Account, AccountDto
             role = domain.role.name,
             active = domain.active,
             createdAt = domain.createdAt.toDoubleOrNull() ?: 0.0,
-            updatedAt = domain.updatedAt.toDoubleOrNull() ?: 0.0
+            updatedAt = domain.updatedAt.toDoubleOrNull() ?: 0.0,
+            assignedStation = domain.assignedStation
         )
     }
 

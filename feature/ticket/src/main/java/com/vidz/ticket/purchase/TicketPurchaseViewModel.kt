@@ -21,13 +21,12 @@ import com.vidz.domain.usecase.cart.RemoveFromCartUseCase
 import com.vidz.domain.usecase.cart.UpdateCartItemQuantityUseCase
 import com.vidz.domain.usecase.order.CheckoutUseCase
 import com.vidz.domain.usecase.p2pjourney.GetP2PJourneyByIdUseCase
-import com.vidz.domain.usecase.p2pjourney.GetP2PJourneysUseCase
 import com.vidz.domain.usecase.p2pjourney.GetP2PJourneyByStationsUseCase
+import com.vidz.domain.usecase.p2pjourney.GetP2PJourneysUseCase
 import com.vidz.domain.usecase.station.GetStationsUseCase
 import com.vidz.domain.usecase.timedticketplan.GetTimedTicketPlanByIdUseCase
 import com.vidz.domain.usecase.timedticketplan.GetTimedTicketPlansUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -384,7 +383,7 @@ class TicketPurchaseViewModel @Inject constructor(
                             is Result.Success -> {
                                 val checkoutRequest = CheckoutRequest(
                                     items = checkoutItems,
-                                    paymentMethod = "CASH",
+                                    paymentMethod = "PAYOS",
                                     customerId = user.data?.uid
                                 )
 

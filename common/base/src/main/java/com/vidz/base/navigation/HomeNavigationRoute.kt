@@ -67,4 +67,8 @@ object DestinationRoutes {
     const val STAFF_QR_SCANNER_SCREEN_ROUTE = "${ROOT_STAFF_SCREEN_ROUTE}/qr_scanner"
     const val STAFF_TICKET_VALIDATION_SCREEN_ROUTE = "${ROOT_STAFF_SCREEN_ROUTE}/ticket_validation"
     const val STAFF_SCAN_HISTORY_SCREEN_ROUTE = "${ROOT_STAFF_SCREEN_ROUTE}/scan_history"
+    const val STAFF_PROFILE_SCREEN_ROUTE = "${ROOT_STAFF_SCREEN_ROUTE}/profile"
+
+    // Generic/shared QR-scanner route (used across customer & staff flows)
+    const val QR_SCANNER_SCREEN_ROUTE = "qr_scanner"
 }

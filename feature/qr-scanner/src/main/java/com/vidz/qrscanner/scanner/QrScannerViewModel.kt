@@ -7,7 +7,11 @@ import com.vidz.base.interfaces.ViewModelState
 import com.vidz.base.interfaces.ViewState
 import com.vidz.base.viewmodel.BaseViewModel
 import com.vidz.domain.Result
+import com.vidz.domain.model.Account
+import com.vidz.domain.model.Station
 import com.vidz.domain.model.TicketValidationCreateRequest
+import com.vidz.domain.usecase.account.GetMeUseCase
+import com.vidz.domain.usecase.station.GetStationByCodeUseCase
 import com.vidz.domain.usecase.ticketvalidation.ValidateTicketUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -26,6 +30,8 @@ enum class ValidationType {
 @HiltViewModel
 class QrScannerViewModel @Inject constructor(
     private val validateTicketUseCase: ValidateTicketUseCase,
+    private val getMeUseCase: GetMeUseCase,
+    private val getStationByCodeUseCase: GetStationByCodeUseCase,
     private val ioDispatcher: CoroutineDispatcher
 ) : BaseViewModel<QrScannerViewModel.QrScannerViewEvent,
         QrScannerViewModel.QrScannerViewState,
@@ -38,6 +44,56 @@ class QrScannerViewModel @Inject constructor(
 
     // JSON parser with unknown keys ignored
     private val jsonParser = Json { ignoreUnknownKeys = true }
+
+    init {
+        loadUserAccount()
+    }
+
+    private fun loadUserAccount() {
+        viewModelScope.launch(ioDispatcher) {
+            getMeUseCase().collect { result ->
+                when (result) {
+                    is Result.Success -> {
+                        val account = result.data
+                        viewModelState.update { it.copy(account = account) }
+                        
+                        // Load station details if assigned station exists
+                        if (account.assignedStation.isNotBlank()) {
+                            loadStationDetails(account.assignedStation)
+                        }
+                    }
+
+                    is Result.ServerError -> {
+                        viewModelState.update { it.copy(error = result.message) }
+                        updateStatus(ScannerStatus.Error("Could not load user account: ${result.message}"))
+                    }
+
+                    else -> {
+                        // Init or other states
+                    }
+                }
+            }
+        }
+    }
+
+    private fun loadStationDetails(stationCode: String) {
+        viewModelScope.launch(ioDispatcher) {
+            getStationByCodeUseCase(stationCode).collect { result ->
+                when (result) {
+                    is Result.Success -> {
+                        viewModelState.update { it.copy(assignedStationDetails = result.data) }
+                    }
+                    is Result.ServerError -> {
+                        // Don't show error for station details, just log it
+                        viewModelState.update { it.copy(stationError = result.message) }
+                    }
+                    else -> {
+                        // Init or other states
+                    }
+                }
+            }
+        }
+    }
 
     override fun onTriggerEvent(event: QrScannerViewEvent) {
         when (event) {
@@ -60,6 +116,19 @@ class QrScannerViewModel @Inject constructor(
         // If currently validating, ignore new inputs to avoid race
         if (currentStatus == ScannerStatus.Validating) return
 
+        val account = viewModelState.value.account
+        if (account == null) {
+            updateStatus(ScannerStatus.Error("User account not loaded. Cannot validate ticket."))
+            updateScreenState(ScreenState.FailureResult)
+            return
+        }
+
+        if (account.assignedStation.isBlank()) {
+            updateStatus(ScannerStatus.Error("No assigned station. Cannot validate ticket."))
+            updateScreenState(ScreenState.FailureResult)
+            return
+        }
+
         try {
             val jsonElement = jsonParser.parseToJsonElement(raw)
             val obj = jsonElement.jsonObject
@@ -71,8 +140,6 @@ class QrScannerViewModel @Inject constructor(
                 return
             }
 
-            val stationId = "684707b570690b4a7a67e0dd"
-            val deviceIdVal = "android-device"
 
             // Use the selected validation type
             val domainValidationType = when (viewModelState.value.selectedValidationType) {
@@ -81,10 +148,8 @@ class QrScannerViewModel @Inject constructor(
             }
 
             val request = TicketValidationCreateRequest(
-                stationId = stationId,
                 ticketId = ticketId,
                 validationType = domainValidationType,
-                deviceId = deviceIdVal
             )
 
             // Check attempt cache
@@ -150,19 +215,26 @@ class QrScannerViewModel @Inject constructor(
         val status: ScannerStatus = ScannerStatus.Waiting,
         val selectedValidationType: ValidationType = ValidationType.ENTRY,
         val currentScreen: ScreenState = ScreenState.Scanner,
-        val error: String? = null
+        val error: String? = null,
+        val account: Account? = null,
+        val assignedStationDetails: Station? = null,
+        val stationError: String? = null
     ) : ViewModelState() {
         override fun toUiState(): ViewState = QrScannerViewState(
             status = status,
             selectedValidationType = selectedValidationType,
-            currentScreen = currentScreen
+            currentScreen = currentScreen,
+            account = account,
+            assignedStationDetails = assignedStationDetails
         )
     }
 
     data class QrScannerViewState(
         val status: ScannerStatus,
         val selectedValidationType: ValidationType,
-        val currentScreen: ScreenState
+        val currentScreen: ScreenState,
+        val account: Account? = null,
+        val assignedStationDetails: Station? = null
     ) : ViewState()
 
     sealed class QrScannerViewEvent : ViewEvent {

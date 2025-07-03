@@ -21,14 +21,15 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppNavHost(
     navController: NavHostController,
-    onShowSnackbar: (String) -> Unit
+    onShowSnackbar: (String) -> Unit,
+    startDestination: String = DestinationRoutes.ROOT_HOME_SCREEN_ROUTE
 ) {
     val scope = rememberCoroutineScope()
     
     SharedTransitionLayout {
         NavHost(
             navController = navController,
-            startDestination = DestinationRoutes.ROOT_HOME_SCREEN_ROUTE,
+            startDestination = startDestination,
 //            enterTransition = enterTransition,
 //            exitTransition = exitTransition,
 //            popEnterTransition = popEnterTransition,
