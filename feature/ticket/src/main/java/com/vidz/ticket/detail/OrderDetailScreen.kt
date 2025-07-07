@@ -102,7 +102,6 @@ fun OrderDetailScreen(
     }
 
 
-
     val onContinuePayment = {
         viewModel.onTriggerEvent(OrderDetailViewModel.OrderDetailEvent.OpenPayment)
     }
@@ -116,7 +115,7 @@ fun OrderDetailScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { 
+                title = {
                     Text(
                         text = uiState.order?.let { "Order #${it.id.take(8)}" } ?: "Order Details",
                         maxLines = 1,
@@ -145,6 +144,7 @@ fun OrderDetailScreen(
                     CircularProgressIndicator()
                 }
             }
+
             uiState.orderError != null -> {
                 Box(
                     modifier = Modifier
@@ -172,6 +172,7 @@ fun OrderDetailScreen(
                     }
                 }
             }
+
             uiState.order != null -> {
                 LazyColumn(
                     modifier = Modifier
@@ -202,7 +203,9 @@ fun OrderDetailScreen(
                         )
                     }
                 }
-            } else -> {
+            }
+
+            else -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -227,7 +230,6 @@ fun OrderDetailScreen(
             viewModel.onTriggerEvent(OrderDetailViewModel.OrderDetailEvent.ClearError)
         }
     }
-
 
 
     // Full-screen Payment WebView
@@ -267,16 +269,19 @@ private fun OrderSummaryCard(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
-                    
+
                     Text(
                         text = order.createdAt.format(
-                            DateTimeFormatter.ofPattern("EEEE, MMM dd, yyyy 'at' HH:mm", Locale.getDefault())
+                            DateTimeFormatter.ofPattern(
+                                "EEEE, MMM dd, yyyy 'at' HH:mm",
+                                Locale.getDefault()
+                            )
                         ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                     )
                 }
-                
+
                 OrderStatusChip(status = order.status)
             }
 
@@ -300,7 +305,7 @@ private fun OrderSummaryCard(
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
-                
+
                 Column(
                     horizontalAlignment = Alignment.End
                 ) {
@@ -321,7 +326,7 @@ private fun OrderSummaryCard(
             // Show payment button for pending orders with payment URL
             if (order.status == OrderStatus.PENDING && !order.paymentUrl.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 MetrollButton(
                     text = "Continue Payment",
                     onClick = onContinuePayment,
@@ -361,15 +366,15 @@ private fun OrderDetailCard(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    
+
                     Text(
                         text = "Ord detail ID: ${orderDetail.id.take(8)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    
+
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     Row {
                         Text(
                             text = "Quantity: ${orderDetail.quantity}",
@@ -382,7 +387,7 @@ private fun OrderDetailCard(
                         )
                     }
                 }
-                
+
                 // QR Code Button
 //                MetrollButton(
 //                    text = "View",
@@ -390,30 +395,37 @@ private fun OrderDetailCard(
 //                    enabled = orderDetail.ticketId.isNotEmpty(),
 //                    modifier = Modifier.width(80.dp)
 //                )
-               if (orderDetail.ticketId.isNotEmpty()) {
-                   IconButton(onClick = onQRCodeClick) {
-                       Icon(
-                           Icons.Default.RemoveRedEye,
-                           contentDescription = "View QR Code",
-                           tint = MaterialTheme.colorScheme.primary
-                       )
-                   }
-               }
+                if (orderDetail.ticketId.isNotEmpty()) {
+                    IconButton(onClick = onQRCodeClick) {
+                        Icon(
+                            Icons.Default.RemoveRedEye,
+                            contentDescription = "View QR Code",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             }
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             // Totals
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Subtotal: $${String.format("%.2f", orderDetail.baseTotal)}",
+                    text = if (orderDetail.baseTotal > orderDetail.finalTotal) "Subtotal: $${
+                        String.format(
+                            "%.2f",
+                            orderDetail.baseTotal
+                        )
+                    }" else "",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                
+
+
+
                 Text(
                     text = "Final: $${String.format("%.2f", orderDetail.finalTotal)}",
                     style = MaterialTheme.typography.titleMedium,
@@ -433,11 +445,13 @@ private fun OrderStatusChip(status: OrderStatus) {
             MaterialTheme.colorScheme.onSecondaryContainer,
             "Pending"
         )
+
         OrderStatus.COMPLETED -> Triple(
             MaterialTheme.colorScheme.tertiaryContainer,
             MaterialTheme.colorScheme.onTertiaryContainer,
             "Completed"
         )
+
         OrderStatus.FAILED -> Triple(
             MaterialTheme.colorScheme.errorContainer,
             MaterialTheme.colorScheme.onErrorContainer,
@@ -463,7 +477,6 @@ private fun OrderStatusChip(status: OrderStatus) {
 }
 
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -480,7 +493,7 @@ private fun FullScreenPaymentWebView(
         Column(modifier = Modifier.fillMaxSize()) {
             // Top app bar with close button
             CenterAlignedTopAppBar(
-                title = { 
+                title = {
                     Text(
                         text = "Complete Payment",
                         style = MaterialTheme.typography.titleMedium,
@@ -511,26 +524,30 @@ private fun FullScreenPaymentWebView(
                                 // Check if payment is complete based on URL patterns
                                 url?.let { currentUrl ->
                                     when {
-                                        currentUrl.contains("success") || 
-                                        currentUrl.contains("complete") ||
-                                        currentUrl.contains("payment_status=success") ||
-                                        currentUrl.contains("status=success") -> {
+                                        currentUrl.contains("success") ||
+                                                currentUrl.contains("complete") ||
+                                                currentUrl.contains("payment_status=success") ||
+                                                currentUrl.contains("status=success") -> {
                                             // Payment successful, close WebView
                                             onClose()
                                         }
-                                        currentUrl.contains("failed") || 
-                                        currentUrl.contains("error") ||
-                                        currentUrl.contains("payment_status=failed") ||
-                                        currentUrl.contains("status=failed") ||
-                                        currentUrl.contains("cancel") -> {
+
+                                        currentUrl.contains("failed") ||
+                                                currentUrl.contains("error") ||
+                                                currentUrl.contains("payment_status=failed") ||
+                                                currentUrl.contains("status=failed") ||
+                                                currentUrl.contains("cancel") -> {
                                             // Payment failed, close WebView
                                             onClose()
                                         }
                                     }
                                 }
                             }
-                            
-                            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+
+                            override fun shouldOverrideUrlLoading(
+                                view: WebView?,
+                                request: WebResourceRequest?
+                            ): Boolean {
                                 request?.url?.toString()?.let { currentUrl ->
                                     when {
                                         currentUrl.startsWith("metroll://") -> {
@@ -538,6 +555,8 @@ private fun FullScreenPaymentWebView(
                                             onClose()
                                             return true
                                         }
+
+                                        else -> {}
                                     }
                                 }
                                 return false

@@ -31,11 +31,13 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,6 +51,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.vidz.base.components.MetrollButton
+import com.vidz.base.components.VoucherSelectionBottomSheet
 import android.annotation.SuppressLint
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -108,6 +111,19 @@ fun TicketCartScreen(
     val onClosePayment = {
         viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ClosePayment)
     }
+    
+    val onShowVoucherSheet = {
+        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ShowVoucherSheet(true))
+    }
+    
+    val onHideVoucherSheet = {
+        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ShowVoucherSheet(false))
+    }
+    
+    val onSelectVoucher = { voucher: com.vidz.domain.model.Voucher? ->
+        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectVoucher(voucher))
+        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ShowVoucherSheet(false))
+    }
     //endregion
 
     //region UI
@@ -135,9 +151,15 @@ fun TicketCartScreen(
         bottomBar = {
             if (uiState.cartItems.isNotEmpty()) {
                 CartBottomBar(
-                    total = uiState.cartTotal,
+                    subtotal = uiState.subtotal,
+                    total = uiState.total,
+                    selectedVoucher = uiState.selectedVoucher,
+                    userDiscountPercentage = uiState.userDiscountPercentage,
+                    voucherDiscount = uiState.voucherDiscount,
+                    discountPackageDiscount = uiState.discountPackageDiscount,
                     isLoading = uiState.isCheckingOut,
-                    onCheckout = onCheckout
+                    onCheckout = onCheckout,
+                    onShowVoucherSheet = onShowVoucherSheet
                 )
             }
         }
@@ -195,6 +217,23 @@ fun TicketCartScreen(
                 navController.popBackStack()
             }
         )
+    }
+    
+    // Voucher Selection Bottom Sheet
+    if (uiState.showVoucherSheet) {
+        ModalBottomSheet(
+            onDismissRequest = onHideVoucherSheet,
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ) {
+            VoucherSelectionBottomSheet(
+                vouchers = uiState.vouchers,
+                selectedVoucher = uiState.selectedVoucher,
+                isLoading = uiState.isLoadingVouchers,
+                cartTotal = uiState.subtotal,
+                onVoucherSelected = onSelectVoucher,
+                onDismiss = onHideVoucherSheet
+            )
+        }
     }
     //endregion
 }
@@ -387,9 +426,15 @@ private fun CartItemCard(
 
 @Composable
 private fun CartBottomBar(
+    subtotal: Double,
     total: Double,
+    selectedVoucher: com.vidz.domain.model.Voucher?,
+    userDiscountPercentage: Float?,
+    voucherDiscount: Double,
+    discountPackageDiscount: Double,
     isLoading: Boolean,
-    onCheckout: () -> Unit
+    onCheckout: () -> Unit,
+    onShowVoucherSheet: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -399,6 +444,73 @@ private fun CartBottomBar(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
+            // Always show subtotal
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Subtotal:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Text(
+                    text = "$${String.format("%.2f", subtotal)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            
+            // Show discount package discount if available
+            if (userDiscountPercentage != null && userDiscountPercentage > 0f && discountPackageDiscount > 0) {
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Member Discount (${(userDiscountPercentage * 100).toInt()}%):",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    Text(
+                        text = "-$${String.format("%.2f", discountPackageDiscount)}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+            
+            // Show voucher discount if selected
+            if (selectedVoucher != null && voucherDiscount > 0) {
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Voucher Discount:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    Text(
+                        text = "-$${String.format("%.2f", voucherDiscount)}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -416,6 +528,54 @@ private fun CartBottomBar(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Voucher Section
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                onClick = onShowVoucherSheet
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Voucher",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        
+                        if (selectedVoucher != null) {
+                            Text(
+                                text = "${selectedVoucher.code} • Save $${String.format("%.2f", selectedVoucher.discountAmount)}",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        } else {
+                            Text(
+                                text = "Tap to select voucher",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    
+                    Text(
+                        text = ">",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -505,6 +665,8 @@ private fun FullScreenPaymentWebView(
                                             onClose()
                                             return true
                                         }
+
+                                        else -> {}
                                     }
                                 }
                                 return false
