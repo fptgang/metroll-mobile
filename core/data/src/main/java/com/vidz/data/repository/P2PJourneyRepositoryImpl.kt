@@ -50,8 +50,8 @@ class P2PJourneyRepositoryImpl @Inject constructor(
     override suspend fun getP2PJourneyByStations(
         page: Int?,
         size: Int?,
-        startStationId: String,
-        endStationId: String
+        startStationId: String?,
+        endStationId: String?
     ): Result<PageDto<P2PJourney>> {
         val flow: IFlow<PageDto<P2PJourney>> = ServerFlow(
             getData = { retrofitServer.p2pJourneyApi.getP2PJourneyByStations(page, size,startStationId, endStationId) },

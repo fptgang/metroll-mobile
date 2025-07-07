@@ -6,9 +6,11 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,18 +20,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AvTimer
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.Train
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -37,7 +39,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,7 +47,6 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -54,22 +54,23 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -79,7 +80,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.vidz.base.components.MetrollActionCard
 import com.vidz.base.components.MetrollButton
+import com.vidz.base.components.MetrollTextField
 import com.vidz.domain.model.P2PJourney
 import com.vidz.domain.model.Station
 import com.vidz.domain.model.TicketType
@@ -168,14 +171,14 @@ fun TicketPurchaseScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "Purchase Tickets",
-                        fontWeight = FontWeight.SemiBold
-                    )
+                title = { Text("Purchase Tickets") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
                 },
                 actions = {
-                    IconButton(onClick = {
+                    IconButton(onClick = { 
                         navController.navigate(com.vidz.base.navigation.DestinationRoutes.TICKET_CART_SCREEN_ROUTE)
                     }) {
                         if (uiState.cartItemCount > 0) {
@@ -186,21 +189,20 @@ fun TicketPurchaseScreen(
                                     ) {
                                         Text(
                                             text = uiState.cartItemCount.toString(),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onError
+                                            style = MaterialTheme.typography.labelSmall
                                         )
                                     }
                                 }
                             ) {
                                 Icon(
-                                    Icons.Default.ShoppingCart,
+                                    Icons.Default.ShoppingCart, 
                                     contentDescription = "Cart",
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                             }
                         } else {
                             Icon(
-                                Icons.Default.ShoppingCart,
+                                Icons.Default.ShoppingCart, 
                                 contentDescription = "Cart",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -208,7 +210,7 @@ fun TicketPurchaseScreen(
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
                 )
             )
         },
@@ -217,24 +219,20 @@ fun TicketPurchaseScreen(
                 ExtendedFloatingActionButton(
                     onClick = onShowCart,
                     containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.ShoppingCart,
-                            contentDescription = "Cart"
-                        )
-                    },
-                    text = {
-                        Text(
-                            "View Cart • ₫${
-                                String.format(
-                                    "%,.0f",
-                                    uiState.cartTotal
-                                )
-                            }"
-                        )
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    BadgedBox(
+                        badge = {
+                            Badge {
+                                Text(uiState.cartItemCount.toString())
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Default.ShoppingCart, contentDescription = "Cart")
                     }
-                )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Cart • $${String.format("%.2f", uiState.subtotal)}")
+                }
             }
         }
     ) { paddingValues ->
@@ -244,33 +242,20 @@ fun TicketPurchaseScreen(
                 .padding(paddingValues)
         ) {
             // Tab Row
-            Column(modifier = Modifier.fillMaxWidth()) {
-                ScrollableTabRow(
-                    selectedTabIndex = if (uiState.selectedTicketType == TicketType.TIMED) 0 else 1,
-                    modifier = Modifier.fillMaxWidth(),
-                    edgePadding = 16.dp,
-                    indicator = { tabPositions ->
-                        TabRowDefaults.Indicator(
-                            modifier = Modifier
-                                .tabIndicatorOffset(tabPositions[if (uiState.selectedTicketType == TicketType.TIMED) 0 else 1])
-                                .height(3.dp)
-                                .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                ) {
-                    Tab(
-                        selected = uiState.selectedTicketType == TicketType.TIMED,
-                        onClick = { onTabSelected(TicketType.TIMED) },
-                        text = { Text("Timed Tickets") }
-                    )
-                    Tab(
-                        selected = uiState.selectedTicketType == TicketType.P2P,
-                        onClick = { onTabSelected(TicketType.P2P) },
-                        text = { Text("Point-to-Point") }
-                    )
-                }
-                Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+            TabRow(
+                selectedTabIndex = if (uiState.selectedTicketType == TicketType.TIMED) 0 else 1,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Tab(
+                    selected = uiState.selectedTicketType == TicketType.TIMED,
+                    onClick = { onTabSelected(TicketType.TIMED) },
+                    text = { Text("Timed Tickets") }
+                )
+                Tab(
+                    selected = uiState.selectedTicketType == TicketType.P2P,
+                    onClick = { onTabSelected(TicketType.P2P) },
+                    text = { Text("Point-to-Point") }
+                )
             }
 
             // Content
@@ -283,26 +268,28 @@ fun TicketPurchaseScreen(
                     )
                 }
                 TicketType.P2P -> {
-                    P2PJourneysContent(
-                        journeys = uiState.p2pJourneys,
-                        isLoading = uiState.isLoadingP2P,
-                        currentSort = uiState.p2pSortType,
-                        stations = uiState.stations,
-                        isLoadingStations = uiState.isLoadingStations,
-                        selectedFromStation = uiState.selectedFromStation,
-                        selectedToStation = uiState.selectedToStation,
-                        onAddToCart = onP2PJourneyAddToCart,
-                        onSortChange = onSortChange,
-                        onFromStationSelect = { station ->
-                            viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectFromStation(station))
-                        },
-                        onToStationSelect = { station ->
-                            viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectToStation(station))
-                        },
-                        onClearStations = {
-                            viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ClearStationSelection)
-                        }
-                    )
+                                    P2PJourneysContent(
+                    journeys = uiState.p2pJourneys,
+                    isLoading = uiState.isLoadingP2P,
+                    currentSort = uiState.p2pSortType,
+                    stations = uiState.stations,
+                    isLoadingStations = uiState.isLoadingStations,
+                    selectedFromStation = uiState.selectedFromStation,
+                    selectedToStation = uiState.selectedToStation,
+                    onAddToCart = onP2PJourneyAddToCart,
+                    onSortChange = onSortChange,
+                    onFromStationSelect = { station ->
+                        println("TicketPurchaseScreen: From station selected: ${station?.name}")
+                        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectFromStation(station))
+                    },
+                    onToStationSelect = { station ->
+                        println("TicketPurchaseScreen: To station selected: ${station?.name}")
+                        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectToStation(station))
+                    },
+                    onClearStations = {
+                        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ClearStationSelection)
+                    }
+                )
                 }
             }
         }
@@ -318,7 +305,7 @@ fun TicketPurchaseScreen(
         ) {
             CartBottomSheet(
                 cartItems = uiState.cartItems,
-                cartTotal = uiState.cartTotal,
+                cartTotal = uiState.subtotal,
                 isCheckingOut = uiState.isCheckingOut,
                 onQuantityChange = onCartItemQuantityChange,
                 onRemoveItem = onCartItemRemove,
@@ -342,6 +329,7 @@ fun TicketPurchaseScreen(
             }
         )
     }
+    //endregion
     //endregion
 }
 
@@ -403,205 +391,284 @@ private fun P2PJourneysContent(
     var showToDropdown by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
     
-    if (isLoading) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Station Selection Section - Always visible
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            CircularProgressIndicator()
-        }
-    } else {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            // Station Selection Section
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier.padding(16.dp)
             ) {
-                Text(
-                    text = "Select Journey Route",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                
-                if (selectedFromStation != null || selectedToStation != null) {
-                    IconButton(
-                        onClick = onClearStations,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Clear,
-                            contentDescription = "Clear stations",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.Top
-            ) {
-                // From Station Dropdown
-                ExposedDropdownMenuBox(
-                    expanded = showFromDropdown,
-                    onExpandedChange = { showFromDropdown = it },
-                    modifier = Modifier.weight(1f)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    OutlinedTextField(
-                        value = selectedFromStation?.name ?: "",
-                        onValueChange = { },
-                        readOnly = true,
-                        label = { Text("From Station") },
-                        placeholder = { Text("From Station") },
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = showFromDropdown)
-                        },
-                        modifier = Modifier
-                            .menuAnchor()
-                            .fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                        )
+                    Text(
+                        text = "Select Journey Route",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
                     )
                     
-                    ExposedDropdownMenu(
-                        expanded = showFromDropdown,
-                        onDismissRequest = { showFromDropdown = false }
-                    ) {
-                        if (isLoadingStations) {
-                            DropdownMenuItem(
-                                text = { Text("Loading stations...") },
-                                onClick = { }
+                    if (selectedFromStation != null || selectedToStation != null) {
+                        IconButton(
+                            onClick = onClearStations,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Clear,
+                                contentDescription = "Clear stations",
+                                tint = MaterialTheme.colorScheme.error
                             )
-                        } else if (stations.isEmpty()) {
-                            DropdownMenuItem(
-                                text = { Text("No stations available") },
-                                onClick = { }
-                            )
-                        } else {
-                            stations.forEach { station ->
-                                DropdownMenuItem(
-                                    text = { 
-                                        Column {
-                                            Text(
-                                                text = station.name,
-                                                style = MaterialTheme.typography.bodyMedium
-                                            )
-                                            Text(
-                                                text = station.code,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-                                    },
-                                    onClick = {
-                                        onFromStationSelect(station)
-                                        showFromDropdown = false
-                                    }
-                                )
-                            }
                         }
                     }
                 }
                 
-                // To Station Dropdown
-                ExposedDropdownMenuBox(
-                    expanded = showToDropdown,
-                    onExpandedChange = { showToDropdown = it },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    OutlinedTextField(
-                        value = selectedToStation?.name ?: "",
-                        onValueChange = { },
-                        readOnly = true,
-                        label = { Text("To Station") },
-                        placeholder = { Text("To Station") },
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = showToDropdown)
-                        },
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                if (isLoadingStations) {
+                    Box(
                         modifier = Modifier
-                            .menuAnchor()
-                            .fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                        )
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = showToDropdown,
-                        onDismissRequest = { showToDropdown = false }
+                            .fillMaxWidth()
+                            .height(60.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        if (isLoadingStations) {
-                            DropdownMenuItem(
-                                text = { Text("Loading stations...") },
-                                onClick = { }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                            Text(
+                                text = "Loading stations...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                        } else if (stations.isEmpty()) {
-                            DropdownMenuItem(
-                                text = { Text("No stations available") },
-                                onClick = { }
-                            )
-                        } else {
-                            // Filter out the selected from station
-                            val availableToStations = stations.filter { it.id != selectedFromStation?.id }
-                            
-                            if (availableToStations.isEmpty()) {
-                                DropdownMenuItem(
-                                    text = { Text("Please select departure station first") },
-                                    onClick = { }
+                        }
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        // From Station Dropdown
+                        ExposedDropdownMenuBox(
+                            expanded = showFromDropdown,
+                            onExpandedChange = { showFromDropdown = it },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            OutlinedTextField(
+                                value = selectedFromStation?.name ?: "",
+                                onValueChange = { },
+                                readOnly = true,
+                                label = { Text("From") },
+                                placeholder = { Text("Select one") },
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = showFromDropdown)
+                                },
+                                modifier = Modifier
+                                    .menuAnchor()
+                                    .fillMaxWidth(),
+                                singleLine = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
                                 )
-                            } else {
-                                availableToStations.forEach { station ->
+                            )
+                            
+                            ExposedDropdownMenu(
+                                expanded = showFromDropdown,
+                                onDismissRequest = { showFromDropdown = false }
+                            ) {
+                                if (stations.isEmpty()) {
                                     DropdownMenuItem(
                                         text = { 
-                                            Column {
-                                                Text(
-                                                    text = station.name,
-                                                    style = MaterialTheme.typography.bodyMedium
-                                                )
-                                                Text(
-                                                    text = station.code,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
+                                            Text(
+                                                "No stations available",
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            ) 
                                         },
-                                        onClick = {
-                                            onToStationSelect(station)
-                                            showToDropdown = false
-                                        }
+                                        onClick = { },
+                                        enabled = false
                                     )
+                                } else {
+                                    stations.forEach { station ->
+                                        DropdownMenuItem(
+                                            text = { 
+                                                Column {
+                                                    Text(
+                                                        text = station.name,
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        fontWeight = FontWeight.Medium
+                                                    )
+                                                    Text(
+                                                        text = "Code: ${station.code}",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            },
+                                            onClick = {
+                                                onFromStationSelect(station)
+                                                showFromDropdown = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // To Station Dropdown
+                        ExposedDropdownMenuBox(
+                            expanded = showToDropdown,
+                            onExpandedChange = { showToDropdown = it },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            OutlinedTextField(
+                                value = selectedToStation?.name ?: "",
+                                onValueChange = { },
+                                readOnly = true,
+                                label = { Text("To") },
+                                placeholder = { Text("Select one") },
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = showToDropdown)
+                                },
+                                modifier = Modifier
+                                    .menuAnchor()
+                                    .fillMaxWidth(),
+                                singleLine = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                                )
+                            )
+                            
+                            ExposedDropdownMenu(
+                                expanded = showToDropdown,
+                                onDismissRequest = { showToDropdown = false }
+                            ) {
+                                if (stations.isEmpty()) {
+                                    DropdownMenuItem(
+                                        text = { 
+                                            Text(
+                                                "No stations available",
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            ) 
+                                        },
+                                        onClick = { },
+                                        enabled = false
+                                    )
+                                } else {
+                                    // Filter out the selected from station
+                                    val availableToStations = stations.filter { it.id != selectedFromStation?.id }
+                                    
+                                    if (availableToStations.isEmpty() && selectedFromStation != null) {
+                                        DropdownMenuItem(
+                                            text = { 
+                                                Text(
+                                                    "No other stations available",
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                ) 
+                                            },
+                                            onClick = { },
+                                            enabled = false
+                                        )
+                                    } else {
+                                        (if (selectedFromStation != null) availableToStations else stations).forEach { station ->
+                                            DropdownMenuItem(
+                                                text = { 
+                                                    Column {
+                                                        Text(
+                                                            text = station.name,
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            fontWeight = FontWeight.Medium
+                                                        )
+                                                        Text(
+                                                            text = "Code: ${station.code}",
+                                                            style = MaterialTheme.typography.bodySmall,
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                    }
+                                                },
+                                                onClick = {
+                                                    onToStationSelect(station)
+                                                    showToDropdown = false
+                                                }
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
+                
+                // Station Selection Info
+                if (selectedFromStation != null || selectedToStation != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (selectedFromStation != null && selectedToStation != null) {
+                                "Route: ${selectedFromStation.name} → ${selectedToStation.name}"
+                            } else if (selectedFromStation != null) {
+                                "From: ${selectedFromStation.name}"
+                            } else {
+                                "To: ${selectedToStation?.name}"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Sort Options
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Journey Results Section
+        if (isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    CircularProgressIndicator()
+                    Text(
+                        text = "Searching for routes...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        } else {
+            // Sort Options and Results Count
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${journeys.size} routes found",
+                    text = "${journeys.size} route${if (journeys.size != 1) "s" else ""} found",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium
                 )
                 
                 Box {
@@ -636,15 +703,58 @@ private fun P2PJourneysContent(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(journeys) { journey ->
-                    P2PJourneyCard(
-                        journey = journey,
-                        stations = stations,
-                        onAddToCart = { onAddToCart(journey) }
+            // Journey List
+            if (journeys.isEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                     )
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = if (selectedFromStation != null || selectedToStation != null) {
+                                    "No routes found for selected stations"
+                                } else {
+                                    "Select stations to search for routes"
+                                },
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = if (selectedFromStation != null || selectedToStation != null) {
+                                    "Try selecting different stations or clear your selection"
+                                } else {
+                                    "Choose departure and destination stations above"
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(journeys) { journey ->
+                        P2PJourneyCard(
+                            journey = journey,
+                            stations = stations,
+                            onAddToCart = { onAddToCart(journey) }
+                        )
+                    }
                 }
             }
         }
@@ -661,70 +771,56 @@ private fun TimedTicketCard(
         modifier = Modifier
             .fillMaxWidth()
             .animateContentSize(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        Column(
+            modifier = Modifier.padding(16.dp)
         ) {
-            Surface(
-                modifier = Modifier.size(48.dp),
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                shape = CircleShape
+            Text(
+                text = ticket.name,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "${ticket.validDuration} days",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.AvTimer,
-                    contentDescription = "Timed Ticket",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(12.dp)
-                )
-            }
-
-            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = ticket.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "${ticket.validDuration} days validity",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = "₫${String.format("%,.0f", ticket.basePrice)}",
+                    text = "$${String.format("%.2f", ticket.basePrice)}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "per pass",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                
+                IconButton(
+                    onClick = onAddToCart,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add to Cart",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
-
-        MetrollButton(
-            text = "Add to Cart",
-            onClick = onAddToCart,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-        )
     }
 }
 
@@ -737,70 +833,95 @@ private fun P2PJourneyCard(
 ) {
     Card(
         modifier = Modifier
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
             .fillMaxWidth()
             .animateContentSize(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.padding(16.dp)
         ) {
-            val fromStation = stations.find { it.id == journey.startStationId }
-            val toStation = stations.find { it.id == journey.endStationId }
-
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
-                Surface(
-                    modifier = Modifier.size(48.dp),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                    shape = CircleShape
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Train,
-                        contentDescription = "Journey",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
-
                 Column(modifier = Modifier.weight(1f)) {
+                    val fromStation = stations.find { it.code == journey.startStationId }
+                    val toStation = stations.find { it.code == journey.endStationId }
+                    
                     Text(
-                        text = "${fromStation?.name ?: "..."} → ${toStation?.name ?: "..."}",
+                        text = "${fromStation?.name ?: journey.startStationId} → ${toStation?.name ?: journey.endStationId}",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.fillMaxWidth(0.9f)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    Text(
+                        text = "From: ${fromStation?.name ?: journey.startStationId} (${fromStation?.code ?: ""})",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    
                     Text(
-                        text = "${journey.distance} km • ${journey.travelTime} min",
+                        text = "To: ${toStation?.name ?: journey.endStationId} (${toStation?.code ?: ""})",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
+                
+                Text(
+                    text = "$${String.format("%.2f", journey.basePrice)}",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
-
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "₫${String.format("%,.0f", journey.basePrice)}",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
-                MetrollButton(
-                    text = "Add to Cart",
-                    onClick = onAddToCart
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "${journey.distance} km",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "${journey.travelTime} min",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                
+                IconButton(
+                    onClick = onAddToCart,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add to Cart",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
     }
@@ -818,30 +939,11 @@ private fun CartBottomSheet(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(16.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.DragHandle,
-                contentDescription = "Drag handle",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                modifier = Modifier
-                    .background(
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                        CircleShape
-                    )
-                    .padding(horizontal = 16.dp, vertical = 2.dp)
-            )
-        }
-
         Text(
             text = "Shopping Cart",
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 16.dp)
         )
@@ -853,25 +955,16 @@ private fun CartBottomSheet(
                     .height(200.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.ShoppingCart,
-                        contentDescription = "Empty Cart",
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Your cart is empty",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Text(
+                    text = "Your cart is empty",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         } else {
             LazyColumn(
                 modifier = Modifier.weight(1f, false),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(cartItems) { item ->
                     CartItemCard(
@@ -887,15 +980,12 @@ private fun CartBottomSheet(
             // Total and Checkout
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    modifier = Modifier.padding(16.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -907,15 +997,17 @@ private fun CartBottomSheet(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "₫${String.format("%,.0f", cartTotal)}",
+                            text = "$${String.format("%.2f", cartTotal)}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
                     
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
                     MetrollButton(
-                        text = if (isCheckingOut) "Processing..." else "Proceed to Checkout",
+                        text = if (isCheckingOut) "Processing..." else "Checkout",
                         onClick = onCheckout,
                         enabled = !isCheckingOut,
                         isLoading = isCheckingOut,
@@ -938,20 +1030,19 @@ private fun CartItemCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = item.name,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Medium
                 )
                 
@@ -964,60 +1055,34 @@ private fun CartItemCard(
                 }
                 
                 Text(
-                    text = "₫${String.format("%,.0f", item.price)} each",
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = "$${String.format("%.2f", item.price)} each",
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             
-            Column(horizontalAlignment = Alignment.End) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                IconButton(
+                    onClick = { onQuantityChange(item.quantity - 1) },
+                    enabled = item.quantity > 1
                 ) {
-                    IconButton(
-                        onClick = { onQuantityChange(item.quantity - 1) },
-                        enabled = item.quantity > 1,
-                        modifier = Modifier.size(32.dp),
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                        )
-                    ) {
-                        Icon(
-                            Icons.Default.Remove,
-                            contentDescription = "Decrease",
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-
-                    Text(
-                        text = item.quantity.toString(),
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.width(32.dp)
-                    )
-
-                    IconButton(
-                        onClick = { onQuantityChange(item.quantity + 1) },
-                        modifier = Modifier.size(32.dp),
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                            contentColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = "Increase",
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
+                    Icon(Icons.Default.Remove, contentDescription = "Decrease")
                 }
-                TextButton(onClick = onRemove) {
-                    Text(
-                        "Remove",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.error
-                    )
+                
+                Text(
+                    text = item.quantity.toString(),
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.width(32.dp)
+                )
+                
+                IconButton(
+                    onClick = { onQuantityChange(item.quantity + 1) }
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Increase")
                 }
             }
         }
@@ -1065,7 +1130,6 @@ internal fun PaymentWebView(
                                                 currentUrl.contains("success") || 
                                                 currentUrl.contains("complete") ||
                                                 currentUrl.contains("payment_status=success") ||
-                                                currentUrl.contains("vnp_ResponseCode=00") ||
                                                 currentUrl.contains("status=success") -> {
                                                     println("Payment success detected")
                                                     showDialog = false
@@ -1074,7 +1138,6 @@ internal fun PaymentWebView(
                                                 currentUrl.contains("failed") || 
                                                 currentUrl.contains("error") ||
                                                 currentUrl.contains("payment_status=failed") ||
-                                                currentUrl.contains("vnp_ResponseCode") ||
                                                 currentUrl.contains("status=failed") ||
                                                 currentUrl.contains("cancel") -> {
                                                     println("Payment failure detected")
@@ -1092,7 +1155,7 @@ internal fun PaymentWebView(
                                             when {
                                                 currentUrl.startsWith("metroll://") -> {
                                                     // Handle app deep link for payment completion
-                                                    if (currentUrl.contains("success") || currentUrl.contains("vnp_ResponseCode=00")) {
+                                                    if (currentUrl.contains("success")) {
                                                         showDialog = false
                                                         onPaymentComplete()
                                                     } else {
@@ -1101,6 +1164,8 @@ internal fun PaymentWebView(
                                                     }
                                                     return true
                                                 }
+
+                                                else -> {}
                                             }
                                         }
                                         return false
@@ -1130,7 +1195,7 @@ internal fun PaymentWebView(
                         onPaymentComplete() 
                     }
                 ) {
-                    Text("Close")
+                    Text("Payment Complete")
                 }
             },
             dismissButton = {
@@ -1140,7 +1205,7 @@ internal fun PaymentWebView(
                         onPaymentFailed()
                     }
                 ) {
-                    Text("Cancel Payment")
+                    Text("Cancel")
                 }
             }
         )
