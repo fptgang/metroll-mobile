@@ -115,7 +115,6 @@ fun QrScannerScreen(
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     var lastScanned by remember { mutableStateOf<String?>(null) }
     var boundingPoints by remember { mutableStateOf<List<PointF>?>(null) }
-    var noQrFrames by remember { mutableIntStateOf(0) }
     var permissionState by remember { mutableStateOf<PermissionState?>(null) }
     var requestPermission: (() -> Unit)? by remember { mutableStateOf(null) }
     // Used later for scaling bounding box
@@ -125,6 +124,8 @@ fun QrScannerScreen(
     // Camera control states
     var camera by remember { mutableStateOf<Camera?>(null) }
     var isFlashlightOn by remember { mutableStateOf(false) }
+    
+
     //endregion
 
     //region Event Handler
@@ -139,16 +140,26 @@ fun QrScannerScreen(
     }
 
     LaunchedEffect(qrScannerUiState.value.status) {
-        if (qrScannerUiState.value.status is QrScannerViewModel.ScannerStatus.Success) {
-            val vibrator = appContext.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator
-            vibrator?.let {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    it.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE))
-                } else {
-                    @Suppress("DEPRECATION")
-                    it.vibrate(200)
+        when (val status = qrScannerUiState.value.status) {
+            is QrScannerViewModel.ScannerStatus.Success -> {
+                val vibrator = appContext.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator
+                vibrator?.let {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        it.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE))
+                    } else {
+                        @Suppress("DEPRECATION")
+                        it.vibrate(200)
+                    }
                 }
             }
+            else -> { /* Handle other statuses if needed */ }
+        }
+    }
+
+    // Clear bounding points when returning to scanner screen
+    LaunchedEffect(qrScannerUiState.value.currentScreen) {
+        if (qrScannerUiState.value.currentScreen == QrScannerViewModel.ScreenState.Scanner) {
+            boundingPoints = null
         }
     }
 
@@ -194,8 +205,6 @@ fun QrScannerScreen(
                     qrScannerViewModel = qrScannerViewModel,
                     boundingPoints = boundingPoints,
                     onBoundingPointsChanged = { boundingPoints = it },
-                    noQrFrames = noQrFrames,
-                    onNoQrFramesChanged = { noQrFrames = it },
                     previewWidth = previewWidth,
                     previewHeight = previewHeight,
                     onPreviewSizeChanged = { width, height ->
@@ -260,8 +269,6 @@ private fun ScannerScreenContent(
     qrScannerViewModel: QrScannerViewModel,
     boundingPoints: List<PointF>?,
     onBoundingPointsChanged: (List<PointF>?) -> Unit,
-    noQrFrames: Int,
-    onNoQrFramesChanged: (Int) -> Unit,
     previewWidth: Int,
     previewHeight: Int,
     onPreviewSizeChanged: (Int, Int) -> Unit,
@@ -369,20 +376,16 @@ private fun ScannerScreenContent(
                             .build()
                             .also { imageAnalysis ->
                                 imageAnalysis.setAnalyzer(analyzerExecutor, QrCodeAnalyzer { text, points, imgWidth, imgHeight ->
-                                    if (text.isNotBlank()) {
-                                        qrScannerViewModel.onTriggerEvent(QrScannerViewModel.QrScannerViewEvent.QrDetected(text))
-                                    }
-
+                                    // Update bounding points regardless of processing state
                                     if (points != null) {
                                         onBoundingPointsChanged(points)
-                                        onNoQrFramesChanged(0)
                                     } else {
-                                        val newFrames = noQrFrames + 1
-                                        onNoQrFramesChanged(newFrames)
-                                        if (newFrames > 5) {
-                                            onBoundingPointsChanged(null)
-                                            qrScannerViewModel.onTriggerEvent(QrScannerViewModel.QrScannerViewEvent.ClearStatus)
-                                        }
+                                        onBoundingPointsChanged(null)
+                                    }
+
+                                    // Send QR to ViewModel - blocking handled at ViewModel level
+                                    if (text.isNotBlank()) {
+                                        qrScannerViewModel.onTriggerEvent(QrScannerViewModel.QrScannerViewEvent.QrDetected(text))
                                     }
 
                                     onPreviewSizeChanged(imgWidth, imgHeight)

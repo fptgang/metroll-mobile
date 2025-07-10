@@ -186,7 +186,7 @@ fun MetrollApp(
         onRequestPermission = onRequestPermissionCallback
     )
 
-    MetrollTheme(darkTheme = true ) {
+    MetrollTheme(darkTheme = false ) {
         //region ui
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },

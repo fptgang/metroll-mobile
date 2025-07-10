@@ -3,213 +3,226 @@ package com.vidz.theme
 import androidx.compose.ui.graphics.Color
 
 /**
+ * HCMC Metro Flat Design Color System
+ * Optimized for flat design principles with bold, vibrant colors
  * Created by FPL on 08/01/2025.
- * Updated with HCMC Metro brand colors - Material Design 3 compliant
  */
 
-val White = Color(0xFFFFFFFF)
-val Black = Color(0xFF000000)
+// ============================================
+// BASE FLAT DESIGN COLORS
+// ============================================
 
-// HCMC Metro Brand Colors
-val MetroNavyBlue = Color(0xFF1E3A8A) // Primary brand color - deep royal navy blue
-val MetroLightBlue = Color(0xFF3B82F6) // Secondary - lighter blue accent
-val MetroRed = Color(0xFFEF4444) // Accent - bright red logo highlight
-val MetroWhite = Color(0xFFFFFFFF) // Neutral - clean white contrast
-val MetroGray = Color(0xFFF3F4F6) // Supporting - light gray backgrounds
+// Primary Flat Colors - Bold and Vibrant
+val FlatMetroNavy = Color(0xFF1E3A8A)        // Deep navy - primary brand
+val FlatMetroBlue = Color(0xFF3B82F6)        // Bright blue - secondary
+val FlatMetroRed = Color(0xFFEF4444)         // Vibrant red - accent
+val FlatMetroWhite = Color(0xFFFFFFFF)       // Pure white
+val FlatMetroGray = Color(0xFF6B7280)        // Medium gray - balanced
 
-// Extended Metro Color Palette
-val MetroNavyBlueDark = Color(0xFF1E40AF) // Darker navy variant
-val MetroNavyBlueLight = Color(0xFF3B82F6) // Lighter navy variant
-val MetroRedLight = Color(0xFFF87171) // Lighter red variant
-val MetroRedDark = Color(0xFFDC2626) // Darker red variant
-val MetroBlueAccent = Color(0xFF60A5FA) // Additional blue accent
-val MetroGrayDark = Color(0xFFE5E7EB) // Darker gray variant
-val MetroGrayLight = Color(0xFFF9FAFB) // Lighter gray variant
+// ============================================
+// EXTENDED FLAT PALETTE
+// ============================================
 
-//val DarkSystemUiBackgroundColor = Color(0xFF0D0D0C)
-val DarkSystemUiBackgroundColor = Color(0xFF000000)
-val LightSystemUiBackgroundColor = Color(0xFFFFFBFF) // Clean white for metro theme
+// Blue Family - Flat Design
+val FlatNavyDark = Color(0xFF1E40AF)         // Darker navy
+val FlatNavyLight = Color(0xFF60A5FA)        // Lighter navy
+val FlatBlueVibrant = Color(0xFF2563EB)      // Vibrant blue
+val FlatBlueLight = Color(0xFF93C5FD)        // Light blue
+val FlatBluePastel = Color(0xFFDBEAFE)       // Pastel blue
 
-// Base - HCMC Metro Brand Colors
-val LightPrimaryColor = MetroNavyBlue // Deep royal navy blue
-val DarkPrimaryColor = MetroLightBlue // Lighter blue for dark mode
+// Red Family - Flat Design
+val FlatRedDark = Color(0xFFDC2626)          // Dark red
+val FlatRedLight = Color(0xFFF87171)         // Light red
+val FlatRedVibrant = Color(0xFFFF4545)       // Vibrant red
+val FlatRedPastel = Color(0xFFFECDD3)        // Pastel red
+val FlatRedCoral = Color(0xFFFF6B6B)         // Coral red
 
-val LightOnPrimaryColor = MetroWhite
-val DarkOnPrimaryColor = Color(0xFF0F172A) // Dark navy for contrast
+// Gray Family - Flat Design
+val FlatGrayDark = Color(0xFF374151)         // Dark gray
+val FlatGrayMedium = Color(0xFF6B7280)       // Medium gray
+val FlatGrayLight = Color(0xFF9CA3AF)        // Light gray
+val FlatGrayLighter = Color(0xFFD1D5DB)      // Lighter gray
+val FlatGrayBackground = Color(0xFFF3F4F6)   // Background gray
 
-val LightPrimaryContainerColor = Color(0xFFEFF6FF) // Light blue container
-val DarkPrimaryContainerColor = Color(0xFF1E293B) // Dark blue container
+// ============================================
+// FUNCTIONAL FLAT COLORS
+// ============================================
 
-val LightOnPrimaryContainerColor = Color(0xFF0F172A)
-val DarkOnPrimaryContainerColor = Color(0xFFEFF6FF)
+// Success Colors
+val FlatSuccess = Color(0xFF10B981)          // Emerald green
+val FlatSuccessLight = Color(0xFF6EE7B7)     // Light success
+val FlatSuccessDark = Color(0xFF059669)      // Dark success
 
-val LightSecondaryColor = MetroLightBlue // Lighter blue accent
-val DarkSecondaryColor = MetroBlueAccent
+// Warning Colors
+val FlatWarning = Color(0xFFF59E0B)          // Amber warning
+val FlatWarningLight = Color(0xFFFBBF24)     // Light warning
+val FlatWarningDark = Color(0xFFD97706)      // Dark warning
 
-val LightOnSecondaryColor = MetroWhite
-val DarkOnSecondaryColor = MetroWhite
+// Error Colors
+val FlatError = Color(0xFFEF4444)            // Red error (matches brand)
+val FlatErrorLight = Color(0xFFF87171)       // Light error
+val FlatErrorDark = Color(0xFFDC2626)        // Dark error
 
-val LightSecondaryContainerColor = Color(0xFFDEECFF) // Light blue container
-val DarkSecondaryContainerColor = Color(0xFF1E3A5F)
+// Info Colors
+val FlatInfo = Color(0xFF3B82F6)             // Blue info (matches brand)
+val FlatInfoLight = Color(0xFF93C5FD)        // Light info
+val FlatInfoDark = Color(0xFF2563EB)         // Dark info
 
-val LightOnSecondaryContainerColor = Color(0xFF0F172A)
-val DarkOnSecondaryContainerColor = Color(0xFFDEECFF)
+// ============================================
+// TRANSIT-SPECIFIC FLAT COLORS
+// ============================================
 
-val LightTertiaryColor = MetroRed // Bright red accent
-val DarkTertiaryColor = MetroRedLight
+// Route & Station Colors
+val FlatRouteActive = Color(0xFF1E3A8A)      // Active route - navy
+val FlatRouteInactive = Color(0xFF9CA3AF)    // Inactive route - gray
+val FlatStationPrimary = Color(0xFF1E3A8A)   // Primary station - navy
+val FlatStationSecondary = Color(0xFF3B82F6) // Secondary station - blue
+val FlatStationDisabled = Color(0xFF6B7280)  // Disabled station - gray
 
-val LightOnTertiaryColor = MetroWhite
-val DarkOnTertiaryColor = MetroWhite
+// Ticket Status Colors
+val FlatTicketValid = Color(0xFF10B981)      // Valid ticket - green
+val FlatTicketExpired = Color(0xFFEF4444)    // Expired ticket - red
+val FlatTicketPending = Color(0xFFF59E0B)    // Pending ticket - amber
+val FlatTicketUsed = Color(0xFF6B7280)       // Used ticket - gray
 
-val LightTertiaryContainerColor = Color(0xFFFEF2F2) // Light red container
-val DarkTertiaryContainerColor = Color(0xFF4C1D1D)
+// ============================================
+// UI COMPONENT FLAT COLORS
+// ============================================
 
-val LightOnTertiaryContainerColor = Color(0xFF7F1D1D)
-val DarkOnTertiaryContainerColor = Color(0xFFFEF2F2)
+// Button Colors
+val FlatButtonPrimary = Color(0xFF1E3A8A)    // Primary button - navy
+val FlatButtonSecondary = Color(0xFF3B82F6)  // Secondary button - blue
+val FlatButtonDanger = Color(0xFFEF4444)     // Danger button - red
+val FlatButtonSuccess = Color(0xFF10B981)    // Success button - green
+val FlatButtonWarning = Color(0xFFF59E0B)    // Warning button - amber
+val FlatButtonDisabled = Color(0xFF9CA3AF)   // Disabled button - gray
 
-val LightErrorColor = Color(0xFFDC2626) // Metro red for errors
-val DarkErrorColor = Color(0xFFF87171)
+// Card & Surface Colors
+val FlatCardBackground = Color(0xFFFFFFFF)   // Card background - white
+val FlatCardBorder = Color(0xFFE5E7EB)       // Card border - light gray
+val FlatSurfaceElevated = Color(0xFFF9FAFB)  // Elevated surface
+val FlatSurfaceDepressed = Color(0xFFF3F4F6) // Depressed surface
 
-val LightOnErrorColor = MetroWhite
-val DarkOnErrorColor = MetroWhite
+// Text Colors
+val FlatTextPrimary = Color(0xFF111827)      // Primary text - dark
+val FlatTextSecondary = Color(0xFF6B7280)    // Secondary text - medium gray
+val FlatTextDisabled = Color(0xFF9CA3AF)     // Disabled text - light gray
+val FlatTextOnDark = Color(0xFFFFFFFF)       // Text on dark backgrounds
+val FlatTextOnColor = Color(0xFFFFFFFF)      // Text on colored backgrounds
 
-val LightErrorContainerColor = Color(0xFFFEF2F2)
-val DarkErrorContainerColor = Color(0xFF4C1D1D)
+// ============================================
+// FLAT DESIGN ACCENT COLORS
+// ============================================
 
-val LightOnErrorContainerColor = Color(0xFF7F1D1D)
-val DarkOnErrorContainerColor = Color(0xFFFEF2F2)
+// Additional Accent Colors for Variety
+val FlatPurple = Color(0xFF8B5CF6)           // Purple accent
+val FlatPurpleLight = Color(0xFFA78BFA)      // Light purple
+val FlatTeal = Color(0xFF14B8A6)             // Teal accent
+val FlatTealLight = Color(0xFF5EEAD4)        // Light teal
+val FlatOrange = Color(0xFFF97316)           // Orange accent
+val FlatOrangeLight = Color(0xFFFB923C)      // Light orange
 
-val LightInverseSurfaceColor = Color(0xFF1E293B)
-val DarkInverseSurfaceColor = Color(0xFFF8FAFC)
+// ============================================
+// OPACITY VARIANTS FOR FLAT DESIGN
+// ============================================
 
-val LightOnInverseSurfaceColor = Color(0xFFF8FAFC)
-val DarkOnInverseSurfaceColor = Color(0xFF1E293B)
+// Navy Opacity Variants
+val FlatNavy90 = Color(0xE61E3A8A)           // 90% opacity
+val FlatNavy80 = Color(0xCC1E3A8A)           // 80% opacity
+val FlatNavy60 = Color(0x991E3A8A)           // 60% opacity
+val FlatNavy40 = Color(0x661E3A8A)           // 40% opacity
+val FlatNavy20 = Color(0x331E3A8A)           // 20% opacity
+val FlatNavy10 = Color(0x1A1E3A8A)           // 10% opacity
 
-val LightInversePrimaryColor = Color(0xFFEFF6FF)
-val DarkInversePrimaryColor = Color(0xFF1E3A8A)
+// Blue Opacity Variants
+val FlatBlue90 = Color(0xE63B82F6)           // 90% opacity
+val FlatBlue80 = Color(0xCC3B82F6)           // 80% opacity
+val FlatBlue60 = Color(0x993B82F6)           // 60% opacity
+val FlatBlue40 = Color(0x663B82F6)           // 40% opacity
+val FlatBlue20 = Color(0x333B82F6)           // 20% opacity
+val FlatBlue10 = Color(0x1A3B82F6)           // 10% opacity
 
-val LightOutlineColor = Color(0xFFCBD5E1) // Metro gray outline
-val DarkOutlineColor = Color(0xFF64748B)
+// Red Opacity Variants
+val FlatRed90 = Color(0xE6EF4444)            // 90% opacity
+val FlatRed80 = Color(0xCCEF4444)            // 80% opacity
+val FlatRed60 = Color(0x99EF4444)            // 60% opacity
+val FlatRed40 = Color(0x66EF4444)            // 40% opacity
+val FlatRed20 = Color(0x33EF4444)            // 20% opacity
+val FlatRed10 = Color(0x1AEF4444)            // 10% opacity
 
-val LightOutlineVariantColor = Color(0xFFE2E8F0)
-val DarkOutlineVariantColor = Color(0xFF475569)
+// ============================================
+// FLAT DESIGN GRADIENTS (Linear Color Stops)
+// ============================================
 
-val LightSurfaceColor = MetroWhite // Clean white surface
-val DarkSurfaceColor = Color(0xFF0F172A)
+// Primary Gradients
+val FlatGradientNavyStart = Color(0xFF1E3A8A)
+val FlatGradientNavyEnd = Color(0xFF2563EB)
 
-val LightSurfaceDimColor = Color(0xFFF8FAFC)
-val DarkSurfaceDimColor = Color(0xFF0D1117)
+val FlatGradientBlueStart = Color(0xFF3B82F6)
+val FlatGradientBlueEnd = Color(0xFF60A5FA)
 
-val LightSurfaceBrightColor = MetroWhite
-val DarkSurfaceBrightColor = Color(0xFF1E293B)
+val FlatGradientRedStart = Color(0xFFEF4444)
+val FlatGradientRedEnd = Color(0xFFF87171)
 
-val LightSurfaceContainerColor = MetroGray // Light gray background
-val DarkSurfaceContainerColor = Color(0xFF1A202C)
+// Success Gradient
+val FlatGradientSuccessStart = Color(0xFF10B981)
+val FlatGradientSuccessEnd = Color(0xFF6EE7B7)
 
-val LightSurfaceContainerHighColor = MetroWhite
-val DarkSurfaceContainerHighColor = Color(0xFFF1F5F9)
+// Warning Gradient
+val FlatGradientWarningStart = Color(0xFFF59E0B)
+val FlatGradientWarningEnd = Color(0xFFFBBF24)
 
-val LightOnSurfaceColor = Color(0xFF1E293B) // Dark for contrast
-val DarkOnSurfaceColor = Color(0xFFF1F5F9)
-
-val LightOnSurfaceVariantColor = Color(0xFF64748B) // Medium gray
-val DarkOnSurfaceVariantColor = Color(0xFFCBD5E1)
-
-// HCMC Metro specific UI colors
-val MetroSuccess = Color(0xFF059669) // Green for success states
-val MetroWarning = Color(0xFFD97706) // Orange for warnings
-val MetroInfo = MetroLightBlue // Info uses secondary blue
-val MetroDanger = MetroRed // Danger uses accent red
-
-// Transit-specific colors
-val RouteActive = MetroNavyBlue // For active routes
-val RouteInactive = Color(0xFF9CA3AF) // For inactive routes
-val StationPrimary = MetroNavyBlue // For station indicators
-val StationSecondary = MetroLightBlue // For station highlights
-val TicketValid = Color(0xFF059669) // For valid tickets
-val TicketExpired = MetroRed // For expired tickets
-val TicketPending = Color(0xFFD97706) // For pending tickets
-
-// Define custom light and dark mode colors - HCMC Metro
-val LightPrimaryFixedColor = MetroNavyBlue
-val DarkPrimaryFixedColor = MetroLightBlue
-
-val LightPrimaryFixedDimColor = Color(0xFF1E40AF)
-val DarkPrimaryFixedDimColor = Color(0xFF1E40AF)
-
-val LightOnPrimaryFixedColor = MetroWhite
-val DarkOnPrimaryFixedColor = MetroWhite
-
-val LightOnPrimaryFixedVariantColor = Color(0xFFEFF6FF)
-val DarkOnPrimaryFixedVariantColor = Color(0xFFEFF6FF)
-
-val LightSecondaryFixedColor = MetroLightBlue
-val DarkSecondaryFixedColor = MetroBlueAccent
-
-val LightOnSecondaryFixedColor = MetroWhite
-val DarkOnSecondaryFixedColor = MetroWhite
-
-val LightSecondaryFixedDimColor = Color(0xFF2563EB)
-val DarkSecondaryFixedDimColor = Color(0xFF2563EB)
-
-val LightSecondaryFixedVariantColor = Color(0xFFDEECFF)
-val DarkSecondaryFixedVariantColor = Color(0xFF1E3A5F)
-
-val LightTertiaryFixedColor = MetroRed
-val DarkTertiaryFixedColor = MetroRedLight
-
-val LightTertiaryFixedDimColor = Color(0xFFDC2626)
-val DarkTertiaryFixedDimColor = Color(0xFFDC2626)
-
-val LightOnTertiaryFixedColor = MetroWhite
-val DarkOnTertiaryFixedColor = MetroWhite
-
-val LightOnTertiaryFixedVariantColor = Color(0xFF7F1D1D)
-val DarkOnTertiaryFixedVariantColor = Color(0xFF7F1D1D)
-
-val LightOnInverseSurfaceVariantColor = Color(0xFFF8FAFC)
-val DarkOnInverseSurfaceVariantColor = Color(0xFF64748B)
-
-// Keep existing utility colors with metro theme
-val SkeletonColor = Color(0xFFF1F5F9) // Light metro gray
-val ChipColor = Color(0xFFEFF6FF) // Light blue for chips
+// ============================================
+// FLAT DESIGN USAGE GUIDE
+// ============================================
 
 /*
-HCMC Metro Brand Color Usage Guidelines:
+FLAT DESIGN PRINCIPLES FOR HCMC METRO:
 
-Primary Colors:
-- Metro Navy Blue (#1E3A8A): Main brand color, primary actions, headers
-- Metro Light Blue (#3B82F6): Secondary actions, links, highlights
-- Metro Red (#EF4444): Accent color, alerts, important indicators
+1. Bold, Vibrant Colors:
+   - Use high contrast colors
+   - Avoid subtle variations
+   - Prefer solid colors over gradients
 
-Neutral Colors:
-- Metro White (#FFFFFF): Backgrounds, text on dark surfaces
-- Metro Gray (#F3F4F6): Light backgrounds, dividers
+2. Primary Color Usage:
+   - Navy (FlatMetroNavy): Main actions, headers, primary buttons
+   - Blue (FlatMetroBlue): Secondary actions, links, info states
+   - Red (FlatMetroRed): Alerts, errors, important indicators
 
-Transit-Specific Usage:
-- Active routes: Metro Navy Blue
-- Station indicators: Metro Navy Blue with white text
-- Valid tickets: Green success color
-- Expired tickets: Metro Red
-- Information displays: Metro Light Blue
+3. Functional Color Usage:
+   - Success: FlatSuccess (emerald green)
+   - Warning: FlatWarning (amber)
+   - Error: FlatError (red - matches brand)
+   - Info: FlatInfo (blue - matches brand)
 
-Material Design 3 Compliance:
-- Bold color usage ✓
-- Geometric shapes ✓
-- Clear typography hierarchy ✓
-- Functional iconography ✓
-- Public transportation optimized ✓
+4. Text Hierarchy:
+   - Primary: FlatTextPrimary (dark gray)
+   - Secondary: FlatTextSecondary (medium gray)
+   - Disabled: FlatTextDisabled (light gray)
+   - On Color: FlatTextOnColor (white)
 
-Opacity Hex Values:
-100% — FF
-90% — E6
-80% — CC
-70% — B3
-60% — 99
-50% — 80
-40% — 66
-30% — 4D
-20% — 33
-10% — 1A
-0% — 00
+5. Transit-Specific Usage:
+   - Active routes: FlatRouteActive (navy)
+   - Valid tickets: FlatTicketValid (green)
+   - Expired tickets: FlatTicketExpired (red)
+   - Pending states: FlatTicketPending (amber)
+
+6. Button Hierarchy:
+   - Primary: FlatButtonPrimary (navy background)
+   - Secondary: FlatButtonSecondary (blue background)
+   - Danger: FlatButtonDanger (red background)
+   - Success: FlatButtonSuccess (green background)
+
+7. Opacity Usage:
+   - Use pre-defined opacity variants
+   - 90-80%: Hover/pressed states
+   - 60-40%: Disabled states
+   - 20-10%: Background overlays
+
+8. Flat Design Best Practices:
+   - No shadows or 3D effects
+   - Clean, geometric shapes
+   - High contrast text
+   - Consistent color application
+   - Minimal visual noise
 */
