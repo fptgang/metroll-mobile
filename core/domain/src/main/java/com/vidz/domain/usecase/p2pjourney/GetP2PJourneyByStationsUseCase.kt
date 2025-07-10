@@ -14,21 +14,21 @@ class GetP2PJourneyByStationsUseCase @Inject constructor(
     suspend operator fun invoke(
         page: Int,
         size: Int,
-        startStationId: String,
-        endStationId: String
+        startStationId: String? = null,
+        endStationId: String? = null
     ): Flow<Result<PageDto<P2PJourney>>> = flow {
         try {
             emit(Result.Init)
-            
+
             when {
-                startStationId.isBlank() -> {
-                    emit(Result.ServerError.MissingParam("Start station ID is required"))
-                    return@flow
-                }
-                endStationId.isBlank() -> {
-                    emit(Result.ServerError.MissingParam("End station ID is required"))
-                    return@flow
-                }
+//                startStationId.isNullOrBlank() -> {
+//                    emit(Result.ServerError.MissingParam("Start station ID is required"))
+//                    return@flow
+//                }
+//                endStationId.isBlank() -> {
+//                    emit(Result.ServerError.MissingParam("End station ID is required"))
+//                    return@flow
+//                }
                 startStationId == endStationId -> {
                     emit(Result.ServerError.MissingParam("Start and end stations cannot be the same"))
                     return@flow

@@ -52,6 +52,27 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.vidz.domain.model.FirebaseTicketStatus
 import com.vidz.domain.model.TicketType
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+/**
+ * Formats ISO 8601 timestamp to a user-friendly format
+ * Input: "2025-07-06T11:24:19.695367436Z"
+ * Output: "Jul 6, 2025 at 11:24 AM"
+ */
+private fun formatValidUntil(validUntil: String): String {
+    return try {
+        val instant = Instant.parse(validUntil)
+        val localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
+        val formatter = DateTimeFormatter.ofPattern("MMM d, yyyy 'at' h:mm a")
+        localDateTime.format(formatter)
+    } catch (e: Exception) {
+        // Fallback to original format if parsing fails
+        validUntil
+    }
+}
 
 @Composable
 fun QRDisplayScreenRoot(
@@ -452,7 +473,7 @@ private fun TicketStatusCard(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                             )
                             Text(
-                                text = firebaseTicket.validUntil,
+                                text = formatValidUntil(firebaseTicket.validUntil),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer

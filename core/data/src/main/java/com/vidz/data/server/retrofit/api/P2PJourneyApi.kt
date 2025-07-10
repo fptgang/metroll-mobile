@@ -30,8 +30,8 @@ interface P2PJourneyApi {
     suspend fun getP2PJourneyByStations(
         @Query("page") page: Int? = null,
         @Query("size") size: Int? = null,
-        @Query("startStationId") startStationId: String,
-        @Query("endStationId") endStationId: String
+        @Query("startStationId") startStationId: String?,
+        @Query("endStationId") endStationId: String?
     ): PageDto<P2PJourneyDto>
     
     @POST("p2p-journeys")

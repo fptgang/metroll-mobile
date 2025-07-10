@@ -11,6 +11,6 @@ data class StationDto(
     val lat: Double,
     val lng: Double,
     val status: String,
-    val description: String,
+    val description: String? ="",
     val lineStationInfos: List<LineStationInfoDto> = emptyList()
 ) 

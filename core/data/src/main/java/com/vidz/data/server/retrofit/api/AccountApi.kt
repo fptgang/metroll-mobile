@@ -42,4 +42,7 @@ interface AccountApi {
     suspend fun deleteAccount(
         @Path("accountId") accountId: String
     ): Response<Unit>
+
+    @GET("account-discount-packages/my-discount-percentage")
+    suspend fun getMyDiscountPercentage(): Response<Float?>
 } 

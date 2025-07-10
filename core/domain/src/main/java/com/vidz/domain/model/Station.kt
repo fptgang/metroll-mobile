@@ -8,6 +8,6 @@ data class Station(
     val latitude: Double,
     val longitude: Double,
     val status: String,
-    val description: String,
+    val description: String? = "",
     val lineStationInfos: List<LineStationInfo> = emptyList()
 ) 
