@@ -72,7 +72,7 @@ fun EditProfileScreen(
     // Handle save success
     LaunchedEffect(uiState.isUpdateSuccess) {
         if (uiState.isUpdateSuccess) {
-            onShowSnackbar("Profile updated successfully")
+            onShowSnackbar("Cập nhật tài khoản thành công")
             navController.popBackStack()
         }
     }
@@ -94,13 +94,13 @@ fun EditProfileScreen(
     val handleSaveClick = {
         // Validate inputs
         fullNameError = when {
-            fullName.isBlank() -> "Full name is required"
-            fullName.length < 2 -> "Full name must be at least 2 characters"
+            fullName.isBlank() -> "Không được để trống"
+            fullName.length < 2 -> "Tối thiểu 2 kí tự"
             else -> null
         }
         
         phoneNumberError = when {
-            phoneNumber.isNotBlank() && phoneNumber.length < 8 -> "Phone number must be at least 8 digits"
+            phoneNumber.isNotBlank() && phoneNumber.length < 8 -> "Tối thiểu 8 kí tự"
             phoneNumber.isNotBlank() && !phoneNumber.matches(Regex("^[0-9+\\-\\s()]+$")) -> "Invalid phone number format"
             else -> null
         }
@@ -116,7 +116,7 @@ fun EditProfileScreen(
     Scaffold(
         topBar = {
             TopAppBarWithBack(
-                title = "Edit Profile",
+                title = "Chỉnh sửa thông tin",
                 onBackClick = handleBackClick
             )
         }
@@ -177,7 +177,7 @@ private fun LoadingScreen(
         ) {
             CircularProgressIndicator()
             Text(
-                text = "Loading profile...",
+                text = "Đang tải hồ sơ...",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -207,7 +207,7 @@ private fun ErrorScreen(
                 modifier = Modifier.size(64.dp)
             )
             Text(
-                text = "Failed to load profile",
+                text = "Không thể tải hồ sơ",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Medium
             )
@@ -281,7 +281,7 @@ private fun CurrentProfileCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Current Information",
+                text = "Thông tin hiện tại",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium
             )
@@ -316,7 +316,7 @@ private fun EditFormCard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Edit Information",
+                text = "Chỉnh sửa thông tin",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium
             )
@@ -325,7 +325,7 @@ private fun EditFormCard(
             OutlinedTextField(
                 value = fullName,
                 onValueChange = onFullNameChange,
-                label = { Text("Full Name") },
+                label = { Text("Họ và tên") },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Person,
@@ -342,7 +342,7 @@ private fun EditFormCard(
             OutlinedTextField(
                 value = phoneNumber,
                 onValueChange = onPhoneNumberChange,
-                label = { Text("Phone Number") },
+                label = { Text("Số điện thoại") },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Phone,
@@ -396,13 +396,13 @@ private fun SaveButtonSection(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Save Changes")
+                    Text("Lưu thay đổi")
                 }
             }
             
             if (!canSave) {
                 Text(
-                    text = "Please fill in all required fields correctly",
+                    text = "Vui lòng nhập đẩy đủ thông tin",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
