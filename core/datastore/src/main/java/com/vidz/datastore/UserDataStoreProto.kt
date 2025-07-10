@@ -1,6 +1,7 @@
 package com.vidz.datastore
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
@@ -48,6 +49,7 @@ class UserDataStoreProto @Inject constructor(
                 fullName = userData.fullName,
                 phoneNumber = userData.phoneNumber,
                 role = AccountRole.valueOf(userData.role),
+                assignedStation = userData.assignedStation,
                 active = userData.active,
                 createdAt = userData.createdAt,
                 updatedAt = userData.updatedAt
@@ -62,6 +64,9 @@ class UserDataStoreProto @Inject constructor(
     }
 
     suspend fun saveUser(account: Account) {
+        Log.d(
+            "HAHHAHAHAHHAHAH","$account"
+        )
         context.userDataStoreProto.updateData { preferences ->
             val userData = UserData.newBuilder()
                 .setId(account.id)
@@ -72,6 +77,7 @@ class UserDataStoreProto @Inject constructor(
                 .setActive(account.active)
                 .setCreatedAt(account.createdAt)
                 .setUpdatedAt(account.updatedAt)
+                .setAssignedStation(account.assignedStation)
                 .build()
 
             preferences.toBuilder()

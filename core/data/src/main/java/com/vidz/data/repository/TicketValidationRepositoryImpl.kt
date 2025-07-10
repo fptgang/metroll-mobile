@@ -59,14 +59,30 @@ class TicketValidationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getTicketValidationsByStationId(stationId: String): Result<List<TicketValidation>> {
-        val flow: IFlow<List<TicketValidation>> = ServerFlow(
-            getData = { retrofitServer.ticketValidationApi.getTicketValidationsByStationId(stationId) },
-            convert = { it.map { dto -> dto.toDomain() } }
-        )
-        return flow.execute().let { flowResult ->
+        return try {
+            android.util.Log.d("TicketValidationRepo", "getTicketValidationsByStationId called with stationId: $stationId")
+            
+            val flow: IFlow<List<TicketValidation>> = ServerFlow(
+                getData = { 
+                    android.util.Log.d("TicketValidationRepo", "Making API call to getTicketValidationsByStationId")
+                    retrofitServer.ticketValidationApi.getTicketValidationsByStationId(stationId)
+                },
+                convert = { 
+                    android.util.Log.d("TicketValidationRepo", "Converting response: ${it.size} items")
+                    it.map { dto -> dto.toDomain() } 
+                }
+            )
+            
             var result: Result<List<TicketValidation>> = Result.Init
-            flowResult.collect { result = it }
+            flow.execute().collect { 
+                android.util.Log.d("TicketValidationRepo", "Flow result: $it")
+                result = it 
+            }
+            android.util.Log.d("TicketValidationRepo", "Final result: $result")
             result
+        } catch (e: Exception) {
+            android.util.Log.e("TicketValidationRepo", "Exception in getTicketValidationsByStationId", e)
+            Result.ServerError.General("Failed to get ticket validations: ${e.message}")
         }
     }
 

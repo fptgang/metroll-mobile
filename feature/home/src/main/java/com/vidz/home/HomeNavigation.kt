@@ -22,6 +22,7 @@ import com.vidz.domain.model.AccountRole
 import com.vidz.domain.usecase.account.ObserveLocalAccountInfoUseCase
 import com.vidz.home.customerhome.CustomerHomeScreenRoot
 import com.vidz.home.staffhome.StaffHomeScreenRoot
+import com.vidz.home.staffhome.TicketValidationLogsScreenRoot
 import dagger.hilt.android.lifecycle.HiltViewModel
 
 fun NavGraphBuilder.addHomeNavGraph(
@@ -57,6 +58,13 @@ fun NavGraphBuilder.addHomeNavGraph(
             )
         }
         
+        // Staff ticket validation logs screen route
+        composable(DestinationRoutes.STAFF_SCAN_HISTORY_SCREEN_ROUTE) {
+            TicketValidationLogsScreenRoot(
+                navController = navController,
+                onShowSnackbar = onShowSnackbar,
+            )
+        }
 
     }
 }

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCodeScanner
@@ -103,6 +104,11 @@ fun StaffHomeScreen(
         navController.navigate(DestinationRoutes.EDIT_PROFILE_SCREEN_ROUTE)
     }
     
+    val onViewLogsClick: () -> Unit = {
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        navController.navigate(DestinationRoutes.STAFF_SCAN_HISTORY_SCREEN_ROUTE)
+    }
+    
     val onLogoutClick: () -> Unit = {
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         viewModel.onTriggerEvent(StaffHomeViewModel.StaffHomeEvent.LogoutClicked)
@@ -190,6 +196,15 @@ fun StaffHomeScreen(
                     icon = Icons.Default.QrCodeScanner,
                     onClick = onQRScannerClick,
                     isPrimary = true
+                )
+
+                // View Validation Logs Button
+                com.vidz.base.components.MetrollActionCard(
+                    title = "Validation Logs",
+                    description = "View ticket validation history for your station",
+                    icon = Icons.Default.History,
+                    onClick = onViewLogsClick,
+                    isPrimary = false
                 )
 
                 // Profile & Settings Button

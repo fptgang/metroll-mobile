@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 /**
  * HCMC Metro Flat Design Color System
  * Optimized for flat design principles with bold, vibrant colors
- * Created by FPL on 08/01/2025.
+ * Created by Vidz on 08/01/2025.
  */
 
 // ============================================

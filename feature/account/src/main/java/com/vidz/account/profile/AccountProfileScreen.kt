@@ -47,10 +47,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.vidz.base.extensions.toFormattedDate
 import com.vidz.domain.model.Account
 import com.vidz.domain.model.AccountRole
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 @Composable
 fun AccountProfileScreenRoot(
@@ -591,10 +590,15 @@ private fun StatusChip(
 
 private fun formatDate(dateString: String): String {
     return try {
-        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-        val outputFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-        val date = inputFormat.parse(dateString)
-        date?.let { outputFormat.format(it) } ?: dateString
+        // If dateString is in milliseconds format, use the extension directly
+        if (dateString.toLongOrNull() != null) {
+            dateString.toFormattedDate("MMM dd, yyyy")
+        } else {
+            // If it's in ISO format or other string format, parse it first
+            val inputFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+            val date = inputFormat.parse(dateString)
+            date?.time?.toString()?.toFormattedDate("MMM dd, yyyy") ?: dateString
+        }
     } catch (e: Exception) {
         dateString
     }
