@@ -95,7 +95,7 @@ fun OrderDetailScreen(
     //region Event Handler
     val onQRCodeClick = { orderDetail: OrderDetail ->
         if (orderDetail.ticketId.isEmpty()) {
-            onShowSnackbar("No ticket ID available")
+            onShowSnackbar("Không có ID vé khả dụng")
         } else {
             navController.navigate("${DestinationRoutes.QR_TICKET_SCREEN_ROUTE}/${orderDetail.ticketId}")
         }
@@ -117,14 +117,14 @@ fun OrderDetailScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = uiState.order?.let { "Order #${it.id.take(8)}" } ?: "Order Details",
+                        text = uiState.order?.let { "Đơn hàng #${it.id.take(8)}" } ?: "Chi tiết đơn hàng",
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -157,12 +157,12 @@ fun OrderDetailScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Failed to load order",
+                            text = "Không thể tải đơn hàng",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.error
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        val errorText = uiState.orderError ?: "Unknown error"
+                        val errorText = uiState.orderError ?: "Lỗi không xác định"
                         Text(
                             text = errorText,
                             style = MaterialTheme.typography.bodyMedium,
@@ -190,7 +190,7 @@ fun OrderDetailScreen(
 
                     item {
                         Text(
-                            text = "Order Items",
+                            text = "Mục đơn hàng",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
@@ -213,7 +213,7 @@ fun OrderDetailScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No order data available",
+                        text = "Không có dữ liệu đơn hàng",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -226,7 +226,7 @@ fun OrderDetailScreen(
 
     uiState.orderError?.let { error ->
         LaunchedEffect(error) {
-            onShowSnackbar("Failed to load order: $error")
+            onShowSnackbar("Không thể tải đơn hàng: $error")
             viewModel.onTriggerEvent(OrderDetailViewModel.OrderDetailEvent.ClearError)
         }
     }
@@ -264,7 +264,7 @@ private fun OrderSummaryCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Order #${order.id.take(8)}",
+                        text = "Đơn hàng #${order.id.take(8)}",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -294,12 +294,16 @@ private fun OrderSummaryCard(
             ) {
                 Column {
                     Text(
-                        text = "Payment Method",
+                        text = "Phương thức thanh toán",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     )
                     Text(
-                        text = order.paymentMethod,
+                        text = if(order.paymentMethod != "CASH") {
+                            "Thanh toán trực tuyến"
+                        } else {
+                            "Thanh toán tại quầy"
+                        },
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -310,12 +314,12 @@ private fun OrderSummaryCard(
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
-                        text = "Total Amount",
+                        text = "Tổng tiền",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     )
                     Text(
-                        text = "$${String.format("%.2f", order.finalTotal)}",
+                        text = "${String.format("%,.0f", order.finalTotal)}₫",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -328,7 +332,7 @@ private fun OrderSummaryCard(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 MetrollButton(
-                    text = "Continue Payment",
+                    text = "Tiếp tục thanh toán",
                     onClick = onContinuePayment,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -360,15 +364,15 @@ private fun OrderDetailCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = when (orderDetail.ticketType) {
-                            TicketType.TIMED -> "Timed Ticket"
-                            TicketType.P2P -> "Point-to-Point Journey"
+                            TicketType.TIMED -> "Vé Thời Hạn"
+                            TicketType.P2P -> "Vé Theo Trạm"
                         },
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
 
                     Text(
-                        text = "Ord detail ID: ${orderDetail.id.take(8)}",
+                        text = "ID chi tiết: ${orderDetail.id.take(8)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -377,12 +381,12 @@ private fun OrderDetailCard(
 
                     Row {
                         Text(
-                            text = "Quantity: ${orderDetail.quantity}",
+                            text = "Số lượng: ${orderDetail.quantity}",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
-                            text = "$${String.format("%.2f", orderDetail.unitPrice)} each",
+                            text = "${String.format("%,.0f", orderDetail.unitPrice)}₫ mỗi vé",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -399,7 +403,7 @@ private fun OrderDetailCard(
                     IconButton(onClick = onQRCodeClick) {
                         Icon(
                             Icons.Default.RemoveRedEye,
-                            contentDescription = "View QR Code",
+                            contentDescription = "Xem mã QR",
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -414,12 +418,12 @@ private fun OrderDetailCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = if (orderDetail.baseTotal > orderDetail.finalTotal) "Subtotal: $${
+                    text = if (orderDetail.baseTotal > orderDetail.finalTotal) "Tạm tính: ${
                         String.format(
-                            "%.2f",
+                            "%,.0f",
                             orderDetail.baseTotal
                         )
-                    }" else "",
+                    }₫" else "",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -427,7 +431,7 @@ private fun OrderDetailCard(
 
 
                 Text(
-                    text = "Final: $${String.format("%.2f", orderDetail.finalTotal)}",
+                    text = "Giá cuối: ${String.format("%,.0f", orderDetail.finalTotal)}₫",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -443,19 +447,19 @@ private fun OrderStatusChip(status: OrderStatus) {
         OrderStatus.PENDING -> Triple(
             MaterialTheme.colorScheme.secondaryContainer,
             MaterialTheme.colorScheme.onSecondaryContainer,
-            "Pending"
+            "Đang xử lý"
         )
 
         OrderStatus.COMPLETED -> Triple(
             MaterialTheme.colorScheme.tertiaryContainer,
             MaterialTheme.colorScheme.onTertiaryContainer,
-            "Completed"
+            "Hoàn thành"
         )
 
         OrderStatus.FAILED -> Triple(
             MaterialTheme.colorScheme.errorContainer,
             MaterialTheme.colorScheme.onErrorContainer,
-            "Failed"
+            "Thất bại"
         )
     }
 
@@ -495,7 +499,7 @@ private fun FullScreenPaymentWebView(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Complete Payment",
+                        text = "Hoàn tất thanh toán",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium
                     )
@@ -504,7 +508,7 @@ private fun FullScreenPaymentWebView(
                     IconButton(onClick = onClose) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Close",
+                            contentDescription = "Đóng",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }

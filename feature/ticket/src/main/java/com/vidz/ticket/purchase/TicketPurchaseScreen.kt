@@ -28,6 +28,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Remove
@@ -129,7 +130,7 @@ fun TicketPurchaseScreen(
             description = "${ticket.validDuration} days"
         )
         viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.AddToCart(cartItem))
-        onShowSnackbar("${ticket.name} added to cart")
+        onShowSnackbar("${ticket.name} đã được thêm vào giỏ hàng")
     }
     
     val onP2PJourneyAddToCart = { journey: P2PJourney ->
@@ -142,7 +143,7 @@ fun TicketPurchaseScreen(
             description = "${journey.distance} km • ${journey.travelTime} min"
         )
         viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.AddToCart(cartItem))
-        onShowSnackbar("Journey added to cart")
+        onShowSnackbar("Chuyến đi đã được thêm vào giỏ hàng")
     }
     
     val onCartItemQuantityChange = { item: CartItem, quantity: Int ->
@@ -157,8 +158,8 @@ fun TicketPurchaseScreen(
         viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.Checkout)
     }
     
-    val onShowCart = {
-        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ShowCartSheet(true))
+    val onNavigateToCart = {
+        navController.navigate(com.vidz.base.navigation.DestinationRoutes.TICKET_CART_SCREEN_ROUTE)
     }
     
     val onSortChange = { sortType: P2PSortType ->
@@ -171,10 +172,10 @@ fun TicketPurchaseScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Purchase Tickets") },
+                title = { Text("Mua Vé") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
                     }
                 },
                 actions = {
@@ -196,14 +197,14 @@ fun TicketPurchaseScreen(
                             ) {
                                 Icon(
                                     Icons.Default.ShoppingCart, 
-                                    contentDescription = "Cart",
+                                    contentDescription = "Giỏ hàng",
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                             }
                         } else {
                             Icon(
                                 Icons.Default.ShoppingCart, 
-                                contentDescription = "Cart",
+                                contentDescription = "Giỏ hàng",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -217,7 +218,7 @@ fun TicketPurchaseScreen(
         floatingActionButton = {
             if (uiState.cartItemCount > 0) {
                 ExtendedFloatingActionButton(
-                    onClick = onShowCart,
+                    onClick = onNavigateToCart,
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
@@ -228,10 +229,10 @@ fun TicketPurchaseScreen(
                             }
                         }
                     ) {
-                        Icon(Icons.Default.ShoppingCart, contentDescription = "Cart")
+                        Icon(Icons.Default.ShoppingCart, contentDescription = "Giỏ hàng")
                     }
                     Spacer(Modifier.width(8.dp))
-                    Text("Cart • $${String.format("%.2f", uiState.subtotal)}")
+                    Text("Giỏ hàng • ${String.format("%,.0f", uiState.subtotal)}₫")
                 }
             }
         }
@@ -249,12 +250,12 @@ fun TicketPurchaseScreen(
                 Tab(
                     selected = uiState.selectedTicketType == TicketType.TIMED,
                     onClick = { onTabSelected(TicketType.TIMED) },
-                    text = { Text("Timed Tickets") }
+                    text = { Text("Vé Thời Hạn") }
                 )
                 Tab(
                     selected = uiState.selectedTicketType == TicketType.P2P,
                     onClick = { onTabSelected(TicketType.P2P) },
-                    text = { Text("Point-to-Point") }
+                    text = { Text("Vé Theo Trạm") }
                 )
             }
 
@@ -296,36 +297,18 @@ fun TicketPurchaseScreen(
     }
 
     //region Dialog and Sheet
-    if (uiState.showCartSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { 
-                viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ShowCartSheet(false))
-            },
-            sheetState = bottomSheetState
-        ) {
-            CartBottomSheet(
-                cartItems = uiState.cartItems,
-                cartTotal = uiState.subtotal,
-                isCheckingOut = uiState.isCheckingOut,
-                onQuantityChange = onCartItemQuantityChange,
-                onRemoveItem = onCartItemRemove,
-                onCheckout = onCheckout
-            )
-        }
-    }
-
     // WebView for payment
     uiState.paymentUrl?.let { url ->
         PaymentWebView(
             url = url,
             onPaymentComplete = {
                 viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ProcessPaymentUrl(""))
-                onShowSnackbar("Payment completed successfully!")
+                onShowSnackbar("Thanh toán thành công!")
                 navController.popBackStack()
             },
             onPaymentFailed = {
                 viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ProcessPaymentUrl(""))
-                onShowSnackbar("Payment failed. Please try again.")
+                onShowSnackbar("Thanh toán thất bại. Vui lòng thử lại.")
             }
         )
     }
@@ -351,7 +334,7 @@ private fun TimedTicketsContent(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Available Timed Tickets",
+                text = "Vé Thời Hạn Khả Dụng",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -413,7 +396,7 @@ private fun P2PJourneysContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Select Journey Route",
+                        text = "Chọn Tuyến Đường",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -426,7 +409,7 @@ private fun P2PJourneysContent(
                         ) {
                             Icon(
                                 Icons.Default.Clear,
-                                contentDescription = "Clear stations",
+                                contentDescription = "Xóa trạm",
                                 tint = MaterialTheme.colorScheme.error
                             )
                         }
@@ -448,7 +431,7 @@ private fun P2PJourneysContent(
                         ) {
                             CircularProgressIndicator(modifier = Modifier.size(20.dp))
                             Text(
-                                text = "Loading stations...",
+                                text = "Đang tải trạm...",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -470,8 +453,8 @@ private fun P2PJourneysContent(
                                 value = selectedFromStation?.name ?: "",
                                 onValueChange = { },
                                 readOnly = true,
-                                label = { Text("From") },
-                                placeholder = { Text("Select one") },
+                                label = { Text("Từ") },
+                                placeholder = { Text("Chọn một") },
                                 trailingIcon = {
                                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = showFromDropdown)
                                 },
@@ -493,7 +476,7 @@ private fun P2PJourneysContent(
                                     DropdownMenuItem(
                                         text = { 
                                             Text(
-                                                "No stations available",
+                                                "Không có trạm khả dụng",
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             ) 
                                         },
@@ -511,7 +494,7 @@ private fun P2PJourneysContent(
                                                         fontWeight = FontWeight.Medium
                                                     )
                                                     Text(
-                                                        text = "Code: ${station.code}",
+                                                        text = "Mã: ${station.code}",
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                                     )
@@ -537,8 +520,8 @@ private fun P2PJourneysContent(
                                 value = selectedToStation?.name ?: "",
                                 onValueChange = { },
                                 readOnly = true,
-                                label = { Text("To") },
-                                placeholder = { Text("Select one") },
+                                label = { Text("Đến") },
+                                placeholder = { Text("Chọn một") },
                                 trailingIcon = {
                                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = showToDropdown)
                                 },
@@ -560,7 +543,7 @@ private fun P2PJourneysContent(
                                     DropdownMenuItem(
                                         text = { 
                                             Text(
-                                                "No stations available",
+                                                "Không có trạm khả dụng",
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             ) 
                                         },
@@ -575,7 +558,7 @@ private fun P2PJourneysContent(
                                         DropdownMenuItem(
                                             text = { 
                                                 Text(
-                                                    "No other stations available",
+                                                    "Không có trạm khác khả dụng",
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 ) 
                                             },
@@ -593,7 +576,7 @@ private fun P2PJourneysContent(
                                                             fontWeight = FontWeight.Medium
                                                         )
                                                         Text(
-                                                            text = "Code: ${station.code}",
+                                                            text = "Mã: ${station.code}",
                                                             style = MaterialTheme.typography.bodySmall,
                                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                                         )
@@ -622,11 +605,11 @@ private fun P2PJourneysContent(
                     ) {
                         Text(
                             text = if (selectedFromStation != null && selectedToStation != null) {
-                                "Route: ${selectedFromStation.name} → ${selectedToStation.name}"
+                                "Tuyến: ${selectedFromStation.name} → ${selectedToStation.name}"
                             } else if (selectedFromStation != null) {
-                                "From: ${selectedFromStation.name}"
+                                "Từ: ${selectedFromStation.name}"
                             } else {
-                                "To: ${selectedToStation?.name}"
+                                "Đến: ${selectedToStation?.name}"
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary,
@@ -651,7 +634,7 @@ private fun P2PJourneysContent(
                 ) {
                     CircularProgressIndicator()
                     Text(
-                        text = "Searching for routes...",
+                        text = "Đang tìm kiếm tuyến đường...",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -665,7 +648,7 @@ private fun P2PJourneysContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${journeys.size} route${if (journeys.size != 1) "s" else ""} found",
+                    text = "Tìm thấy ${journeys.size} tuyến đường",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium
@@ -677,7 +660,7 @@ private fun P2PJourneysContent(
                     ) {
                         Icon(
                             Icons.Default.FilterList, 
-                            contentDescription = "Sort",
+                            contentDescription = "Sắp xếp",
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
@@ -723,9 +706,9 @@ private fun P2PJourneysContent(
                         ) {
                             Text(
                                 text = if (selectedFromStation != null || selectedToStation != null) {
-                                    "No routes found for selected stations"
+                                    "Không tìm thấy tuyến đường cho các trạm đã chọn"
                                 } else {
-                                    "Select stations to search for routes"
+                                    "Chọn trạm để tìm kiếm tuyến đường"
                                 },
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -733,9 +716,9 @@ private fun P2PJourneysContent(
                             )
                             Text(
                                 text = if (selectedFromStation != null || selectedToStation != null) {
-                                    "Try selecting different stations or clear your selection"
+                                    "Hãy thử chọn các trạm khác hoặc xóa lựa chọn của bạn"
                                 } else {
-                                    "Choose departure and destination stations above"
+                                    "Chọn trạm khởi hành và đích đến ở trên"
                                 },
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -790,7 +773,7 @@ private fun TimedTicketCard(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "${ticket.validDuration} days",
+                text = "${ticket.validDuration} ngày",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -803,7 +786,7 @@ private fun TimedTicketCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "$${String.format("%.2f", ticket.basePrice)}",
+                    text = "${String.format("%,.0f", ticket.basePrice)}₫",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -815,7 +798,7 @@ private fun TimedTicketCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Add to Cart",
+                        contentDescription = "Thêm vào giỏ hàng",
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -882,7 +865,7 @@ private fun P2PJourneyCard(
                 }
                 
                 Text(
-                    text = "$${String.format("%.2f", journey.basePrice)}",
+                    text = "${String.format("%,.0f", journey.basePrice)}₫",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -927,99 +910,7 @@ private fun P2PJourneyCard(
     }
 }
 
-@Composable
-private fun CartBottomSheet(
-    cartItems: List<CartItem>,
-    cartTotal: Double,
-    isCheckingOut: Boolean,
-    onQuantityChange: (CartItem, Int) -> Unit,
-    onRemoveItem: (CartItem) -> Unit,
-    onCheckout: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Shopping Cart",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        
-        if (cartItems.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Your cart is empty",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f, false),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(cartItems) { item ->
-                    CartItemCard(
-                        item = item,
-                        onQuantityChange = { quantity -> onQuantityChange(item, quantity) },
-                        onRemove = { onRemoveItem(item) }
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Total and Checkout
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "Total",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "$${String.format("%.2f", cartTotal)}",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    MetrollButton(
-                        text = if (isCheckingOut) "Processing..." else "Checkout",
-                        onClick = onCheckout,
-                        enabled = !isCheckingOut,
-                        isLoading = isCheckingOut,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-    }
-}
+
 
 @Composable
 private fun CartItemCard(
@@ -1055,7 +946,7 @@ private fun CartItemCard(
                 }
                 
                 Text(
-                    text = "$${String.format("%.2f", item.price)} each",
+                    text = "${String.format("%,.0f", item.price)}₫ each",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1088,6 +979,8 @@ private fun CartItemCard(
         }
     }
 }
+
+
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -1211,3 +1104,4 @@ internal fun PaymentWebView(
         )
     }
 } 
+

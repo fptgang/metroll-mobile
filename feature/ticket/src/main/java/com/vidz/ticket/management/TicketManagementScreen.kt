@@ -106,7 +106,7 @@ fun TicketManagementScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "My Tickets",
+                        "Vé của tôi",
                         fontWeight = FontWeight.SemiBold
                     )
                 },
@@ -117,7 +117,7 @@ fun TicketManagementScreen(
                     IconButton(onClick = onRefresh) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh"
+                            contentDescription = "Làm mới"
                         )
                     }
                 },
@@ -139,7 +139,7 @@ fun TicketManagementScreen(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = onSearchChanged,
-                label = { Text("Search tickets...") },
+                label = { Text("Tìm kiếm vé...") },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
@@ -188,7 +188,7 @@ fun TicketManagementScreen(
                     if (uiState.hasNextPage) {
                         item {
                             MetrollButton(
-                                text = if (uiState.isLoading) "Loading..." else "Load More",
+                                text = if (uiState.isLoading) "Đang tải..." else "Tải thêm",
                                 onClick = onLoadMore,
                                 enabled = !uiState.isLoading,
                                 isLoading = uiState.isLoading,
@@ -226,7 +226,7 @@ private fun EmptyOrdersState(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "No Tickets Found",
+            text = "Không tìm thấy vé",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface
@@ -235,7 +235,7 @@ private fun EmptyOrdersState(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "It seems you haven't purchased any tickets yet. Let's get you started!",
+            text = "Có vẻ như bạn chưa mua vé nào. Hãy bắt đầu thôi!",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -244,7 +244,7 @@ private fun EmptyOrdersState(
         Spacer(modifier = Modifier.height(24.dp))
 
         MetrollButton(
-            text = "Refresh",
+            text = "Làm mới",
             onClick = onRefresh,
             modifier = Modifier.width(120.dp)
         )
@@ -278,7 +278,7 @@ private fun OrderCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Order #${order.id.take(8).uppercase()}",
+                        text = "Đơn hàng #${order.id.take(8).uppercase()}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -295,7 +295,7 @@ private fun OrderCard(
                 }
 
                 Text(
-                    text = "₫${String.format("%,.0f", order.finalTotal)}",
+                    text = "${String.format("%,.0f", order.finalTotal)}₫",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -309,7 +309,7 @@ private fun OrderCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Items: ${order.orderDetails.sumOf { it.quantity }}",
+                    text = "Số Lượng: ${order.orderDetails.sumOf { it.quantity }}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -328,17 +328,17 @@ private fun OrderStatusChip(
         OrderStatus.PENDING -> Triple(
             MaterialTheme.colorScheme.secondaryContainer,
             MaterialTheme.colorScheme.onSecondaryContainer,
-            "Pending"
+            "Đang xử lý"
         )
         OrderStatus.COMPLETED -> Triple(
             MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
             MaterialTheme.colorScheme.primary,
-            "Completed"
+            "Hoàn thành"
         )
         OrderStatus.FAILED -> Triple(
             MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
             MaterialTheme.colorScheme.error,
-            "Failed"
+            "Thất bại"
         )
     }
 

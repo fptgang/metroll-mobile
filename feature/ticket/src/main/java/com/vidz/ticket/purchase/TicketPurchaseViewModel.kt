@@ -15,7 +15,9 @@ import com.vidz.domain.model.TicketType
 import com.vidz.domain.model.TimedTicketPlan
 import com.vidz.domain.model.Voucher
 import com.vidz.domain.model.VoucherStatus
+import com.vidz.domain.model.AccountRole
 import com.vidz.domain.usecase.account.GetMyDiscountPercentageUseCase
+import com.vidz.domain.usecase.account.ObserveLocalAccountInfoUseCase
 import com.vidz.domain.usecase.auth.GetCurrentUserUseCase
 import com.vidz.domain.usecase.cart.AddToCartUseCase
 import com.vidz.domain.usecase.cart.ClearCartUseCase
@@ -47,15 +49,33 @@ data class CartItem(
 )
 
 enum class P2PSortType(val displayName: String) {
-    PRICE_ASC("Price: Low to High"),
-    PRICE_DESC("Price: High to Low"),
-    DURATION_ASC("Duration: Shortest"),
-    DURATION_DESC("Duration: Longest"),
-    DISTANCE_ASC("Distance: Shortest"),
-    DISTANCE_DESC("Distance: Longest"),
-    DEFAULT("Default")
+    PRICE_ASC("Giá: Thấp đến Cao"),
+    PRICE_DESC("Giá: Cao đến Thấp"),
+    DURATION_ASC("Thời gian: Ngắn nhất"),
+    DURATION_DESC("Thời gian: Dài nhất"),
+    DISTANCE_ASC("Khoảng cách: Gần nhất"),
+    DISTANCE_DESC("Khoảng cách: Xa nhất"),
+    DEFAULT("Mặc định")
 }
 
+enum class PaymentMethod(val displayName: String, val value: String) {
+    PAYOS("Thanh toán trực tuyến", "PAYOS"),
+    CASH("Thanh toán tiền mặt", "CASH")
+}
+
+/**
+ * TicketPurchaseViewModel handles role-based ticket purchasing logic:
+ * 
+ * FOR CUSTOMERS (AccountRole.CUSTOMER):
+ * - Can only use PAYOS payment method (online payment)
+ * - Can select and use vouchers for discounts
+ * - Automatic voucher selection for best discount
+ * 
+ * FOR STAFF/ADMIN (AccountRole.STAFF, AccountRole.ADMIN):
+ * - Can use both PAYOS and CASH payment methods
+ * - Cannot use vouchers (voucher selection disabled)
+ * - Payment method selection required before checkout
+ */
 @HiltViewModel
 class TicketPurchaseViewModel @Inject constructor(
     private val getTimedTicketPlansUseCase: GetTimedTicketPlansUseCase,
@@ -71,6 +91,7 @@ class TicketPurchaseViewModel @Inject constructor(
     private val removeFromCartUseCase: RemoveFromCartUseCase,
     private val updateCartItemQuantityUseCase: UpdateCartItemQuantityUseCase,
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
+    private val observeLocalAccountInfoUseCase: ObserveLocalAccountInfoUseCase,
     private val getMyVouchersUseCase: GetMyVouchersUseCase,
     private val getMyDiscountPercentageUseCase: GetMyDiscountPercentageUseCase
 ) : BaseViewModel<TicketPurchaseViewModel.TicketPurchaseEvent, TicketPurchaseViewModel.TicketPurchaseUiState, TicketPurchaseViewModel.TicketPurchaseViewModelState>(
@@ -80,6 +101,7 @@ class TicketPurchaseViewModel @Inject constructor(
     init {
         loadInitialData()
         observeCartItems()
+        observeUserRole()
     }
 
     override fun onTriggerEvent(event: TicketPurchaseEvent) {
@@ -111,6 +133,30 @@ class TicketPurchaseViewModel @Inject constructor(
             is TicketPurchaseEvent.LoadVouchers -> loadVouchers()
             is TicketPurchaseEvent.SelectVoucher -> selectVoucher(event.voucher)
             is TicketPurchaseEvent.ShowVoucherSheet -> showVoucherSheet(event.show)
+            is TicketPurchaseEvent.SelectPaymentMethod -> selectPaymentMethod(event.paymentMethod)
+            is TicketPurchaseEvent.ShowPaymentMethodSheet -> showPaymentMethodSheet(event.show)
+        }
+    }
+
+    private fun observeUserRole() {
+        viewModelScope.launch {
+            observeLocalAccountInfoUseCase().collect { account ->
+                val userRole = account?.role ?: AccountRole.CUSTOMER
+                val isCustomer = userRole == AccountRole.CUSTOMER
+                
+                updateState {
+                    copy(
+                        userRole = userRole,
+                        isCustomer = isCustomer,
+                        selectedPaymentMethod = if (isCustomer) PaymentMethod.PAYOS else PaymentMethod.PAYOS // Default to PAYOS for both
+                    )
+                }
+                
+                // Load vouchers only for customers
+                if (isCustomer) {
+                    loadVouchers()
+                }
+            }
         }
     }
 
@@ -118,7 +164,6 @@ class TicketPurchaseViewModel @Inject constructor(
         loadTimedTickets()
         loadP2PJourneys() // Load all P2P journeys initially
         loadStations()
-        loadVouchers()
         loadDiscountPercentage()
     }
 
@@ -142,10 +187,12 @@ class TicketPurchaseViewModel @Inject constructor(
                     // Fetch detailed information for each item
                     fetchCartItemDetails(checkoutItems)
                     
-                    // Re-evaluate best voucher when cart changes
-                    val currentVouchers = viewModelState.value.vouchers
-                    if (currentVouchers.isNotEmpty()) {
-                        autoSelectBestVoucher(currentVouchers)
+                    // Re-evaluate best voucher when cart changes (only for customers)
+                    if (viewModelState.value.isCustomer) {
+                        val currentVouchers = viewModelState.value.vouchers
+                        if (currentVouchers.isNotEmpty()) {
+                            autoSelectBestVoucher(currentVouchers)
+                        }
                     }
                 }
                 .launchIn(this)
@@ -401,8 +448,8 @@ class TicketPurchaseViewModel @Inject constructor(
                             is Result.Success -> {
                                 val checkoutRequest = CheckoutRequest(
                                     items = checkoutItems,
-                                    paymentMethod = "CASH",
-                                    voucherId = viewModelState.value.selectedVoucher?.id,
+                                    paymentMethod = viewModelState.value.selectedPaymentMethod.value,
+                                    voucherId = if (viewModelState.value.isCustomer) viewModelState.value.selectedVoucher?.id else null,
 //                                    discountPackage = if (viewModelState.value.userDiscountPercentage != null && viewModelState.value.userDiscountPercentage!! > 0f) "ACTIVE" else null,
                                     customerId = user.data?.uid
                                 )
@@ -619,6 +666,9 @@ class TicketPurchaseViewModel @Inject constructor(
     }
 
     private fun loadVouchers() {
+        // Only load vouchers for customers
+        if (!viewModelState.value.isCustomer) return
+        
         viewModelScope.launch {
             getMyVouchersUseCase()
                 .onEach { result ->
@@ -635,7 +685,7 @@ class TicketPurchaseViewModel @Inject constructor(
                                     error = null
                                 )
                             }
-                            // Auto-select the best voucher
+                            // Auto-select the best voucher only for customers
                             autoSelectBestVoucher(vouchers)
                         }
                         is Result.ServerError -> {
@@ -653,6 +703,9 @@ class TicketPurchaseViewModel @Inject constructor(
     }
 
     private fun autoSelectBestVoucher(vouchers: List<Voucher>) {
+        // Only auto-select vouchers for customers
+        if (!viewModelState.value.isCustomer) return
+        
         val currentSubtotal = viewModelState.value.cartItems.sumOf { it.price * it.quantity }
         
         // Select the first usable voucher (highest discount among usable ones)
@@ -669,10 +722,14 @@ class TicketPurchaseViewModel @Inject constructor(
     }
 
     private fun selectVoucher(voucher: Voucher?) {
+        // Only allow voucher selection for customers
+        if (!viewModelState.value.isCustomer) return
         updateState { copy(selectedVoucher = voucher) }
     }
 
     private fun showVoucherSheet(show: Boolean) {
+        // Only allow voucher sheet for customers
+        if (!viewModelState.value.isCustomer) return
         updateState { copy(showVoucherSheet = show) }
     }
 
@@ -707,6 +764,16 @@ class TicketPurchaseViewModel @Inject constructor(
         }
     }
 
+    private fun selectPaymentMethod(paymentMethod: PaymentMethod) {
+        updateState { copy(selectedPaymentMethod = paymentMethod) }
+    }
+
+    private fun showPaymentMethodSheet(show: Boolean) {
+        updateState { copy(showPaymentMethodSheet = show) }
+    }
+    
+
+
     private fun updateState(update: TicketPurchaseViewModelState.() -> TicketPurchaseViewModelState) {
         viewModelState.value = viewModelState.value.update()
     }
@@ -737,6 +804,8 @@ class TicketPurchaseViewModel @Inject constructor(
         object LoadVouchers : TicketPurchaseEvent
         data class SelectVoucher(val voucher: Voucher?) : TicketPurchaseEvent
         data class ShowVoucherSheet(val show: Boolean) : TicketPurchaseEvent
+        data class SelectPaymentMethod(val paymentMethod: PaymentMethod) : TicketPurchaseEvent
+        data class ShowPaymentMethodSheet(val show: Boolean) : TicketPurchaseEvent
     }
 
     data class TicketPurchaseViewModelState(
@@ -762,19 +831,27 @@ class TicketPurchaseViewModel @Inject constructor(
         val selectedVoucher: Voucher? = null,
         val showVoucherSheet: Boolean = false,
         val isLoadingDiscountPercentage: Boolean = false,
-        val userDiscountPercentage: Float? = null
+        val userDiscountPercentage: Float? = null,
+        val userRole: AccountRole = AccountRole.CUSTOMER,
+        val isCustomer: Boolean = true,
+        val selectedPaymentMethod: PaymentMethod = PaymentMethod.PAYOS,
+        val showPaymentMethodSheet: Boolean = false
     ) : ViewModelState() {
         override fun toUiState(): ViewState {
             val subtotal = cartItems.sumOf { it.price * it.quantity }
             
-            // Calculate voucher discount
-            val voucherDiscount = selectedVoucher?.let { voucher ->
-                if (voucher.status == VoucherStatus.VALID && subtotal >= voucher.minTransactionAmount) {
-                    voucher.discountAmount
-                } else {
-                    0.0
-                }
-            } ?: 0.0
+            // Calculate voucher discount (only for customers)
+            val voucherDiscount = if (isCustomer) {
+                selectedVoucher?.let { voucher ->
+                    if (voucher.status == VoucherStatus.VALID && subtotal >= voucher.minTransactionAmount) {
+                        voucher.discountAmount
+                    } else {
+                        0.0
+                    }
+                } ?: 0.0
+            } else {
+                0.0
+            }
             
             // Calculate discount package discount
             val discountPackageDiscount = userDiscountPercentage?.let { percentage ->
@@ -789,9 +866,23 @@ class TicketPurchaseViewModel @Inject constructor(
             val totalAfterVoucher = subtotal - voucherDiscount
             val total = totalAfterVoucher - discountPackageDiscount
             
-            val sortedVouchers = vouchers.sortedWith(compareByDescending<Voucher> { voucher ->
-                voucher.status == VoucherStatus.VALID && subtotal >= voucher.minTransactionAmount
-            }.thenByDescending { it.discountAmount })
+            // Sort vouchers only for customers
+            val sortedVouchers = if (isCustomer) {
+                vouchers.sortedWith(compareByDescending<Voucher> { voucher ->
+                    voucher.status == VoucherStatus.VALID && subtotal >= voucher.minTransactionAmount
+                }.thenByDescending { it.discountAmount })
+            } else {
+                emptyList()
+            }
+            
+            // Calculate available payment methods based on user role
+            val availablePaymentMethods = if (isCustomer) {
+                // Customers can only use online payment
+                listOf(PaymentMethod.PAYOS)
+            } else {
+                // Staff and admin can use both payment methods
+                listOf(PaymentMethod.PAYOS, PaymentMethod.CASH)
+            }
             
             return TicketPurchaseUiState(
                 isLoadingTimed = isLoadingTimed,
@@ -821,7 +912,12 @@ class TicketPurchaseViewModel @Inject constructor(
                 total = total,
                 voucherDiscount = voucherDiscount,
                 discountPackageDiscount = discountPackageDiscount,
-                cartItemCount = cartItems.sumOf { it.quantity }
+                cartItemCount = cartItems.sumOf { it.quantity },
+                userRole = userRole,
+                isCustomer = isCustomer,
+                selectedPaymentMethod = selectedPaymentMethod,
+                showPaymentMethodSheet = showPaymentMethodSheet,
+                availablePaymentMethods = availablePaymentMethods
             )
         }
     }
@@ -854,6 +950,11 @@ class TicketPurchaseViewModel @Inject constructor(
         val total: Double,
         val voucherDiscount: Double,
         val discountPackageDiscount: Double,
-        val cartItemCount: Int
+        val cartItemCount: Int,
+        val userRole: AccountRole,
+        val isCustomer: Boolean,
+        val selectedPaymentMethod: PaymentMethod,
+        val showPaymentMethodSheet: Boolean,
+        val availablePaymentMethods: List<PaymentMethod>
     ) : ViewState()
 } 

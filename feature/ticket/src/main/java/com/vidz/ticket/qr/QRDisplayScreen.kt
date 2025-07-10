@@ -141,14 +141,14 @@ fun QRDisplayScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Ticket QR Code",
+                        text = "Mã QR vé",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackPressed) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -183,14 +183,14 @@ fun QRDisplayScreen(
 
     uiState.statusError?.let { error ->
         LaunchedEffect(error) {
-            onShowSnackbar("Failed to load ticket status: $error")
+            onShowSnackbar("Không thể tải trạng thái vé: $error")
             viewModel.onTriggerEvent(QRDisplayViewModel.QRDisplayEvent.ClearError)
         }
     }
 
     uiState.qrError?.let { error ->
         LaunchedEffect(error) {
-            onShowSnackbar("Failed to load QR code: $error")
+            onShowSnackbar("Không thể tải mã QR: $error")
             viewModel.onTriggerEvent(QRDisplayViewModel.QRDisplayEvent.ClearError)
         }
     }
@@ -219,7 +219,7 @@ private fun QRCodeCard(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Present this QR code for validation",
+                text = "Xuất trình mã QR này để xác thực",
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -256,7 +256,7 @@ private fun QRCodeCard(
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = "Loading QR Code...",
+                                text = "Đang tải mã QR...",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -274,13 +274,13 @@ private fun QRCodeCard(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Error,
-                                contentDescription = "Error",
+                                contentDescription = "Lỗi",
                                 modifier = Modifier.size(48.dp),
                                 tint = MaterialTheme.colorScheme.error
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = "Failed to Load QR Code",
+                                text = "Không thể tải mã QR",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.error,
                                 textAlign = TextAlign.Center
@@ -318,7 +318,7 @@ private fun QRCodeCard(
                         ) {
                             Image(
                                 bitmap = qrBitmap.asImageBitmap(),
-                                contentDescription = "QR Code",
+                                contentDescription = "Mã QR",
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
@@ -335,20 +335,20 @@ private fun QRCodeCard(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Error,
-                                contentDescription = "Error",
+                                contentDescription = "Lỗi",
                                 modifier = Modifier.size(48.dp),
                                 tint = MaterialTheme.colorScheme.error
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = "QR Code Not Available",
+                                text = "Mã QR không có sẵn",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.error,
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Unable to decode QR code data",
+                                text = "Không thể giải mã dữ liệu mã QR",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
@@ -387,7 +387,7 @@ private fun TicketStatusCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Ticket Status",
+                    text = "Trạng thái vé",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -411,13 +411,13 @@ private fun TicketStatusCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Error,
-                            contentDescription = "Error",
+                            contentDescription = "Lỗi",
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Unable to load status",
+                            text = "Không thể tải trạng thái",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -431,7 +431,7 @@ private fun TicketStatusCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Status:",
+                            text = "Trạng thái:",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )
@@ -446,14 +446,14 @@ private fun TicketStatusCard(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Type:",
+                            text = "Loại:",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )
                         Text(
                             text = when (firebaseTicket.ticketType) {
-                                TicketType.TIMED -> "Timed Ticket"
-                                TicketType.P2P -> "Point-to-Point"
+                                TicketType.TIMED -> "Vé Thời Hạn"
+                                TicketType.P2P -> "Vé Theo Trạm"
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
@@ -468,7 +468,7 @@ private fun TicketStatusCard(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Valid Until:",
+                                text = "Có hiệu lực đến:",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                             )
@@ -492,7 +492,7 @@ private fun TicketStatusCard(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Journey:",
+                                text = "Hành trình:",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                             )
@@ -508,7 +508,7 @@ private fun TicketStatusCard(
 
                 else -> {
                     Text(
-                        text = "Loading ticket status...",
+                        text = "Đang tải trạng thái vé...",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                     )
@@ -524,31 +524,31 @@ private fun TicketStatusChip(status: FirebaseTicketStatus) {
         FirebaseTicketStatus.VALID -> Triple(
             MaterialTheme.colorScheme.tertiaryContainer,
             MaterialTheme.colorScheme.onTertiaryContainer,
-            "Valid"
+            "Hợp lệ"
         ) to Icons.Default.CheckCircle
 
         FirebaseTicketStatus.IN_USED -> Triple(
             MaterialTheme.colorScheme.secondaryContainer,
             MaterialTheme.colorScheme.onSecondaryContainer,
-            "In Use"
+            "Đang sử dụng"
         ) to Icons.Default.Schedule
 
         FirebaseTicketStatus.USED -> Triple(
             MaterialTheme.colorScheme.surfaceVariant,
             MaterialTheme.colorScheme.onSurfaceVariant,
-            "Used"
+            "Đã sử dụng"
         ) to Icons.Default.CheckCircle
 
         FirebaseTicketStatus.EXPIRED -> Triple(
             MaterialTheme.colorScheme.errorContainer,
             MaterialTheme.colorScheme.onErrorContainer,
-            "Expired"
+            "Hết hạn"
         ) to Icons.Default.Error
 
         FirebaseTicketStatus.CANCELLED -> Triple(
             MaterialTheme.colorScheme.errorContainer,
             MaterialTheme.colorScheme.onErrorContainer,
-            "Cancelled"
+            "Đã hủy"
         ) to Icons.Default.Error
     }
 

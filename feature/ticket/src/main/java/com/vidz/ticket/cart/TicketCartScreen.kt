@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
@@ -58,6 +59,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.ui.viewinterop.AndroidView
 import com.vidz.ticket.purchase.CartItem
+import com.vidz.ticket.purchase.PaymentMethod
 import com.vidz.ticket.purchase.TicketPurchaseViewModel
 import kotlin.OptIn
 
@@ -92,24 +94,28 @@ fun TicketCartScreen(
     
     val onRemoveItem = { item: CartItem ->
         viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.RemoveFromCart(item))
-        onShowSnackbar("Item removed from cart")
+        onShowSnackbar("Mục đã được xóa khỏi giỏ hàng")
     }
     
     val onClearCart = {
         viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ClearCart)
-        onShowSnackbar("Cart cleared")
+        onShowSnackbar("Giỏ hàng đã được xóa")
     }
     
     val onCheckout = {
         if (uiState.cartItems.isNotEmpty()) {
             viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.Checkout)
         } else {
-            onShowSnackbar("Cart is empty")
+            onShowSnackbar("Giỏ hàng trống")
         }
     }
 
     val onClosePayment = {
         viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ClosePayment)
+        // Navigate to ticket management screen after payment
+        navController.navigate(com.vidz.base.navigation.DestinationRoutes.MY_TICKETS_SCREEN_ROUTE) {
+            popUpTo(com.vidz.base.navigation.DestinationRoutes.ROOT_TICKET_SCREEN_ROUTE) { inclusive = true }
+        }
     }
     
     val onShowVoucherSheet = {
@@ -124,22 +130,35 @@ fun TicketCartScreen(
         viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectVoucher(voucher))
         viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ShowVoucherSheet(false))
     }
+    
+    val onShowPaymentMethodSheet = {
+        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ShowPaymentMethodSheet(true))
+    }
+    
+    val onHidePaymentMethodSheet = {
+        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ShowPaymentMethodSheet(false))
+    }
+    
+    val onSelectPaymentMethod = { paymentMethod: PaymentMethod ->
+        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectPaymentMethod(paymentMethod))
+        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ShowPaymentMethodSheet(false))
+    }
     //endregion
 
     //region UI
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Cart (${uiState.cartItemCount} items)") },
+                title = { Text("Giỏ hàng (${uiState.cartItemCount} mục)") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
                     }
                 },
                 actions = {
                     if (uiState.cartItems.isNotEmpty()) {
                         IconButton(onClick = onClearCart) {
-                            Icon(Icons.Default.Delete, contentDescription = "Clear Cart")
+                            Icon(Icons.Default.Delete, contentDescription = "Xóa giỏ hàng")
                         }
                     }
                 },
@@ -158,8 +177,11 @@ fun TicketCartScreen(
                     voucherDiscount = uiState.voucherDiscount,
                     discountPackageDiscount = uiState.discountPackageDiscount,
                     isLoading = uiState.isCheckingOut,
+                    isCustomer = uiState.isCustomer,
+                    selectedPaymentMethod = uiState.selectedPaymentMethod,
                     onCheckout = onCheckout,
-                    onShowVoucherSheet = onShowVoucherSheet
+                    onShowVoucherSheet = onShowVoucherSheet,
+                    onShowPaymentMethodSheet = onShowPaymentMethodSheet
                 )
             }
         }
@@ -202,25 +224,37 @@ fun TicketCartScreen(
             viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ClearError)
         }
     }
+    
+    // Handle successful checkout for CASH payments (no WebView)
+    LaunchedEffect(uiState.checkoutResult) {
+        uiState.checkoutResult?.let { order ->
+            if (order.paymentMethod == "CASH") {
+                onShowSnackbar("Đơn hàng đã được tạo thành công!")
+                // Navigate to ticket management screen
+                navController.navigate(com.vidz.base.navigation.DestinationRoutes.MY_TICKETS_SCREEN_ROUTE) {
+                    popUpTo(com.vidz.base.navigation.DestinationRoutes.ROOT_TICKET_SCREEN_ROUTE) { inclusive = true }
+                }
+            }
+        }
+    }
 
     // Full-screen Payment WebView
     if (uiState.showPaymentWebView && uiState.paymentUrl != null) {
         LaunchedEffect(uiState.paymentUrl) {
-            onShowSnackbar("Opening payment page...")
+            onShowSnackbar("Đang mở trang thanh toán...")
         }
         
         FullScreenPaymentWebView(
             url = uiState.paymentUrl!!,
             onClose = {
                 onClosePayment()
-                onShowSnackbar("Payment completed!")
-                navController.popBackStack()
+                onShowSnackbar("Thanh toán hoàn tất!")
             }
         )
     }
     
-    // Voucher Selection Bottom Sheet
-    if (uiState.showVoucherSheet) {
+    // Voucher Selection Bottom Sheet (for customers only)
+    if (uiState.showVoucherSheet && uiState.isCustomer) {
         ModalBottomSheet(
             onDismissRequest = onHideVoucherSheet,
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -232,6 +266,21 @@ fun TicketCartScreen(
                 cartTotal = uiState.subtotal,
                 onVoucherSelected = onSelectVoucher,
                 onDismiss = onHideVoucherSheet
+            )
+        }
+    }
+    
+    // Payment Method Selection Bottom Sheet (for staff only)
+    if (uiState.showPaymentMethodSheet && !uiState.isCustomer) {
+        ModalBottomSheet(
+            onDismissRequest = onHidePaymentMethodSheet,
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ) {
+            PaymentMethodSelectionBottomSheet(
+                availablePaymentMethods = uiState.availablePaymentMethods,
+                selectedPaymentMethod = uiState.selectedPaymentMethod,
+                onPaymentMethodSelected = onSelectPaymentMethod,
+                onDismiss = onHidePaymentMethodSheet
             )
         }
     }
@@ -258,7 +307,7 @@ private fun EmptyCartState(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Your cart is empty",
+            text = "Giỏ hàng của bạn trống",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -267,7 +316,7 @@ private fun EmptyCartState(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Add some tickets to get started!",
+            text = "Thêm một số vé để bắt đầu!",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
             textAlign = TextAlign.Center
@@ -276,7 +325,7 @@ private fun EmptyCartState(
         Spacer(modifier = Modifier.height(24.dp))
 
         MetrollButton(
-            text = "Continue Shopping",
+            text = "Tiếp tục mua sắm",
             onClick = onContinueShopping,
             modifier = Modifier.fillMaxWidth()
         )
@@ -344,7 +393,7 @@ private fun CartItemCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Remove",
+                        contentDescription = "Xóa",
                         tint = MaterialTheme.colorScheme.error
                     )
                 }
@@ -371,7 +420,7 @@ private fun CartItemCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Remove,
-                            contentDescription = "Decrease",
+                            contentDescription = "Giảm",
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -397,7 +446,7 @@ private fun CartItemCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "Increase",
+                            contentDescription = "Tăng",
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -408,12 +457,12 @@ private fun CartItemCard(
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
-                        text = "$${String.format("%.2f", item.price)} each",
+                        text = "${String.format("%,.0f", item.price)}₫ mỗi vé",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "$${String.format("%.2f", item.price * item.quantity)}",
+                        text = "${String.format("%,.0f", item.price * item.quantity)}₫",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -433,8 +482,11 @@ private fun CartBottomBar(
     voucherDiscount: Double,
     discountPackageDiscount: Double,
     isLoading: Boolean,
+    isCustomer: Boolean,
+    selectedPaymentMethod: PaymentMethod,
     onCheckout: () -> Unit,
-    onShowVoucherSheet: () -> Unit
+    onShowVoucherSheet: () -> Unit,
+    onShowPaymentMethodSheet: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -451,13 +503,13 @@ private fun CartBottomBar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Subtotal:",
+                    text = "Tạm tính:",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
                 Text(
-                    text = "$${String.format("%.2f", subtotal)}",
+                    text = "${String.format("%,.0f", subtotal)}₫",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -473,13 +525,13 @@ private fun CartBottomBar(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Member Discount (${(userDiscountPercentage * 100).toInt()}%):",
+                        text = "Giảm giá thành viên (${(userDiscountPercentage * 100).toInt()}%):",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     
                     Text(
-                        text = "-$${String.format("%.2f", discountPackageDiscount)}",
+                        text = "-${String.format("%,.0f", discountPackageDiscount)}₫",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -496,13 +548,13 @@ private fun CartBottomBar(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Voucher Discount:",
+                        text = "Giảm giá voucher:",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     
                     Text(
-                        text = "-$${String.format("%.2f", voucherDiscount)}",
+                        text = "-${String.format("%,.0f", voucherDiscount)}₫",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -517,13 +569,13 @@ private fun CartBottomBar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Total:",
+                    text = "Tổng cộng:",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 
                 Text(
-                    text = "$${String.format("%.2f", total)}",
+                    text = "${String.format("%,.0f", total)}₫",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -532,56 +584,97 @@ private fun CartBottomBar(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Voucher Section
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
-                onClick = onShowVoucherSheet
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+            // Role-based Selection Section
+            if (isCustomer) {
+                // Voucher Section (for customers)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    onClick = onShowVoucherSheet
                 ) {
-                    Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Voucher",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            
+                            if (selectedVoucher != null) {
+                                Text(
+                                    text = "${selectedVoucher.code} • Tiết kiệm ${String.format("%,.0f", selectedVoucher.discountAmount)}₫",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            } else {
+                                Text(
+                                    text = "Chạm để chọn voucher",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        
                         Text(
-                            text = "Voucher",
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = ">",
+                            style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        
-                        if (selectedVoucher != null) {
+                    }
+                }
+            } else {
+                // Payment Method Section (for staff)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    onClick = onShowPaymentMethodSheet
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
                             Text(
-                                text = "${selectedVoucher.code} • Save $${String.format("%.2f", selectedVoucher.discountAmount)}",
+                                text = "Phương thức thanh toán",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            
+                            Text(
+                                text = selectedPaymentMethod.displayName,
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.primary
                             )
-                        } else {
-                            Text(
-                                text = "Tap to select voucher",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
                         }
+                        
+                        Text(
+                            text = ">",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
-                    
-                    Text(
-                        text = ">",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
             
             Spacer(modifier = Modifier.height(12.dp))
             
             MetrollButton(
-                text = if (isLoading) "Processing..." else "Proceed to Checkout",
+                text = if (isLoading) "Đang xử lý..." else "Tiến hành thanh toán",
                 onClick = onCheckout,
                 enabled = !isLoading,
                 isLoading = isLoading,
@@ -609,7 +702,7 @@ private fun FullScreenPaymentWebView(
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        text = "Complete Payment",
+                        text = "Hoàn tất thanh toán",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium
                     )
@@ -618,7 +711,7 @@ private fun FullScreenPaymentWebView(
                     IconButton(onClick = onClose) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
+                            contentDescription = "Đóng",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -685,5 +778,89 @@ private fun FullScreenPaymentWebView(
                 modifier = Modifier.fillMaxSize()
             )
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PaymentMethodSelectionBottomSheet(
+    availablePaymentMethods: List<PaymentMethod>,
+    selectedPaymentMethod: PaymentMethod,
+    onPaymentMethodSelected: (PaymentMethod) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "Chọn phương thức thanh toán",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+        
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(availablePaymentMethods) { paymentMethod ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (paymentMethod == selectedPaymentMethod) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        }
+                    ),
+                    onClick = { onPaymentMethodSelected(paymentMethod) }
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = paymentMethod.displayName,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = if (paymentMethod == selectedPaymentMethod) {
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                }
+                            )
+                            
+                            Text(
+                                text = when (paymentMethod) {
+                                    PaymentMethod.CASH -> "Thanh toán bằng tiền mặt"
+                                    PaymentMethod.PAYOS -> "Thanh toán trực tuyến qua PayOS"
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (paymentMethod == selectedPaymentMethod) {
+                                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                                }
+                            )
+                        }
+                        
+                        if (paymentMethod == selectedPaymentMethod) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "Đã chọn",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
     }
 } 

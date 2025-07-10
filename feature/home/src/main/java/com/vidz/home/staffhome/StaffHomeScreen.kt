@@ -16,7 +16,9 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.WavingHand
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
@@ -87,6 +89,16 @@ fun StaffHomeScreen(
     val onQRScannerClick: () -> Unit = {
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         navController.navigate(DestinationRoutes.QR_SCANNER_SCREEN_ROUTE)
+    }
+    
+    val onBuyTicketClick: () -> Unit = {
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        navController.navigate(DestinationRoutes.ROOT_TICKET_SCREEN_ROUTE)
+    }
+    
+    val onViewTicketsClick: () -> Unit = {
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        navController.navigate(DestinationRoutes.MY_TICKETS_SCREEN_ROUTE)
     }
     
     val onSettingsClick: () -> Unit = {
@@ -207,6 +219,24 @@ fun StaffHomeScreen(
                     isPrimary = false
                 )
 
+                // Buy Ticket for Guest Button
+                com.vidz.base.components.MetrollActionCard(
+                    title = "Buy Ticket for Guest",
+                    description = "Purchase tickets on behalf of passengers",
+                    icon = Icons.Default.ShoppingCart,
+                    onClick = onBuyTicketClick,
+                    isPrimary = false
+                )
+
+                // View Tickets Button
+                com.vidz.base.components.MetrollActionCard(
+                    title = "View Tickets",
+                    description = "View and manage ticket orders",
+                    icon = Icons.Default.Receipt,
+                    onClick = onViewTicketsClick,
+                    isPrimary = false
+                )
+
                 // Profile & Settings Button
                 com.vidz.base.components.MetrollActionCard(
                     title = "Profile & Settings",
@@ -218,7 +248,7 @@ fun StaffHomeScreen(
             }
         }
         
-        //regiosattn Dialog and Sheet
+        //registration Dialog and Sheet
         // Settings Bottom Sheet
         if (showSettingsBottomSheet) {
             ModalBottomSheet(
