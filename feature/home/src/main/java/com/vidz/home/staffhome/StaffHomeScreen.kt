@@ -239,8 +239,8 @@ fun StaffHomeScreen(
 
                 // Profile & Settings Button
                 com.vidz.base.components.MetrollActionCard(
-                    title = "Profile & Settings",
-                    description = "Manage your profile and account settings",
+                    title = "Tài khoản và cài đặt",
+                    description = "Quản lí tài khoản của bạn",
                     icon = Icons.Default.Settings,
                     onClick = onSettingsClick,
                     isPrimary = false
@@ -293,12 +293,12 @@ private fun StaffSettingsBottomSheetContent(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "Staff Settings",
+                text = "Tùy chọn",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = "Welcome, $staffName",
+                text = "Chào mừng, $staffName",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -319,7 +319,7 @@ private fun StaffSettingsBottomSheetContent(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("View Profile")
+                Text("Thông tin cá nhân")
             }
             
             OutlinedButton(
@@ -332,7 +332,7 @@ private fun StaffSettingsBottomSheetContent(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Edit Profile")
+                Text("Chỉnh sửa thông tin")
             }
         }
         
@@ -352,7 +352,7 @@ private fun StaffSettingsBottomSheetContent(
                     color = MaterialTheme.colorScheme.error
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Signing out...")
+                Text("Đang đăng xuất...")
             } else {
                 Icon(
                     imageVector = Icons.Default.Logout,
@@ -360,7 +360,7 @@ private fun StaffSettingsBottomSheetContent(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Sign Out")
+                Text("Đăng xuất")
             }
         }
     }
@@ -374,10 +374,10 @@ private fun WelcomeMessageCard(
     // Get current time for greeting
     val currentHour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
     val greeting = when (currentHour) {
-        in 5..11 -> "Good Morning"
-        in 12..16 -> "Good Afternoon"
-        in 17..21 -> "Good Evening"
-        else -> "Good Night"
+        in 5..11 -> "Chào buổi sáng"
+        in 12..16 -> "Chào buổi chiều"
+        in 17..21 -> "Chào buổi tối"
+        else -> "Chào buổi tối"
     }
     
     Card(
@@ -396,7 +396,7 @@ private fun WelcomeMessageCard(
         ) {
             Icon(
                 imageVector = Icons.Default.WavingHand,
-                contentDescription = "Welcome",
+                contentDescription = "Chào mừng",
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(32.dp)
             )
@@ -412,7 +412,7 @@ private fun WelcomeMessageCard(
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
-                    text = "Ready to start your shift?",
+                    text = "Chúc bạn một ngày làm việc vui vẻ",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                 )

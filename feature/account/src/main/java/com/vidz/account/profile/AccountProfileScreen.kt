@@ -163,7 +163,7 @@ private fun LoadingScreen(
         ) {
             CircularProgressIndicator()
             Text(
-                text = "Loading your profile...",
+                text = "Đang tải thông tin...",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -193,7 +193,7 @@ private fun ErrorScreen(
                 modifier = Modifier.size(64.dp)
             )
             Text(
-                text = "Failed to load profile",
+                text = "Không tải được hồ sơ",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center
@@ -214,7 +214,7 @@ private fun ErrorScreen(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Try Again")
+                Text("Thử lại")
             }
         }
     }
@@ -295,7 +295,7 @@ private fun ProfileHeader(
             
             // Profile Name and Email
             Text(
-                text = account.fullName.ifEmpty { "Unknown User" },
+                text = account.fullName.ifEmpty { "Người dùng không xác định" },
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center
@@ -330,15 +330,15 @@ private fun ProfileInformationCard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Personal Information",
+                text = "Thông tin cá nhân",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium
             )
             
             ProfileInfoRow(
                 icon = Icons.Default.Person,
-                label = "Full Name",
-                value = account.fullName.ifEmpty { "Not provided" }
+                label = "Họ và tên",
+                value = account.fullName.ifEmpty { "Chưa cung cấp" }
             )
             
             ProfileInfoRow(
@@ -349,14 +349,14 @@ private fun ProfileInformationCard(
             
             ProfileInfoRow(
                 icon = Icons.Default.Phone,
-                label = "Phone Number",
-                value = account.phoneNumber.ifEmpty { "Not provided" }
+                label = "Số điện thoại",
+                value = account.phoneNumber.ifEmpty { "Chưa cung cấp" }
             )
             
             ProfileInfoRow(
                 icon = Icons.Default.Security,
-                label = "Account ID",
-                value = account.id.ifEmpty { "Unknown" }
+                label = "Mã tài khoản",
+                value = account.id.ifEmpty { "Không rõ" }
             )
         }
     }
@@ -378,7 +378,7 @@ private fun AccountStatusCard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Account Status",
+                text = "Trạng thái tài khoản",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium
             )
@@ -390,7 +390,7 @@ private fun AccountStatusCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Status",
+                    text = "Trạng thái",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -401,7 +401,7 @@ private fun AccountStatusCard(
             if (account.createdAt.isNotEmpty()) {
                 ProfileInfoRow(
                     icon = Icons.Default.Person,
-                    label = "Member Since",
+                    label = "Là thành viên từ",
                     value = formatDate(account.createdAt)
                 )
             }
@@ -410,7 +410,7 @@ private fun AccountStatusCard(
             if (account.updatedAt.isNotEmpty()) {
                 ProfileInfoRow(
                     icon = Icons.Default.Refresh,
-                    label = "Last Updated",
+                    label = "Cập nhật lần cuối",
                     value = formatDate(account.updatedAt)
                 )
             }
@@ -437,7 +437,7 @@ private fun ActionsSection(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Actions",
+                text = "Tùy chọn",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium
             )
@@ -452,7 +452,7 @@ private fun ActionsSection(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Edit Profile")
+                Text("Chỉnh sửa hồ sơ")
             }
             
             OutlinedButton(
@@ -465,7 +465,7 @@ private fun ActionsSection(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Refresh Profile")
+                Text("Làm mới thông tin")
             }
             
             // Logout Button
@@ -484,7 +484,7 @@ private fun ActionsSection(
                         color = MaterialTheme.colorScheme.error
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Logging out...")
+                    Text("Đang đăng xuất...")
                 } else {
                     Icon(
                         imageVector = Icons.Default.ExitToApp,
@@ -492,7 +492,7 @@ private fun ActionsSection(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Logout")
+                    Text("Đăng xuất")
                 }
             }
         }
@@ -543,8 +543,8 @@ private fun RoleChip(
 ) {
     val (text, color) = when (role) {
         AccountRole.ADMIN -> "Admin" to MaterialTheme.colorScheme.error
-        AccountRole.STAFF -> "Staff" to MaterialTheme.colorScheme.primary
-        AccountRole.CUSTOMER -> "Customer" to MaterialTheme.colorScheme.secondary
+        AccountRole.STAFF -> "Nhân viên" to MaterialTheme.colorScheme.primary
+        AccountRole.CUSTOMER -> "Người dùng" to MaterialTheme.colorScheme.secondary
     }
     
     Surface(
@@ -568,9 +568,9 @@ private fun StatusChip(
     modifier: Modifier = Modifier
 ) {
     val (text, color) = if (isActive) {
-        "Active" to MaterialTheme.colorScheme.primary
+        "Đang hoạt động" to MaterialTheme.colorScheme.primary
     } else {
-        "Inactive" to MaterialTheme.colorScheme.error
+        "Không khả dụng" to MaterialTheme.colorScheme.error
     }
     
     Surface(
