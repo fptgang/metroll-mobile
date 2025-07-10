@@ -10,8 +10,14 @@ import com.vidz.domain.model.CheckoutItem
 import com.vidz.domain.model.CheckoutRequest
 import com.vidz.domain.model.Order
 import com.vidz.domain.model.P2PJourney
+import com.vidz.domain.model.Station
 import com.vidz.domain.model.TicketType
 import com.vidz.domain.model.TimedTicketPlan
+import com.vidz.domain.model.Voucher
+import com.vidz.domain.model.VoucherStatus
+import com.vidz.domain.model.AccountRole
+import com.vidz.domain.usecase.account.GetMyDiscountPercentageUseCase
+import com.vidz.domain.usecase.account.ObserveLocalAccountInfoUseCase
 import com.vidz.domain.usecase.auth.GetCurrentUserUseCase
 import com.vidz.domain.usecase.cart.AddToCartUseCase
 import com.vidz.domain.usecase.cart.ClearCartUseCase
@@ -21,8 +27,11 @@ import com.vidz.domain.usecase.cart.UpdateCartItemQuantityUseCase
 import com.vidz.domain.usecase.order.CheckoutUseCase
 import com.vidz.domain.usecase.p2pjourney.GetP2PJourneyByIdUseCase
 import com.vidz.domain.usecase.p2pjourney.GetP2PJourneysUseCase
+import com.vidz.domain.usecase.p2pjourney.GetP2PJourneyByStationsUseCase
+import com.vidz.domain.usecase.station.GetStationsUseCase
 import com.vidz.domain.usecase.timedticketplan.GetTimedTicketPlanByIdUseCase
 import com.vidz.domain.usecase.timedticketplan.GetTimedTicketPlansUseCase
+import com.vidz.domain.usecase.voucher.GetMyVouchersUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 
 import kotlinx.coroutines.flow.launchIn
@@ -40,19 +49,39 @@ data class CartItem(
 )
 
 enum class P2PSortType(val displayName: String) {
-    PRICE_ASC("Price: Low to High"),
-    PRICE_DESC("Price: High to Low"),
-    DURATION_ASC("Duration: Shortest"),
-    DURATION_DESC("Duration: Longest"),
-    DISTANCE_ASC("Distance: Shortest"),
-    DISTANCE_DESC("Distance: Longest"),
-    DEFAULT("Default")
+    PRICE_ASC("Giá: Thấp đến Cao"),
+    PRICE_DESC("Giá: Cao đến Thấp"),
+    DURATION_ASC("Thời gian: Ngắn nhất"),
+    DURATION_DESC("Thời gian: Dài nhất"),
+    DISTANCE_ASC("Khoảng cách: Gần nhất"),
+    DISTANCE_DESC("Khoảng cách: Xa nhất"),
+    DEFAULT("Mặc định")
 }
 
+enum class PaymentMethod(val displayName: String, val value: String) {
+    PAYOS("Thanh toán trực tuyến", "PAYOS"),
+    CASH("Thanh toán tiền mặt", "CASH")
+}
+
+/**
+ * TicketPurchaseViewModel handles role-based ticket purchasing logic:
+ * 
+ * FOR CUSTOMERS (AccountRole.CUSTOMER):
+ * - Can only use PAYOS payment method (online payment)
+ * - Can select and use vouchers for discounts
+ * - Automatic voucher selection for best discount
+ * 
+ * FOR STAFF/ADMIN (AccountRole.STAFF, AccountRole.ADMIN):
+ * - Can use both PAYOS and CASH payment methods
+ * - Cannot use vouchers (voucher selection disabled)
+ * - Payment method selection required before checkout
+ */
 @HiltViewModel
 class TicketPurchaseViewModel @Inject constructor(
     private val getTimedTicketPlansUseCase: GetTimedTicketPlansUseCase,
     private val getP2PJourneysUseCase: GetP2PJourneysUseCase,
+    private val getP2PJourneyByStationsUseCase: GetP2PJourneyByStationsUseCase,
+    private val getStationsUseCase: GetStationsUseCase,
     private val getTimedTicketPlanByIdUseCase: GetTimedTicketPlanByIdUseCase,
     private val getP2PJourneyByIdUseCase: GetP2PJourneyByIdUseCase,
     private val checkoutUseCase: CheckoutUseCase,
@@ -61,7 +90,10 @@ class TicketPurchaseViewModel @Inject constructor(
     private val clearCartUseCase: ClearCartUseCase,
     private val removeFromCartUseCase: RemoveFromCartUseCase,
     private val updateCartItemQuantityUseCase: UpdateCartItemQuantityUseCase,
-    private val getCurrentUserUseCase: GetCurrentUserUseCase
+    private val getCurrentUserUseCase: GetCurrentUserUseCase,
+    private val observeLocalAccountInfoUseCase: ObserveLocalAccountInfoUseCase,
+    private val getMyVouchersUseCase: GetMyVouchersUseCase,
+    private val getMyDiscountPercentageUseCase: GetMyDiscountPercentageUseCase
 ) : BaseViewModel<TicketPurchaseViewModel.TicketPurchaseEvent, TicketPurchaseViewModel.TicketPurchaseUiState, TicketPurchaseViewModel.TicketPurchaseViewModelState>(
     initState = TicketPurchaseViewModelState()
 ) {
@@ -69,6 +101,7 @@ class TicketPurchaseViewModel @Inject constructor(
     init {
         loadInitialData()
         observeCartItems()
+        observeUserRole()
     }
 
     override fun onTriggerEvent(event: TicketPurchaseEvent) {
@@ -92,12 +125,46 @@ class TicketPurchaseViewModel @Inject constructor(
             is TicketPurchaseEvent.ProcessPaymentUrl -> processPaymentUrl(event.url)
             is TicketPurchaseEvent.OpenPayment -> openPayment()
             is TicketPurchaseEvent.ClosePayment -> closePayment()
+            is TicketPurchaseEvent.LoadStations -> loadStations()
+            is TicketPurchaseEvent.SelectFromStation -> selectFromStation(event.station)
+            is TicketPurchaseEvent.SelectToStation -> selectToStation(event.station)
+            is TicketPurchaseEvent.SearchJourneyByStations -> searchJourneyByStations()
+            is TicketPurchaseEvent.ClearStationSelection -> clearStationSelection()
+            is TicketPurchaseEvent.LoadVouchers -> loadVouchers()
+            is TicketPurchaseEvent.SelectVoucher -> selectVoucher(event.voucher)
+            is TicketPurchaseEvent.ShowVoucherSheet -> showVoucherSheet(event.show)
+            is TicketPurchaseEvent.SelectPaymentMethod -> selectPaymentMethod(event.paymentMethod)
+            is TicketPurchaseEvent.ShowPaymentMethodSheet -> showPaymentMethodSheet(event.show)
+        }
+    }
+
+    private fun observeUserRole() {
+        viewModelScope.launch {
+            observeLocalAccountInfoUseCase().collect { account ->
+                val userRole = account?.role ?: AccountRole.CUSTOMER
+                val isCustomer = userRole == AccountRole.CUSTOMER
+                
+                updateState {
+                    copy(
+                        userRole = userRole,
+                        isCustomer = isCustomer,
+                        selectedPaymentMethod = if (isCustomer) PaymentMethod.PAYOS else PaymentMethod.PAYOS // Default to PAYOS for both
+                    )
+                }
+                
+                // Load vouchers only for customers
+                if (isCustomer) {
+                    loadVouchers()
+                }
+            }
         }
     }
 
     private fun loadInitialData() {
         loadTimedTickets()
-        loadP2PJourneys()
+        loadP2PJourneys() // Load all P2P journeys initially
+        loadStations()
+        loadDiscountPercentage()
     }
 
     private fun observeCartItems() {
@@ -116,9 +183,17 @@ class TicketPurchaseViewModel @Inject constructor(
                         )
                     }
                     updateState { copy(cartItems = placeholderCartItems) }
-                    
+
                     // Fetch detailed information for each item
                     fetchCartItemDetails(checkoutItems)
+                    
+                    // Re-evaluate best voucher when cart changes (only for customers)
+                    if (viewModelState.value.isCustomer) {
+                        val currentVouchers = viewModelState.value.vouchers
+                        if (currentVouchers.isNotEmpty()) {
+                            autoSelectBestVoucher(currentVouchers)
+                        }
+                    }
                 }
                 .launchIn(this)
         }
@@ -213,7 +288,7 @@ class TicketPurchaseViewModel @Inject constructor(
     }
 
     private fun updateCartItemWithDetails(id: String, cartItem: CartItem) {
-        updateState { 
+        updateState {
             copy(
                 cartItems = cartItems.map { existing ->
                     if (existing.id == id) cartItem else existing
@@ -373,7 +448,9 @@ class TicketPurchaseViewModel @Inject constructor(
                             is Result.Success -> {
                                 val checkoutRequest = CheckoutRequest(
                                     items = checkoutItems,
-                                    paymentMethod = "PAYOS",
+                                    paymentMethod = viewModelState.value.selectedPaymentMethod.value,
+                                    voucherId = if (viewModelState.value.isCustomer) viewModelState.value.selectedVoucher?.id else null,
+//                                    discountPackage = if (viewModelState.value.userDiscountPercentage != null && viewModelState.value.userDiscountPercentage!! > 0f) "ACTIVE" else null,
                                     customerId = user.data?.uid
                                 )
 
@@ -384,27 +461,27 @@ class TicketPurchaseViewModel @Inject constructor(
                                                 updateState { copy(isCheckingOut = true) }
                                             }
 
-                                                                        is Result.Success -> {
-                                // Clear cart after successful checkout
-                                clearCartUseCase()
-                                
-                                // Only set paymentUrl if payment method is PAYOS and paymentUrl exists
-                                val shouldShowPaymentWebView = result.data.paymentMethod == "PAYOS" && 
-                                                              !result.data.paymentUrl.isNullOrEmpty()
-                                
-                                // Debug logging
-                                println("Checkout successful - Payment Method: ${result.data.paymentMethod}, PaymentUrl: ${result.data.paymentUrl}, ShouldShow: $shouldShowPaymentWebView")
-                                
-                                updateState {
-                                    copy(
-                                        isCheckingOut = false,
-                                        checkoutResult = result.data,
-                                        error = null,
-                                        paymentUrl = if (shouldShowPaymentWebView) result.data.paymentUrl else null,
-                                        showPaymentWebView = shouldShowPaymentWebView
-                                    )
-                                }
-                            }
+                                            is Result.Success -> {
+                                                // Clear cart after successful checkout
+                                                clearCartUseCase()
+
+                                                // Only set paymentUrl if payment method is PAYOS and paymentUrl exists
+                                                val shouldShowPaymentWebView = result.data.paymentMethod == "PAYOS" &&
+                                                                              !result.data.paymentUrl.isNullOrEmpty()
+
+                                                // Debug logging
+                                                println("Checkout successful - Payment Method: ${result.data.paymentMethod}, PaymentUrl: ${result.data.paymentUrl}, ShouldShow: $shouldShowPaymentWebView")
+
+                                                updateState {
+                                                    copy(
+                                                        isCheckingOut = false,
+                                                        checkoutResult = result.data,
+                                                        error = null,
+                                                        paymentUrl = if (shouldShowPaymentWebView) result.data.paymentUrl else null,
+                                                        showPaymentWebView = shouldShowPaymentWebView
+                                                    )
+                                                }
+                                            }
 
                                             is Result.ServerError -> {
                                                 updateState {
@@ -452,6 +529,251 @@ class TicketPurchaseViewModel @Inject constructor(
         updateState { copy(showPaymentWebView = false, paymentUrl = null) }
     }
 
+    private fun loadStations() {
+        viewModelScope.launch {
+            getStationsUseCase(page = 0, size = 100)
+                .onEach { result ->
+                    when (result) {
+                        is Result.Init -> {
+                            updateState { copy(isLoadingStations = true) }
+                        }
+                        is Result.Success -> {
+                            println("ViewModel: Stations loaded successfully - ${result.data.content.size} stations")
+                            updateState {
+                                copy(
+                                    isLoadingStations = false,
+                                    stations = result.data.content,
+                                    error = null
+                                )
+                            }
+                        }
+                        is Result.ServerError -> {
+                            println( "ViewModel: Error loading stations - ${result.message}")
+                            updateState {
+                                copy(
+                                    isLoadingStations = false,
+                                    error = result.message
+                                )
+                            }
+                        }
+                    }
+                }
+                .launchIn(this)
+        }
+    }
+
+    private fun selectFromStation(station: Station?) {
+        println("ViewModel: selectFromStation called with: ${station?.name} (${station?.code})")
+        updateState {
+            copy(
+                selectedFromStation = station,
+                selectedToStation = if (selectedToStation?.id == station?.id) null else selectedToStation
+            )
+        }
+
+        // Always try to search when any station is selected
+        if (station != null) {
+            println("ViewModel: From station selected, triggering searchJourneyByStations")
+            searchJourneyByStations()
+        } else {
+            println("ViewModel: From station cleared, loading all P2P journeys")
+            loadP2PJourneys()
+        }
+    }
+
+    private fun selectToStation(station: Station?) {
+        println("ViewModel: selectToStation called with: ${station?.name} (${station?.code})")
+        updateState {
+            copy(
+                selectedToStation = station,
+                selectedFromStation = if (selectedFromStation?.id == station?.id) null else selectedFromStation
+            )
+        }
+
+        // Always try to search when any station is selected
+        if (station != null) {
+            println("ViewModel: To station selected, triggering searchJourneyByStations")
+            searchJourneyByStations()
+        } else {
+            println("ViewModel: To station cleared, loading all P2P journeys")
+            loadP2PJourneys()
+        }
+    }
+
+    private fun searchJourneyByStations() {
+        val fromStation = viewModelState.value.selectedFromStation
+        val toStation = viewModelState.value.selectedToStation
+        
+        println("ViewModel: searchJourneyByStations called. From: ${fromStation?.name} (${fromStation?.code}), To: ${toStation?.name} (${toStation?.code})")
+
+        // If stations are selected, search by stations using codes
+        if (fromStation != null || toStation != null) {
+            val fromCode = fromStation?.code.orEmpty()
+            val toCode = toStation?.code.orEmpty()
+            println("ViewModel: Searching P2P journeys with fromCode='$fromCode', toCode='$toCode'")
+            
+            viewModelScope.launch {
+                getP2PJourneyByStationsUseCase(page = 0, size = 50, fromCode, toCode)
+                    .onEach { result ->
+                        when (result) {
+                            is Result.Init -> {
+                                println("ViewModel: P2P journey search init state")
+                                updateState { copy(isLoadingP2P = true) }
+                            }
+                            is Result.Success -> {
+                                println("ViewModel: P2P journey search success - ${result.data.content.size} journeys found")
+                                val sortedJourneys = sortJourneysByType(
+                                    result.data.content,
+                                    viewModelState.value.p2pSortType
+                                )
+                                updateState {
+                                    copy(
+                                        isLoadingP2P = false,
+                                        p2pJourneys = sortedJourneys,
+                                        error = null
+                                    )
+                                }
+                            }
+                            is Result.ServerError -> {
+                                println("ViewModel: P2P journey search error - ${result.message}")
+                                updateState {
+                                    copy(
+                                        isLoadingP2P = false,
+                                        p2pJourneys = emptyList(),
+                                        error = result.message
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    .launchIn(this)
+            }
+        } else {
+            println("ViewModel: No stations selected, loading all P2P journeys")
+            loadP2PJourneys()
+        }
+    }
+
+    private fun clearStationSelection() {
+        updateState {
+            copy(
+                selectedFromStation = null,
+                selectedToStation = null
+            )
+        }
+        // Reload all P2P journeys when clearing stations
+        loadP2PJourneys()
+    }
+
+    private fun loadVouchers() {
+        // Only load vouchers for customers
+        if (!viewModelState.value.isCustomer) return
+        
+        viewModelScope.launch {
+            getMyVouchersUseCase()
+                .onEach { result ->
+                    when (result) {
+                        is Result.Init -> {
+                            updateState { copy(isLoadingVouchers = true) }
+                        }
+                        is Result.Success -> {
+                            val vouchers = result.data
+                            updateState {
+                                copy(
+                                    isLoadingVouchers = false,
+                                    vouchers = vouchers,
+                                    error = null
+                                )
+                            }
+                            // Auto-select the best voucher only for customers
+                            autoSelectBestVoucher(vouchers)
+                        }
+                        is Result.ServerError -> {
+                            updateState {
+                                copy(
+                                    isLoadingVouchers = false,
+                                    error = result.message
+                                )
+                            }
+                        }
+                    }
+                }
+                .launchIn(this)
+        }
+    }
+
+    private fun autoSelectBestVoucher(vouchers: List<Voucher>) {
+        // Only auto-select vouchers for customers
+        if (!viewModelState.value.isCustomer) return
+        
+        val currentSubtotal = viewModelState.value.cartItems.sumOf { it.price * it.quantity }
+        
+        // Select the first usable voucher (highest discount among usable ones)
+        val bestVoucher = vouchers.firstOrNull { voucher ->
+            voucher.status == VoucherStatus.VALID && currentSubtotal >= voucher.minTransactionAmount
+        }?.let { voucher ->
+            // Among usable vouchers, select the one with highest discount
+            vouchers.filter { v ->
+                v.status == VoucherStatus.VALID && currentSubtotal >= v.minTransactionAmount
+            }.maxByOrNull { it.discountAmount }
+        }
+        
+        updateState { copy(selectedVoucher = bestVoucher) }
+    }
+
+    private fun selectVoucher(voucher: Voucher?) {
+        // Only allow voucher selection for customers
+        if (!viewModelState.value.isCustomer) return
+        updateState { copy(selectedVoucher = voucher) }
+    }
+
+    private fun showVoucherSheet(show: Boolean) {
+        // Only allow voucher sheet for customers
+        if (!viewModelState.value.isCustomer) return
+        updateState { copy(showVoucherSheet = show) }
+    }
+
+    private fun loadDiscountPercentage() {
+        viewModelScope.launch {
+            getMyDiscountPercentageUseCase()
+                .onEach { result ->
+                    when (result) {
+                        is Result.Init -> {
+                            updateState { copy(isLoadingDiscountPercentage = true) }
+                        }
+                        is Result.Success -> {
+                            updateState {
+                                copy(
+                                    isLoadingDiscountPercentage = false,
+                                    userDiscountPercentage = result.data,
+                                    error = null
+                                )
+                            }
+                        }
+                        is Result.ServerError -> {
+                            updateState {
+                                copy(
+                                    isLoadingDiscountPercentage = false,
+                                    error = result.message
+                                )
+                            }
+                        }
+                    }
+                }
+                .launchIn(this)
+        }
+    }
+
+    private fun selectPaymentMethod(paymentMethod: PaymentMethod) {
+        updateState { copy(selectedPaymentMethod = paymentMethod) }
+    }
+
+    private fun showPaymentMethodSheet(show: Boolean) {
+        updateState { copy(showPaymentMethodSheet = show) }
+    }
+    
+
+
     private fun updateState(update: TicketPurchaseViewModelState.() -> TicketPurchaseViewModelState) {
         viewModelState.value = viewModelState.value.update()
     }
@@ -474,6 +796,16 @@ class TicketPurchaseViewModel @Inject constructor(
         data class ProcessPaymentUrl(val url: String) : TicketPurchaseEvent
         object OpenPayment : TicketPurchaseEvent
         object ClosePayment : TicketPurchaseEvent
+        object LoadStations : TicketPurchaseEvent
+        data class SelectFromStation(val station: Station?) : TicketPurchaseEvent
+        data class SelectToStation(val station: Station?) : TicketPurchaseEvent
+        object SearchJourneyByStations : TicketPurchaseEvent
+        object ClearStationSelection : TicketPurchaseEvent
+        object LoadVouchers : TicketPurchaseEvent
+        data class SelectVoucher(val voucher: Voucher?) : TicketPurchaseEvent
+        data class ShowVoucherSheet(val show: Boolean) : TicketPurchaseEvent
+        data class SelectPaymentMethod(val paymentMethod: PaymentMethod) : TicketPurchaseEvent
+        data class ShowPaymentMethodSheet(val show: Boolean) : TicketPurchaseEvent
     }
 
     data class TicketPurchaseViewModelState(
@@ -489,25 +821,105 @@ class TicketPurchaseViewModel @Inject constructor(
         val p2pSortType: P2PSortType = P2PSortType.DEFAULT,
         val showCartSheet: Boolean = false,
         val paymentUrl: String? = null,
-        val showPaymentWebView: Boolean = false
+        val showPaymentWebView: Boolean = false,
+        val isLoadingStations: Boolean = false,
+        val stations: List<Station> = emptyList(),
+        val selectedFromStation: Station? = null,
+        val selectedToStation: Station? = null,
+        val isLoadingVouchers: Boolean = false,
+        val vouchers: List<Voucher> = emptyList(),
+        val selectedVoucher: Voucher? = null,
+        val showVoucherSheet: Boolean = false,
+        val isLoadingDiscountPercentage: Boolean = false,
+        val userDiscountPercentage: Float? = null,
+        val userRole: AccountRole = AccountRole.CUSTOMER,
+        val isCustomer: Boolean = true,
+        val selectedPaymentMethod: PaymentMethod = PaymentMethod.PAYOS,
+        val showPaymentMethodSheet: Boolean = false
     ) : ViewModelState() {
-        override fun toUiState(): ViewState = TicketPurchaseUiState(
-            isLoadingTimed = isLoadingTimed,
-            isLoadingP2P = isLoadingP2P,
-            isCheckingOut = isCheckingOut,
-            selectedTicketType = selectedTicketType,
-            timedTickets = timedTickets,
-            p2pJourneys = p2pJourneys,
-            cartItems = cartItems,
-            checkoutResult = checkoutResult,
-            error = error,
-            p2pSortType = p2pSortType,
-            showCartSheet = showCartSheet,
-            paymentUrl = paymentUrl,
-            showPaymentWebView = showPaymentWebView,
-            cartTotal = cartItems.sumOf { it.price * it.quantity },
-            cartItemCount = cartItems.sumOf { it.quantity }
-        )
+        override fun toUiState(): ViewState {
+            val subtotal = cartItems.sumOf { it.price * it.quantity }
+            
+            // Calculate voucher discount (only for customers)
+            val voucherDiscount = if (isCustomer) {
+                selectedVoucher?.let { voucher ->
+                    if (voucher.status == VoucherStatus.VALID && subtotal >= voucher.minTransactionAmount) {
+                        voucher.discountAmount
+                    } else {
+                        0.0
+                    }
+                } ?: 0.0
+            } else {
+                0.0
+            }
+            
+            // Calculate discount package discount
+            val discountPackageDiscount = userDiscountPercentage?.let { percentage ->
+                if (percentage > 0f && percentage < 1f) {
+                    subtotal * percentage
+                } else {
+                    0.0
+                }
+            } ?: 0.0
+            
+            // Apply both discounts (voucher first, then discount package)
+            val totalAfterVoucher = subtotal - voucherDiscount
+            val total = totalAfterVoucher - discountPackageDiscount
+            
+            // Sort vouchers only for customers
+            val sortedVouchers = if (isCustomer) {
+                vouchers.sortedWith(compareByDescending<Voucher> { voucher ->
+                    voucher.status == VoucherStatus.VALID && subtotal >= voucher.minTransactionAmount
+                }.thenByDescending { it.discountAmount })
+            } else {
+                emptyList()
+            }
+            
+            // Calculate available payment methods based on user role
+            val availablePaymentMethods = if (isCustomer) {
+                // Customers can only use online payment
+                listOf(PaymentMethod.PAYOS)
+            } else {
+                // Staff and admin can use both payment methods
+                listOf(PaymentMethod.PAYOS, PaymentMethod.CASH)
+            }
+            
+            return TicketPurchaseUiState(
+                isLoadingTimed = isLoadingTimed,
+                isLoadingP2P = isLoadingP2P,
+                isCheckingOut = isCheckingOut,
+                selectedTicketType = selectedTicketType,
+                timedTickets = timedTickets,
+                p2pJourneys = p2pJourneys,
+                cartItems = cartItems,
+                checkoutResult = checkoutResult,
+                error = error,
+                p2pSortType = p2pSortType,
+                showCartSheet = showCartSheet,
+                paymentUrl = paymentUrl,
+                showPaymentWebView = showPaymentWebView,
+                isLoadingStations = isLoadingStations,
+                stations = stations,
+                selectedFromStation = selectedFromStation,
+                selectedToStation = selectedToStation,
+                isLoadingVouchers = isLoadingVouchers,
+                vouchers = sortedVouchers,
+                selectedVoucher = selectedVoucher,
+                showVoucherSheet = showVoucherSheet,
+                isLoadingDiscountPercentage = isLoadingDiscountPercentage,
+                userDiscountPercentage = userDiscountPercentage,
+                subtotal = subtotal,
+                total = total,
+                voucherDiscount = voucherDiscount,
+                discountPackageDiscount = discountPackageDiscount,
+                cartItemCount = cartItems.sumOf { it.quantity },
+                userRole = userRole,
+                isCustomer = isCustomer,
+                selectedPaymentMethod = selectedPaymentMethod,
+                showPaymentMethodSheet = showPaymentMethodSheet,
+                availablePaymentMethods = availablePaymentMethods
+            )
+        }
     }
 
     data class TicketPurchaseUiState(
@@ -524,7 +936,25 @@ class TicketPurchaseViewModel @Inject constructor(
         val showCartSheet: Boolean,
         val paymentUrl: String?,
         val showPaymentWebView: Boolean,
-        val cartTotal: Double,
-        val cartItemCount: Int
+        val isLoadingStations: Boolean,
+        val stations: List<Station>,
+        val selectedFromStation: Station?,
+        val selectedToStation: Station?,
+        val isLoadingVouchers: Boolean,
+        val vouchers: List<Voucher>,
+        val selectedVoucher: Voucher?,
+        val showVoucherSheet: Boolean,
+        val isLoadingDiscountPercentage: Boolean,
+        val userDiscountPercentage: Float?,
+        val subtotal: Double,
+        val total: Double,
+        val voucherDiscount: Double,
+        val discountPackageDiscount: Double,
+        val cartItemCount: Int,
+        val userRole: AccountRole,
+        val isCustomer: Boolean,
+        val selectedPaymentMethod: PaymentMethod,
+        val showPaymentMethodSheet: Boolean,
+        val availablePaymentMethods: List<PaymentMethod>
     ) : ViewState()
 } 

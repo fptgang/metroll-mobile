@@ -16,9 +16,11 @@ interface P2PJourneyRepository {
     suspend fun getP2PJourneyById(id: String): Result<P2PJourney>
     
     suspend fun getP2PJourneyByStations(
-        startStationId: String,
-        endStationId: String
-    ): Result<P2PJourney>
+        page: Int? = null,
+        size: Int? = null,
+        startStationId: String?,
+        endStationId: String?
+    ): Result<PageDto<P2PJourney>>
     
     suspend fun createP2PJourney(request: P2PJourneyCreateRequest): Result<P2PJourney>
     

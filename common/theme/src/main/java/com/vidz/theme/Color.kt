@@ -3,274 +3,226 @@ package com.vidz.theme
 import androidx.compose.ui.graphics.Color
 
 /**
- * Created by FPL on 08/01/2025.
- * Updated with Shopee Vietnam style colors
+ * HCMC Metro Flat Design Color System
+ * Optimized for flat design principles with bold, vibrant colors
+ * Created by Vidz on 08/01/2025.
  */
 
-val White = Color(0xFFFFFFFF)
-val Black = Color(0xFF000000)
+// ============================================
+// BASE FLAT DESIGN COLORS
+// ============================================
 
-// Shopee Vietnam Brand Colors
-val ShopeeOrange = Color(0xFFFF5722) // Primary brand color
-val ShopeeOrangeLight = Color(0xFFFF7043)
-val ShopeeOrangeDark = Color(0xFFE64A19)
-val ShopeeRed = Color(0xFFE91E63) // For promotions/sales
-val ShopeeRedLight = Color(0xFFEC407A)
-val ShopeeRedDark = Color(0xFFC2185B)
-val ShopeeBlue = Color(0xFF2196F3) // For trust/security
-val ShopeeGreen = Color(0xFF4CAF50) // For success/orders
-val ShopeeYellow = Color(0xFFFFC107) // For ratings/highlights
-val ShopeePurple = Color(0xFF9C27B0) // For premium features
+// Primary Flat Colors - Bold and Vibrant
+val FlatMetroNavy = Color(0xFF1E3A8A)        // Deep navy - primary brand
+val FlatMetroBlue = Color(0xFF3B82F6)        // Bright blue - secondary
+val FlatMetroRed = Color(0xFFEF4444)         // Vibrant red - accent
+val FlatMetroWhite = Color(0xFFFFFFFF)       // Pure white
+val FlatMetroGray = Color(0xFF6B7280)        // Medium gray - balanced
 
-//val DarkSystemUiBackgroundColor = Color(0xFF0D0D0C)
-val DarkSystemUiBackgroundColor = Color(0xFF000000)
-val LightSystemUiBackgroundColor = Color(0xFFFFFBF5) // Warmer white for e-commerce
+// ============================================
+// EXTENDED FLAT PALETTE
+// ============================================
 
-// Base - Updated for Shopee style
-val LightPrimaryColor = ShopeeOrange // Shopee brand orange
-val DarkPrimaryColor = ShopeeOrangeLight
+// Blue Family - Flat Design
+val FlatNavyDark = Color(0xFF1E40AF)         // Darker navy
+val FlatNavyLight = Color(0xFF60A5FA)        // Lighter navy
+val FlatBlueVibrant = Color(0xFF2563EB)      // Vibrant blue
+val FlatBlueLight = Color(0xFF93C5FD)        // Light blue
+val FlatBluePastel = Color(0xFFDBEAFE)       // Pastel blue
 
-val LightOnPrimaryColor = Color(0xFFFFFFFF)
-val DarkOnPrimaryColor = Color(0xFF0D0D0C)
+// Red Family - Flat Design
+val FlatRedDark = Color(0xFFDC2626)          // Dark red
+val FlatRedLight = Color(0xFFF87171)         // Light red
+val FlatRedVibrant = Color(0xFFFF4545)       // Vibrant red
+val FlatRedPastel = Color(0xFFFECDD3)        // Pastel red
+val FlatRedCoral = Color(0xFFFF6B6B)         // Coral red
 
-val LightPrimaryContainerColor = Color(0xFFFFF3E0) // Light orange container
-val DarkPrimaryContainerColor = Color(0xFF4E2A1A) // Dark orange container
+// Gray Family - Flat Design
+val FlatGrayDark = Color(0xFF374151)         // Dark gray
+val FlatGrayMedium = Color(0xFF6B7280)       // Medium gray
+val FlatGrayLight = Color(0xFF9CA3AF)        // Light gray
+val FlatGrayLighter = Color(0xFFD1D5DB)      // Lighter gray
+val FlatGrayBackground = Color(0xFFF3F4F6)   // Background gray
 
-val LightOnPrimaryContainerColor = ShopeeOrangeDark
-val DarkOnPrimaryContainerColor = Color(0xFFFFF3E0)
+// ============================================
+// FUNCTIONAL FLAT COLORS
+// ============================================
 
-val LightSecondaryColor = ShopeeRed // Secondary action color
-val DarkSecondaryColor = ShopeeRedLight
+// Success Colors
+val FlatSuccess = Color(0xFF10B981)          // Emerald green
+val FlatSuccessLight = Color(0xFF6EE7B7)     // Light success
+val FlatSuccessDark = Color(0xFF059669)      // Dark success
 
-val LightOnSecondaryColor = Color(0xFFFFFFFF)
-val DarkOnSecondaryColor = Color(0xFFFFFFFF)
+// Warning Colors
+val FlatWarning = Color(0xFFF59E0B)          // Amber warning
+val FlatWarningLight = Color(0xFFFBBF24)     // Light warning
+val FlatWarningDark = Color(0xFFD97706)      // Dark warning
 
-val LightSecondaryContainerColor = Color(0xFFFCE4EC) // Light pink container
-val DarkSecondaryContainerColor = Color(0xFF4A1C2C)
+// Error Colors
+val FlatError = Color(0xFFEF4444)            // Red error (matches brand)
+val FlatErrorLight = Color(0xFFF87171)       // Light error
+val FlatErrorDark = Color(0xFFDC2626)        // Dark error
 
-val LightOnSecondaryContainerColor = ShopeeRedDark
-val DarkOnSecondaryContainerColor = Color(0xFFFCE4EC)
+// Info Colors
+val FlatInfo = Color(0xFF3B82F6)             // Blue info (matches brand)
+val FlatInfoLight = Color(0xFF93C5FD)        // Light info
+val FlatInfoDark = Color(0xFF2563EB)         // Dark info
 
-val LightTertiaryColor = ShopeeYellow // For highlights and ratings
-val DarkTertiaryColor = ShopeeYellow
+// ============================================
+// TRANSIT-SPECIFIC FLAT COLORS
+// ============================================
 
-val LightOnTertiaryColor = Color(0xFF0D0D0C)
-val DarkOnTertiaryColor = Color(0xFF0D0D0C)
+// Route & Station Colors
+val FlatRouteActive = Color(0xFF1E3A8A)      // Active route - navy
+val FlatRouteInactive = Color(0xFF9CA3AF)    // Inactive route - gray
+val FlatStationPrimary = Color(0xFF1E3A8A)   // Primary station - navy
+val FlatStationSecondary = Color(0xFF3B82F6) // Secondary station - blue
+val FlatStationDisabled = Color(0xFF6B7280)  // Disabled station - gray
 
-val LightTertiaryContainerColor = Color(0xFFFFF8E1) // Light yellow container
-val DarkTertiaryContainerColor = Color(0xFF3E2723)
+// Ticket Status Colors
+val FlatTicketValid = Color(0xFF10B981)      // Valid ticket - green
+val FlatTicketExpired = Color(0xFFEF4444)    // Expired ticket - red
+val FlatTicketPending = Color(0xFFF59E0B)    // Pending ticket - amber
+val FlatTicketUsed = Color(0xFF6B7280)       // Used ticket - gray
 
-val LightOnTertiaryContainerColor = Color(0xFF3E2723)
-val DarkOnTertiaryContainerColor = Color(0xFFFFF8E1)
+// ============================================
+// UI COMPONENT FLAT COLORS
+// ============================================
 
-val LightErrorColor = Color(0xFFD32F2F) // Brighter error color
-val DarkErrorColor = Color(0xFFE57373)
+// Button Colors
+val FlatButtonPrimary = Color(0xFF1E3A8A)    // Primary button - navy
+val FlatButtonSecondary = Color(0xFF3B82F6)  // Secondary button - blue
+val FlatButtonDanger = Color(0xFFEF4444)     // Danger button - red
+val FlatButtonSuccess = Color(0xFF10B981)    // Success button - green
+val FlatButtonWarning = Color(0xFFF59E0B)    // Warning button - amber
+val FlatButtonDisabled = Color(0xFF9CA3AF)   // Disabled button - gray
 
-val LightOnErrorColor = Color(0xFFFFFFFF)
-val DarkOnErrorColor = Color(0xFFFFFFFF)
+// Card & Surface Colors
+val FlatCardBackground = Color(0xFFFFFFFF)   // Card background - white
+val FlatCardBorder = Color(0xFFE5E7EB)       // Card border - light gray
+val FlatSurfaceElevated = Color(0xFFF9FAFB)  // Elevated surface
+val FlatSurfaceDepressed = Color(0xFFF3F4F6) // Depressed surface
 
-val LightErrorContainerColor = Color(0xFFFFEBEE)
-val DarkErrorContainerColor = Color(0xFF4A0E0E)
+// Text Colors
+val FlatTextPrimary = Color(0xFF111827)      // Primary text - dark
+val FlatTextSecondary = Color(0xFF6B7280)    // Secondary text - medium gray
+val FlatTextDisabled = Color(0xFF9CA3AF)     // Disabled text - light gray
+val FlatTextOnDark = Color(0xFFFFFFFF)       // Text on dark backgrounds
+val FlatTextOnColor = Color(0xFFFFFFFF)      // Text on colored backgrounds
 
-val LightOnErrorContainerColor = Color(0xFFB71C1C)
-val DarkOnErrorContainerColor = Color(0xFFFFEBEE)
+// ============================================
+// FLAT DESIGN ACCENT COLORS
+// ============================================
 
-val LightInverseSurfaceColor = Color(0xFF2C2B2B)
-val DarkInverseSurfaceColor = Color(0xFFFFFFFF)
+// Additional Accent Colors for Variety
+val FlatPurple = Color(0xFF8B5CF6)           // Purple accent
+val FlatPurpleLight = Color(0xFFA78BFA)      // Light purple
+val FlatTeal = Color(0xFF14B8A6)             // Teal accent
+val FlatTealLight = Color(0xFF5EEAD4)        // Light teal
+val FlatOrange = Color(0xFFF97316)           // Orange accent
+val FlatOrangeLight = Color(0xFFFB923C)      // Light orange
 
-val LightOnInverseSurfaceColor = Color(0xFFFFFFFF)
-val DarkOnInverseSurfaceColor = Color(0xFF0D0D0C)
+// ============================================
+// OPACITY VARIANTS FOR FLAT DESIGN
+// ============================================
 
-val LightInversePrimaryColor = Color(0xFFFFF3E0)
-val DarkInversePrimaryColor = ShopeeOrangeDark
+// Navy Opacity Variants
+val FlatNavy90 = Color(0xE61E3A8A)           // 90% opacity
+val FlatNavy80 = Color(0xCC1E3A8A)           // 80% opacity
+val FlatNavy60 = Color(0x991E3A8A)           // 60% opacity
+val FlatNavy40 = Color(0x661E3A8A)           // 40% opacity
+val FlatNavy20 = Color(0x331E3A8A)           // 20% opacity
+val FlatNavy10 = Color(0x1A1E3A8A)           // 10% opacity
 
-val LightOutlineColor = Color(0xFFBDBDBD) // Softer outline
-val DarkOutlineColor = Color(0xFF757575)
+// Blue Opacity Variants
+val FlatBlue90 = Color(0xE63B82F6)           // 90% opacity
+val FlatBlue80 = Color(0xCC3B82F6)           // 80% opacity
+val FlatBlue60 = Color(0x993B82F6)           // 60% opacity
+val FlatBlue40 = Color(0x663B82F6)           // 40% opacity
+val FlatBlue20 = Color(0x333B82F6)           // 20% opacity
+val FlatBlue10 = Color(0x1A3B82F6)           // 10% opacity
 
-val LightOutlineVariantColor = Color(0xFFEEEEEE)
-val DarkOutlineVariantColor = Color(0xFF424242)
+// Red Opacity Variants
+val FlatRed90 = Color(0xE6EF4444)            // 90% opacity
+val FlatRed80 = Color(0xCCEF4444)            // 80% opacity
+val FlatRed60 = Color(0x99EF4444)            // 60% opacity
+val FlatRed40 = Color(0x66EF4444)            // 40% opacity
+val FlatRed20 = Color(0x33EF4444)            // 20% opacity
+val FlatRed10 = Color(0x1AEF4444)            // 10% opacity
 
-val LightSurfaceColor = Color(0xFFFFFBF5) // Warm white surface
-val DarkSurfaceColor = Color(0xFF121212)
+// ============================================
+// FLAT DESIGN GRADIENTS (Linear Color Stops)
+// ============================================
 
-val LightSurfaceDimColor = Color(0xFFF5F5F5)
-val DarkSurfaceDimColor = Color(0xFF0D0D0C)
+// Primary Gradients
+val FlatGradientNavyStart = Color(0xFF1E3A8A)
+val FlatGradientNavyEnd = Color(0xFF2563EB)
 
-val LightSurfaceBrightColor = Color(0xFFFFFFFF)
-val DarkSurfaceBrightColor = Color(0xFF2C2B2B)
+val FlatGradientBlueStart = Color(0xFF3B82F6)
+val FlatGradientBlueEnd = Color(0xFF60A5FA)
 
-val LightSurfaceContainerColor = Color(0xFFFFF8F0) // Slightly tinted surface
-val DarkSurfaceContainerColor = Color(0xFF1A1A1A)
+val FlatGradientRedStart = Color(0xFFEF4444)
+val FlatGradientRedEnd = Color(0xFFF87171)
 
-val LightSurfaceContainerHighColor = Color(0xFFFFFFFF)
-val DarkSurfaceContainerHighColor = Color(0xFF2A2A2A)
+// Success Gradient
+val FlatGradientSuccessStart = Color(0xFF10B981)
+val FlatGradientSuccessEnd = Color(0xFF6EE7B7)
 
-val LightOnSurfaceColor = Color(0xFF212121) // Darker for better contrast
-val DarkOnSurfaceColor = Color(0xFFEEEEEE)
+// Warning Gradient
+val FlatGradientWarningStart = Color(0xFFF59E0B)
+val FlatGradientWarningEnd = Color(0xFFFBBF24)
 
-val LightOnSurfaceVariantColor = Color(0xFF616161) // Medium gray
-val DarkOnSurfaceVariantColor = Color(0xFFBDBDBD)
-
-// Shopee-specific colors for UI elements
-val ShopeeSuccess = ShopeeGreen
-val ShopeeWarning = Color(0xFFFF9800)
-val ShopeeInfo = ShopeeBlue
-val ShopeeDanger = ShopeeRed
-
-// E-commerce specific colors
-val DiscountRed = Color(0xFFFF1744) // For discount badges
-val SalePrice = Color(0xFFE91E63) // For sale prices
-val OriginalPrice = Color(0xFF9E9E9E) // For crossed-out original prices
-val FreeShipping = Color(0xFF4CAF50) // For free shipping badges
-val Rating = Color(0xFFFFC107) // For star ratings
-val Stock = Color(0xFFFF5722) // For stock indicators
-
-// Define custom light and dark mode colors - Updated for Shopee
-val LightPrimaryFixedColor = ShopeeOrange
-val DarkPrimaryFixedColor = ShopeeOrangeLight
-
-val LightPrimaryFixedDimColor = ShopeeOrangeDark
-val DarkPrimaryFixedDimColor = ShopeeOrangeDark
-
-val LightOnPrimaryFixedColor = Color(0xFFFFFFFF)
-val DarkOnPrimaryFixedColor = Color(0xFFFFFFFF)
-
-val LightOnPrimaryFixedVariantColor = Color(0xFFFFF3E0)
-val DarkOnPrimaryFixedVariantColor = Color(0xFFFFF3E0)
-
-val LightSecondaryFixedColor = ShopeeRed
-val DarkSecondaryFixedColor = ShopeeRedLight
-
-val LightOnSecondaryFixedColor = Color(0xFFFFFFFF)
-val DarkOnSecondaryFixedColor = Color(0xFFFFFFFF)
-
-val LightSecondaryFixedDimColor = ShopeeRedDark
-val DarkSecondaryFixedDimColor = ShopeeRedDark
-
-val LightSecondaryFixedVariantColor = Color(0xFFFCE4EC)
-val DarkSecondaryFixedVariantColor = Color(0xFF4A1C2C)
-
-val LightTertiaryFixedColor = ShopeeYellow
-val DarkTertiaryFixedColor = ShopeeYellow
-
-val LightTertiaryFixedDimColor = Color(0xFFFFB300)
-val DarkTertiaryFixedDimColor = Color(0xFFFFB300)
-
-val LightOnTertiaryFixedColor = Color(0xFF0D0D0C)
-val DarkOnTertiaryFixedColor = Color(0xFF0D0D0C)
-
-val LightOnTertiaryFixedVariantColor = Color(0xFF3E2723)
-val DarkOnTertiaryFixedVariantColor = Color(0xFF3E2723)
-
-val LightOnInverseSurfaceVariantColor = Color(0xFFF5F5F5)
-val DarkOnInverseSurfaceVariantColor = Color(0xFF616161)
-
-// Keep existing utility colors
-val SkeletonColor = Color(0xFFF2F2F2)
-val ChipColor = Color(0xFFFFF8F0) // Slightly tinted for warmth
+// ============================================
+// FLAT DESIGN USAGE GUIDE
+// ============================================
 
 /*
-Opacity Hex
+FLAT DESIGN PRINCIPLES FOR HCMC METRO:
 
-100% — FF
-99% — FC
-98% — FA
-97% — F7
-96% — F5
-95% — F2
-94% — F0
-93% — ED
-92% — EB
-91% — E8
-90% — E6
-89% — E3
-88% — E0
-87% — DE
-86% — DB
-85% — D9
-84% — D6
-83% — D4
-82% — D1
-81% — CF
-80% — CC
-79% — C9
-78% — C7
-77% — C4
-76% — C2
-75% — BF
-74% — BD
-73% — BA
-72% — B8
-71% — B5
-70% — B3
-69% — B0
-68% — AD
-67% — AB
-66% — A8
-65% — A6
-64% — A3
-63% — A1
-62% — 9E
-61% — 9C
-60% — 99
-59% — 96
-58% — 94
-57% — 91
-56% — 8F
-55% — 8C
-54% — 8A
-53% — 87
-52% — 85
-51% — 82
-50% — 80
-49% — 7D
-48% — 7A
-47% — 78
-46% — 75
-45% — 73
-44% — 70
-43% — 6E
-42% — 6B
-41% — 69
-40% — 66
-39% — 63
-38% — 61
-37% — 5E
-36% — 5C
-35% — 59
-34% — 57
-33% — 54
-32% — 52
-31% — 4F
-30% — 4D
-29% — 4A
-28% — 47
-27% — 45
-26% — 42
-25% — 40
-24% — 3D
-23% — 3B
-22% — 38
-21% — 36
-20% — 33
-19% — 30
-18% — 2E
-17% — 2B
-16% — 29
-15% — 26
-14% — 24
-13% — 21
-12% — 1F
-11% — 1C
-10% — 1A
-9% — 17
-8% — 14
-7% — 12
-6% — 0F
-5% — 0D
-4% — 0A
-3% — 08
-2% — 05
-1% — 03
-0% — 00
+1. Bold, Vibrant Colors:
+   - Use high contrast colors
+   - Avoid subtle variations
+   - Prefer solid colors over gradients
+
+2. Primary Color Usage:
+   - Navy (FlatMetroNavy): Main actions, headers, primary buttons
+   - Blue (FlatMetroBlue): Secondary actions, links, info states
+   - Red (FlatMetroRed): Alerts, errors, important indicators
+
+3. Functional Color Usage:
+   - Success: FlatSuccess (emerald green)
+   - Warning: FlatWarning (amber)
+   - Error: FlatError (red - matches brand)
+   - Info: FlatInfo (blue - matches brand)
+
+4. Text Hierarchy:
+   - Primary: FlatTextPrimary (dark gray)
+   - Secondary: FlatTextSecondary (medium gray)
+   - Disabled: FlatTextDisabled (light gray)
+   - On Color: FlatTextOnColor (white)
+
+5. Transit-Specific Usage:
+   - Active routes: FlatRouteActive (navy)
+   - Valid tickets: FlatTicketValid (green)
+   - Expired tickets: FlatTicketExpired (red)
+   - Pending states: FlatTicketPending (amber)
+
+6. Button Hierarchy:
+   - Primary: FlatButtonPrimary (navy background)
+   - Secondary: FlatButtonSecondary (blue background)
+   - Danger: FlatButtonDanger (red background)
+   - Success: FlatButtonSuccess (green background)
+
+7. Opacity Usage:
+   - Use pre-defined opacity variants
+   - 90-80%: Hover/pressed states
+   - 60-40%: Disabled states
+   - 20-10%: Background overlays
+
+8. Flat Design Best Practices:
+   - No shadows or 3D effects
+   - Clean, geometric shapes
+   - High contrast text
+   - Consistent color application
+   - Minimal visual noise
 */

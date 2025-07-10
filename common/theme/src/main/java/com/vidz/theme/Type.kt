@@ -6,7 +6,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 /**
- * Created by FPL on 08/01/2025.
+ * Created by Vidz on 08/01/2025.
  *
  * This file defines typography styles and utility functions for converting
  * between different measurement units in Android.

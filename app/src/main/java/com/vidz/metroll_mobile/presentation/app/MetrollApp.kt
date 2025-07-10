@@ -5,12 +5,25 @@ import android.app.Activity
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -28,8 +41,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -168,7 +186,7 @@ fun MetrollApp(
         onRequestPermission = onRequestPermissionCallback
     )
 
-    MetrollTheme(darkTheme = true ) {
+    MetrollTheme(darkTheme = false ) {
         //region ui
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -182,14 +200,21 @@ fun MetrollApp(
                 }
             }
         ) { paddingvalue ->
-            AppNavHost(
-                navController = navController.navController,
-                onShowSnackbar = { message ->
-                    scope.launch {
-                        snackbarHostState.showSnackbar(message, withDismissAction = true)
+            if (uiState.isInitialized) {
+                AppNavHost(
+                    navController = navController.navController,
+                    startDestination = uiState.startDestination,
+                    onShowSnackbar = { message ->
+                        scope.launch {
+                            snackbarHostState.showSnackbar(message, withDismissAction = true)
+                        }
                     }
-                }
-            )
+                )
+            } else {
+                AppLoadingScreen(
+                    modifier = Modifier.padding(paddingvalue)
+                )
+            }
         }
 
         //region Dialog and Sheet
@@ -254,7 +279,8 @@ fun MetrollBottomAppBar(
                         contentDescription = item.label
                     )
                 },
-                label = { Text(item.label) },
+                label = { Text(item.label, style = MaterialTheme.typography
+                        .labelSmall) },
                 colors = NavigationBarItemColors(
                     selectedIconColor = MaterialTheme.colorScheme.primary,
                     selectedTextColor = MaterialTheme.colorScheme.primary,
@@ -302,6 +328,76 @@ fun DoubleBackToExitApp(streamUiState: MetrollAppViewModel.MetrollViewState) {
                 delay(2000)
                 backPressedOnce = false
             }
+        }
+    }
+}
+
+@Composable
+fun AppLoadingScreen(
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        MaterialTheme.colorScheme.background
+                    )
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            // App Logo/Brand
+            Card(
+                modifier = Modifier.size(120.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "M",
+                        style = MaterialTheme.typography.displayLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
+            
+            // App Name
+            Text(
+                text = "Metroll",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Loading Indicator
+            CircularProgressIndicator(
+                modifier = Modifier.size(48.dp),
+                color = MaterialTheme.colorScheme.primary,
+                strokeWidth = 4.dp
+            )
+            
+            // Loading Text
+            Text(
+                text = "Loading...",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

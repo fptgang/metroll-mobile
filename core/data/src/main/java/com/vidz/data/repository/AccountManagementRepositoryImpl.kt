@@ -84,4 +84,13 @@ class AccountManagementRepositoryImpl @Inject constructor(
             }
         ).execute()
     }
+
+    override fun getMyDiscountPercentage(): Flow<Result<Float?>> {
+        return ServerFlow(
+            getData = { retrofitServer.accountApi.getMyDiscountPercentage() },
+            convert = { response ->
+                response.body()
+            }
+        ).execute()
+    }
 } 

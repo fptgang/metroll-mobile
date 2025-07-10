@@ -2,8 +2,7 @@ package com.vidz.ticket.detail
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.graphics.BitmapFactory
-import android.util.Base64
+
 import android.view.WindowManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -26,9 +25,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -40,17 +39,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
+
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -60,6 +58,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.vidz.base.components.MetrollButton
+import com.vidz.base.navigation.DestinationRoutes
 import com.vidz.domain.model.Order
 import com.vidz.domain.model.OrderDetail
 import com.vidz.domain.model.OrderStatus
@@ -96,14 +95,12 @@ fun OrderDetailScreen(
     //region Event Handler
     val onQRCodeClick = { orderDetail: OrderDetail ->
         if (orderDetail.ticketId.isEmpty()) {
-            onShowSnackbar("No QR code available for this ticket")
-        }else
-            viewModel.onTriggerEvent(OrderDetailViewModel.OrderDetailEvent.LoadQRCode(orderDetail.ticketId))
+            onShowSnackbar("Không có ID vé khả dụng")
+        } else {
+            navController.navigate("${DestinationRoutes.QR_TICKET_SCREEN_ROUTE}/${orderDetail.ticketId}")
+        }
     }
 
-    val onCloseQRCode = {
-        viewModel.onTriggerEvent(OrderDetailViewModel.OrderDetailEvent.CloseQRCode)
-    }
 
     val onContinuePayment = {
         viewModel.onTriggerEvent(OrderDetailViewModel.OrderDetailEvent.OpenPayment)
@@ -118,16 +115,16 @@ fun OrderDetailScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { 
+                title = {
                     Text(
-                        text = uiState.order?.let { "Order #${it.id.take(8)}" } ?: "Order Details",
+                        text = uiState.order?.let { "Đơn hàng #${it.id.take(8)}" } ?: "Chi tiết đơn hàng",
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -147,6 +144,7 @@ fun OrderDetailScreen(
                     CircularProgressIndicator()
                 }
             }
+
             uiState.orderError != null -> {
                 Box(
                     modifier = Modifier
@@ -159,12 +157,12 @@ fun OrderDetailScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Failed to load order",
+                            text = "Không thể tải đơn hàng",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.error
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        val errorText = uiState.orderError ?: "Unknown error"
+                        val errorText = uiState.orderError ?: "Lỗi không xác định"
                         Text(
                             text = errorText,
                             style = MaterialTheme.typography.bodyMedium,
@@ -174,6 +172,7 @@ fun OrderDetailScreen(
                     }
                 }
             }
+
             uiState.order != null -> {
                 LazyColumn(
                     modifier = Modifier
@@ -191,7 +190,7 @@ fun OrderDetailScreen(
 
                     item {
                         Text(
-                            text = "Order Items",
+                            text = "Mục đơn hàng",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
@@ -200,12 +199,13 @@ fun OrderDetailScreen(
                     items(uiState.order!!.orderDetails) { orderDetail ->
                         OrderDetailCard(
                             orderDetail = orderDetail,
-                            isLoadingQR = uiState.isLoadingQR,
                             onQRCodeClick = { onQRCodeClick(orderDetail) }
                         )
                     }
                 }
-            } else -> {
+            }
+
+            else -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -213,7 +213,7 @@ fun OrderDetailScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No order data available",
+                        text = "Không có dữ liệu đơn hàng",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -223,27 +223,14 @@ fun OrderDetailScreen(
     }
 
     // Error handling
-    uiState.qrError?.let { error ->
-        LaunchedEffect(error) {
-            onShowSnackbar(error)
-            viewModel.onTriggerEvent(OrderDetailViewModel.OrderDetailEvent.ClearError)
-        }
-    }
 
     uiState.orderError?.let { error ->
         LaunchedEffect(error) {
-            onShowSnackbar("Failed to load order: $error")
+            onShowSnackbar("Không thể tải đơn hàng: $error")
             viewModel.onTriggerEvent(OrderDetailViewModel.OrderDetailEvent.ClearError)
         }
     }
 
-    // QR Code Dialog with brightness control
-    if (uiState.showQRDialog && uiState.qrCodeData != null) {
-        QRCodeDialog(
-            qrCodeData = uiState.qrCodeData!!,
-            onDismiss = onCloseQRCode
-        )
-    }
 
     // Full-screen Payment WebView
     if (uiState.showPaymentWebView && uiState.order?.paymentUrl != null) {
@@ -277,21 +264,24 @@ private fun OrderSummaryCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Order #${order.id.take(8)}",
+                        text = "Đơn hàng #${order.id.take(8)}",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
-                    
+
                     Text(
                         text = order.createdAt.format(
-                            DateTimeFormatter.ofPattern("EEEE, MMM dd, yyyy 'at' HH:mm", Locale.getDefault())
+                            DateTimeFormatter.ofPattern(
+                                "EEEE, MMM dd, yyyy 'at' HH:mm",
+                                Locale.getDefault()
+                            )
                         ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                     )
                 }
-                
+
                 OrderStatusChip(status = order.status)
             }
 
@@ -304,28 +294,32 @@ private fun OrderSummaryCard(
             ) {
                 Column {
                     Text(
-                        text = "Payment Method",
+                        text = "Phương thức thanh toán",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     )
                     Text(
-                        text = order.paymentMethod,
+                        text = if(order.paymentMethod != "CASH") {
+                            "Thanh toán trực tuyến"
+                        } else {
+                            "Thanh toán tại quầy"
+                        },
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
-                
+
                 Column(
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
-                        text = "Total Amount",
+                        text = "Tổng tiền",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     )
                     Text(
-                        text = "$${String.format("%.2f", order.finalTotal)}",
+                        text = "${String.format("%,.0f", order.finalTotal)}₫",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -336,9 +330,9 @@ private fun OrderSummaryCard(
             // Show payment button for pending orders with payment URL
             if (order.status == OrderStatus.PENDING && !order.paymentUrl.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 MetrollButton(
-                    text = "Continue Payment",
+                    text = "Tiếp tục thanh toán",
                     onClick = onContinuePayment,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -351,7 +345,6 @@ private fun OrderSummaryCard(
 @Composable
 private fun OrderDetailCard(
     orderDetail: OrderDetail,
-    isLoadingQR: Boolean,
     onQRCodeClick: () -> Unit
 ) {
     OutlinedCard(
@@ -371,59 +364,74 @@ private fun OrderDetailCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = when (orderDetail.ticketType) {
-                            TicketType.TIMED -> "Timed Ticket"
-                            TicketType.P2P -> "Point-to-Point Journey"
+                            TicketType.TIMED -> "Vé Thời Hạn"
+                            TicketType.P2P -> "Vé Theo Trạm"
                         },
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    
+
                     Text(
-                        text = "Ticket ID: ${orderDetail.id.take(8)}",
+                        text = "ID chi tiết: ${orderDetail.id.take(8)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    
+
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     Row {
                         Text(
-                            text = "Quantity: ${orderDetail.quantity}",
+                            text = "Số lượng: ${orderDetail.quantity}",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
-                            text = "$${String.format("%.2f", orderDetail.unitPrice)} each",
+                            text = "${String.format("%,.0f", orderDetail.unitPrice)}₫ mỗi vé",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
                 }
-                
+
                 // QR Code Button
-                MetrollButton(
-                    text = if (isLoadingQR) "" else "QR",
-                    onClick = onQRCodeClick,
-                    enabled = !isLoadingQR && orderDetail.ticketId.isNotEmpty(),
-                    isLoading = isLoadingQR,
-                    modifier = Modifier.width(80.dp)
-                )
+//                MetrollButton(
+//                    text = "View",
+//                    onClick = onQRCodeClick,
+//                    enabled = orderDetail.ticketId.isNotEmpty(),
+//                    modifier = Modifier.width(80.dp)
+//                )
+                if (orderDetail.ticketId.isNotEmpty()) {
+                    IconButton(onClick = onQRCodeClick) {
+                        Icon(
+                            Icons.Default.RemoveRedEye,
+                            contentDescription = "Xem mã QR",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             }
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             // Totals
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Subtotal: $${String.format("%.2f", orderDetail.baseTotal)}",
+                    text = if (orderDetail.baseTotal > orderDetail.finalTotal) "Tạm tính: ${
+                        String.format(
+                            "%,.0f",
+                            orderDetail.baseTotal
+                        )
+                    }₫" else "",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                
+
+
+
                 Text(
-                    text = "Final: $${String.format("%.2f", orderDetail.finalTotal)}",
+                    text = "Giá cuối: ${String.format("%,.0f", orderDetail.finalTotal)}₫",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -439,17 +447,19 @@ private fun OrderStatusChip(status: OrderStatus) {
         OrderStatus.PENDING -> Triple(
             MaterialTheme.colorScheme.secondaryContainer,
             MaterialTheme.colorScheme.onSecondaryContainer,
-            "Pending"
+            "Đang xử lý"
         )
+
         OrderStatus.COMPLETED -> Triple(
             MaterialTheme.colorScheme.tertiaryContainer,
             MaterialTheme.colorScheme.onTertiaryContainer,
-            "Completed"
+            "Hoàn thành"
         )
+
         OrderStatus.FAILED -> Triple(
             MaterialTheme.colorScheme.errorContainer,
             MaterialTheme.colorScheme.onErrorContainer,
-            "Failed"
+            "Thất bại"
         )
     }
 
@@ -470,122 +480,6 @@ private fun OrderStatusChip(status: OrderStatus) {
     }
 }
 
-@Composable
-private fun QRCodeDialog(
-    qrCodeData: String,
-    onDismiss: () -> Unit
-) {
-    val context = LocalContext.current
-    val activity = context as? Activity
-    
-    // Brightness control
-    DisposableEffect(Unit) {
-        val window = activity?.window
-        val originalBrightness = window?.attributes?.screenBrightness ?: -1f
-        
-        // Set to maximum brightness
-        window?.attributes = window?.attributes?.apply {
-            screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
-        }
-        window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        
-        onDispose {
-            // Restore original brightness
-            window?.attributes = window?.attributes?.apply {
-                screenBrightness = originalBrightness
-            }
-            window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        }
-    }
-    
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Ticket QR Code",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Close")
-                }
-            }
-        },
-        text = {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "Present this QR code for validation",
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-                
-                // QR Code Image
-                val qrBitmap = remember(qrCodeData) {
-                    try {
-                        val decodedBytes = Base64.decode(qrCodeData, Base64.DEFAULT)
-                        BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-                    } catch (e: Exception) {
-                        null
-                    }
-                }
-                
-                if (qrBitmap != null) {
-                    Card(
-                        modifier = Modifier.size(280.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Image(
-                                bitmap = qrBitmap.asImageBitmap(),
-                                contentDescription = "QR Code",
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier.size(280.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            CircularProgressIndicator()
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "Failed to load QR code",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
-            }
-        }
-    )
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("SetJavaScriptEnabled")
@@ -603,9 +497,9 @@ private fun FullScreenPaymentWebView(
         Column(modifier = Modifier.fillMaxSize()) {
             // Top app bar with close button
             CenterAlignedTopAppBar(
-                title = { 
+                title = {
                     Text(
-                        text = "Complete Payment",
+                        text = "Hoàn tất thanh toán",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium
                     )
@@ -613,8 +507,8 @@ private fun FullScreenPaymentWebView(
                 navigationIcon = {
                     IconButton(onClick = onClose) {
                         Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Đóng",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -634,26 +528,30 @@ private fun FullScreenPaymentWebView(
                                 // Check if payment is complete based on URL patterns
                                 url?.let { currentUrl ->
                                     when {
-                                        currentUrl.contains("success") || 
-                                        currentUrl.contains("complete") ||
-                                        currentUrl.contains("payment_status=success") ||
-                                        currentUrl.contains("status=success") -> {
+                                        currentUrl.contains("success") ||
+                                                currentUrl.contains("complete") ||
+                                                currentUrl.contains("payment_status=success") ||
+                                                currentUrl.contains("status=success") -> {
                                             // Payment successful, close WebView
                                             onClose()
                                         }
-                                        currentUrl.contains("failed") || 
-                                        currentUrl.contains("error") ||
-                                        currentUrl.contains("payment_status=failed") ||
-                                        currentUrl.contains("status=failed") ||
-                                        currentUrl.contains("cancel") -> {
+
+                                        currentUrl.contains("failed") ||
+                                                currentUrl.contains("error") ||
+                                                currentUrl.contains("payment_status=failed") ||
+                                                currentUrl.contains("status=failed") ||
+                                                currentUrl.contains("cancel") -> {
                                             // Payment failed, close WebView
                                             onClose()
                                         }
                                     }
                                 }
                             }
-                            
-                            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+
+                            override fun shouldOverrideUrlLoading(
+                                view: WebView?,
+                                request: WebResourceRequest?
+                            ): Boolean {
                                 request?.url?.toString()?.let { currentUrl ->
                                     when {
                                         currentUrl.startsWith("metroll://") -> {
@@ -661,6 +559,8 @@ private fun FullScreenPaymentWebView(
                                             onClose()
                                             return true
                                         }
+
+                                        else -> {}
                                     }
                                 }
                                 return false

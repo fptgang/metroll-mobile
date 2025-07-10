@@ -129,8 +129,8 @@ class OrderMapper @Inject constructor() : BaseRemoteMapper<Order, OrderDto> {
         return CheckoutRequestDto(
             items = domain.items.map { checkoutItemToDto(it) },
             paymentMethod = domain.paymentMethod,
-            discountPackageId = domain.discountPackageId,
             voucherId = domain.voucherId,
+//            discountPackage = domain.discountPackage,
             customerId = domain.customerId
         )
     }

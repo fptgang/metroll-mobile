@@ -126,10 +126,8 @@ fun TicketValidationDto.toDomain(): TicketValidation {
 
 fun TicketValidationCreateRequest.toDto(): TicketValidationCreateRequestDto {
     return TicketValidationCreateRequestDto(
-        stationId = stationId,
         ticketId = ticketId,
-        validationType = validationType.name,
-        deviceId = deviceId
+        validationType = validationType.name
     )
 }
 

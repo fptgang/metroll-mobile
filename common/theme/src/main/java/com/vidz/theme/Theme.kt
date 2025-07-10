@@ -4,91 +4,140 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 
+/**
+ * HCMC Metro Flat Design Theme - Material Design 3 compliant
+ * Updated for metro transit application with flat design principles
+ *
+ * Flat Design Principles Applied:
+ * - Bold, vibrant colors without gradients
+ * - High contrast for better readability
+ * - Simplified color relationships
+ * - Clean, geometric color application
+ * - No shadows or 3D effects in color scheme
+ *
+ * Color Usage:
+ * - primary: Flat Metro Navy - main brand color, bold and vibrant
+ * - secondary: Flat Metro Blue - secondary actions, high contrast
+ * - tertiary: Flat Metro Red - accent color, bold alerts
+ * - background: Pure white/black for maximum contrast
+ * - surface: Clean flat surfaces without elevation effects
+ * - surfaceTint: Minimal tinting for flat appearance
+ * - onSurface: High contrast text for flat design readability
+ */
 
-// - primary: The main theme color, typically representing the brand identity.
-// - onPrimary: The color of content displayed on the primary color (e.g., text, icons).
-// - secondary: A supplementary color used for secondary UI elements or highlights.
-// - onSecondary: The color of content displayed on the secondary color.
-// - background: The primary background color of the app in Dark Mode.
-// - onBackground: The color of content displayed on the background (e.g., text, icons).
-// - surface: The background color for UI components like cards, dialogs, and app bars.
-// - surfaceTint: Used to add a tint to components layered on the surface color.
-// - onSurface: The color of content displayed on the surface color.
+private val FlatLightColors = lightColorScheme(
+    // Primary - Bold Navy Blue
+    primary = FlatMetroNavy, // Deep navy - bold and vibrant
+    onPrimary = FlatMetroWhite, // Pure white for maximum contrast
+    primaryContainer = FlatBluePastel, // Light blue container - flat
+    onPrimaryContainer = FlatTextPrimary, // Dark text for high contrast
 
-private val LightColors = lightColorScheme(
-    primary = LightPrimaryColor,
-    onPrimary = LightOnPrimaryColor,
-    primaryContainer = LightPrimaryContainerColor,
-    onPrimaryContainer = LightOnPrimaryContainerColor,
-    secondary = LightSecondaryColor,
-    onSecondary = LightOnSecondaryColor,
-    secondaryContainer = LightSecondaryContainerColor,
-    onSecondaryContainer = LightOnSecondaryContainerColor,
-    tertiary = LightTertiaryColor,
-    onTertiary = LightOnTertiaryColor,
-    tertiaryContainer = LightTertiaryContainerColor,
-    onTertiaryContainer = LightOnTertiaryContainerColor,
-    error = LightErrorColor,
-    onError = LightOnErrorColor,
-    errorContainer = LightErrorContainerColor,
-    onErrorContainer = LightOnErrorContainerColor,
-    inverseSurface = LightInverseSurfaceColor,
-    inverseOnSurface = LightOnInverseSurfaceColor,
-    inversePrimary = LightInversePrimaryColor,
-    outline = LightOutlineColor,
-    outlineVariant = LightOutlineVariantColor,
-    surface = LightSurfaceColor,
-    surfaceDim = LightSurfaceDimColor,
-    surfaceBright = LightSurfaceBrightColor,
-    surfaceContainer = LightSurfaceContainerColor,
-    surfaceContainerHigh = LightSurfaceContainerHighColor,
-    onSurface = LightOnSurfaceColor,
-    onSurfaceVariant = LightOnSurfaceVariantColor,
-    background = LightSurfaceContainerHighColor
+    // Secondary - Vibrant Blue
+    secondary = FlatMetroBlue, // Bright blue - bold secondary
+    onSecondary = FlatTextOnColor, // White text on colored background
+    secondaryContainer = FlatBlueLight, // Light blue container - flat
+    onSecondaryContainer = FlatTextPrimary, // Dark text for contrast
+
+    // Tertiary - Bold Red
+    tertiary = FlatMetroRed, // Vibrant red - bold accent
+    onTertiary = FlatTextOnColor, // White text on red
+    tertiaryContainer = FlatRedPastel, // Light red container - flat
+    onTertiaryContainer = FlatTextPrimary, // Dark text for contrast
+
+    // Error - Consistent with brand red
+    error = FlatError, // Bold red error
+    onError = FlatTextOnColor, // White text on error
+    errorContainer = FlatRedPastel, // Light error background
+    onErrorContainer = FlatTextPrimary, // Dark text on error container
+
+    // Surface Colors - Clean and Flat
+    surface = FlatCardBackground, // Pure white surface
+    surfaceDim = FlatGrayBackground, // Light gray - minimal variation
+    surfaceBright = FlatMetroWhite, // Pure white - flat
+    surfaceContainer = FlatGrayBackground, // Light gray container - flat
+    surfaceContainerHigh = FlatMetroWhite, // Pure white - no elevation effect
+    onSurface = FlatTextPrimary, // Dark text - high contrast
+    onSurfaceVariant = FlatTextSecondary, // Medium gray - clear hierarchy
+
+    // Background - Pure and Clean
+    background = FlatMetroWhite, // Pure white background
+    onBackground = FlatTextPrimary, // Dark text on white - maximum contrast
+
+    // Outline - Clean and Bold
+    outline = FlatGrayMedium, // Medium gray - bold outline
+    outlineVariant = FlatGrayLight, // Light gray - subtle variant
+
+    // Inverse Colors - High Contrast
+    inverseSurface = FlatTextPrimary, // Dark surface for contrast
+    inverseOnSurface = FlatMetroWhite, // White text on dark
+    inversePrimary = FlatBlueLight, // Light blue for dark backgrounds
+
+    // Surface Tint - Minimal for Flat Design
+    surfaceTint = FlatMetroNavy // Navy tint - minimal application
 )
 
-private val DarkColors = darkColorScheme(
-    primary = DarkPrimaryColor,
-    onPrimary = DarkOnPrimaryColor,
-    primaryContainer = DarkPrimaryContainerColor,
-    onPrimaryContainer = DarkOnPrimaryContainerColor,
-    secondary = DarkSecondaryColor,
-    onSecondary = DarkOnSecondaryColor,
-    secondaryContainer = DarkSecondaryContainerColor,
-    onSecondaryContainer = DarkOnSecondaryContainerColor,
-    tertiary = DarkTertiaryColor,
-    onTertiary = DarkOnTertiaryColor,
-    tertiaryContainer = DarkTertiaryContainerColor,
-    onTertiaryContainer = DarkOnTertiaryContainerColor,
-    error = DarkErrorColor,
-    onError = DarkOnErrorColor,
-    errorContainer = DarkErrorContainerColor,
-    onErrorContainer = DarkOnErrorContainerColor,
-    inverseSurface = DarkInverseSurfaceColor,
-    inverseOnSurface = DarkOnInverseSurfaceColor,
-    inversePrimary = DarkInversePrimaryColor,
-    outline = DarkOutlineColor,
-    outlineVariant = DarkOutlineVariantColor,
-    surface = DarkSurfaceColor,
-    surfaceDim = DarkSurfaceDimColor,
-    surfaceBright = DarkSurfaceBrightColor,
-    surfaceContainer = DarkSurfaceContainerColor,
-    surfaceContainerHigh = DarkSurfaceContainerHighColor,
-    onSurface = DarkOnSurfaceColor,
-    onSurfaceVariant = DarkOnSurfaceVariantColor,
-    background = DarkSurfaceContainerHighColor
+private val FlatDarkColors = darkColorScheme(
+    // Primary - Bright Blue for Dark Mode
+    primary = FlatMetroBlue, // Bright blue - vibrant in dark
+    onPrimary = FlatMetroWhite, // Pure white text
+    primaryContainer = FlatNavyDark, // Dark navy container
+    onPrimaryContainer = FlatBlueLight, // Light blue text on dark
+
+    // Secondary - Light Blue Accent
+    secondary = FlatNavyLight, // Light navy - good contrast
+    onSecondary = FlatTextOnDark, // White text on secondary
+    secondaryContainer = FlatNavyDark, // Dark navy container
+    onSecondaryContainer = FlatBlueLight, // Light blue on dark container
+
+    // Tertiary - Light Red for Dark
+    tertiary = FlatRedLight, // Light red - visible in dark
+    onTertiary = FlatTextOnDark, // White text on red
+    tertiaryContainer = FlatRedDark, // Dark red container
+    onTertiaryContainer = FlatRedLight, // Light red text on dark
+
+    // Error - Light Red for Dark Mode
+    error = FlatErrorLight, // Light red error
+    onError = FlatTextOnDark, // White text on error
+    errorContainer = FlatRedDark, // Dark error background
+    onErrorContainer = FlatRedLight, // Light red text on dark error
+
+    // Surface Colors - Pure Black for Flat Design
+    surface = Color(0xFF000000), // Pure black surface - flat
+    surfaceDim = Color(0xFF111111), // Very dark gray - minimal variation
+    surfaceBright = FlatGrayDark, // Dark gray - brighter variant
+    surfaceContainer = Color(0xFF111111), // Dark container - flat
+    surfaceContainerHigh = FlatGrayDark, // Dark gray - no elevation effect
+    onSurface = FlatMetroWhite, // White text - high contrast
+    onSurfaceVariant = FlatGrayLight, // Light gray - clear hierarchy
+
+    // Background - Pure Black
+    background = Color(0xFF000000), // Pure black background
+    onBackground = FlatMetroWhite, // White text on black - maximum contrast
+
+    // Outline - Bold in Dark Mode
+    outline = FlatGrayMedium, // Medium gray - visible outline
+    outlineVariant = FlatGrayDark, // Dark gray - subtle variant
+
+    // Inverse Colors - High Contrast
+    inverseSurface = FlatMetroWhite, // White surface for contrast
+    inverseOnSurface = FlatTextPrimary, // Dark text on white
+    inversePrimary = FlatMetroNavy, // Navy for light backgrounds
+
+    // Surface Tint - Minimal for Flat Design
+    surfaceTint = FlatMetroBlue // Blue tint - minimal application
 )
 
 @Composable
-fun MetrollTheme(
-    darkTheme: Boolean = true,
+fun MetrollFlatTheme(
+    darkTheme: Boolean = false, // Default to light theme for metro app
     content: @Composable () -> Unit
 ) {
     val colors = if (darkTheme) {
-        DarkColors
+        FlatDarkColors
     } else {
-        LightColors
+        FlatLightColors
     }
 
     MaterialTheme(
@@ -97,3 +146,64 @@ fun MetrollTheme(
         typography = Typography,
     )
 }
+
+// Legacy theme compatibility - uses flat design colors
+@Composable
+fun MetrollTheme(
+    darkTheme: Boolean = false,
+    content: @Composable () -> Unit
+) {
+    MetrollFlatTheme(
+        darkTheme = darkTheme,
+        content = content
+    )
+}
+
+/*
+FLAT DESIGN THEME IMPLEMENTATION NOTES:
+
+1. Color Boldness:
+   - Used FlatMetroNavy, FlatMetroBlue, FlatMetroRed for bold primary colors
+   - Pure white (#FFFFFF) and black (#000000) for maximum contrast
+   - No subtle color variations - clear, distinct colors only
+
+2. Surface Treatment:
+   - Pure white surfaces in light mode
+   - Pure black surfaces in dark mode
+   - Minimal surfaceTint to avoid elevation effects
+   - Clean, flat containers without visual depth
+
+3. Text Contrast:
+   - FlatTextPrimary for high contrast text
+   - FlatTextOnColor for text on colored backgrounds
+   - Clear hierarchy with FlatTextSecondary
+
+4. Flat Design Benefits:
+   - Better performance (no shadow/gradient calculations)
+   - Cleaner, more readable interface
+   - Consistent with modern flat design trends
+   - Better accessibility with high contrast
+
+5. Metro Transit Optimization:
+   - Bold colors for quick recognition
+   - High contrast for visibility in various lighting
+   - Clean interface for easy navigation
+   - Consistent color meaning across the app
+
+6. Material Design 3 Compliance:
+   - Uses Material Design 3 color scheme structure
+   - Implements flat design within MD3 guidelines
+   - Maintains semantic color roles
+   - Supports both light and dark themes
+
+Usage Example:
+```kotlin
+@Composable
+fun MyApp() {
+    MetrollFlatTheme {
+        // Your app content here
+        // All colors will use flat design principles
+    }
+}
+```
+*/

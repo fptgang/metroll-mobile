@@ -16,3 +16,5 @@
 local.properties
 /build-logic/build/*
 /.kotlin/sessions/*
+/build-logic/build/reports/problems/*
+

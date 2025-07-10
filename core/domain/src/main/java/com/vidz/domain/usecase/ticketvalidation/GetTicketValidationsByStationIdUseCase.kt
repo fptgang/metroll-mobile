@@ -12,16 +12,21 @@ class GetTicketValidationsByStationIdUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(stationId: String): Flow<Result<List<TicketValidation>>> = flow {
         try {
+            android.util.Log.d("GetTicketValidationsUseCase", "UseCase called with stationId: $stationId")
             emit(Result.Init)
             
             if (stationId.isBlank()) {
+                android.util.Log.w("GetTicketValidationsUseCase", "Station ID is blank")
                 emit(Result.ServerError.MissingParam("Station ID is required"))
                 return@flow
             }
             
+            android.util.Log.d("GetTicketValidationsUseCase", "Calling repository.getTicketValidationsByStationId")
             val result = repository.getTicketValidationsByStationId(stationId)
+            android.util.Log.d("GetTicketValidationsUseCase", "Repository result: $result")
             emit(result)
         } catch (e: Exception) {
+            android.util.Log.e("GetTicketValidationsUseCase", "Exception in use case", e)
             emit(Result.ServerError.General(e.message ?: "Failed to get ticket validations by station ID"))
         }
     }

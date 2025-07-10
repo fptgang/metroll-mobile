@@ -7,7 +7,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.vidz.metroll.common.theme.R
 
 /**
- * Created by FPL on 08/01/2025.
+ * Created by Vidz on 08/01/2025.
  */
 
 val fontFamily = FontFamily(

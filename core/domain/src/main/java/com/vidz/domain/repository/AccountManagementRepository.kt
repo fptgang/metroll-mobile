@@ -16,4 +16,5 @@ interface AccountManagementRepository {
     fun deactivateAccount(id: String): Flow<Result<Unit>>
     fun login(idToken : String): Flow<Result<Account>>
     fun me(): Flow<Result<Account>>
+    fun getMyDiscountPercentage(): Flow<Result<Float?>>
 } 

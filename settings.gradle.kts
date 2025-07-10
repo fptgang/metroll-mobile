@@ -23,7 +23,11 @@ dependencyResolutionManagement {
                 includeGroupByRegex("com\\.android.*")
                 includeGroupByRegex("com\\.google.*")
                 includeGroupByRegex("androidx.*")
+                includeGroupByRegex("org.chromium.*")
             }
+        }
+        maven {
+            url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
         }
         mavenCentral()
     }

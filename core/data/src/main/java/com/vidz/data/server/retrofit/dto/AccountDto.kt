@@ -9,6 +9,7 @@ data class AccountDto(
     val fullName: String = "",
     val phoneNumber: String = "",
     val role: String = "CUSTOMER",
+    val assignedStation: String = "",
     val active: Boolean = true,
     val createdAt: Double = 0.0,
     val updatedAt: Double = 0.0

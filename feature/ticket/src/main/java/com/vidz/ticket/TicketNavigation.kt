@@ -5,10 +5,15 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.vidz.base.navigation.DestinationRoutes
+import com.vidz.base.navigation.NavigationAnimations.enterTransition
+import com.vidz.base.navigation.NavigationAnimations.exitTransition
+import com.vidz.base.navigation.NavigationAnimations.popEnterTransition
+import com.vidz.base.navigation.NavigationAnimations.popExitTransition
 import com.vidz.ticket.cart.TicketCartScreenRoot
 import com.vidz.ticket.detail.OrderDetailScreenRoot
 import com.vidz.ticket.management.TicketManagementScreenRoot
 import com.vidz.ticket.purchase.TicketPurchaseScreenRoot
+import com.vidz.ticket.qr.QRDisplayScreenRoot
 
 fun NavGraphBuilder.addTicketNavGraph(
     navController: NavController,
@@ -27,7 +32,12 @@ fun NavGraphBuilder.addTicketNavGraph(
             )
         }
         
-        composable(DestinationRoutes.TICKET_CART_SCREEN_ROUTE) {
+        composable(DestinationRoutes.TICKET_CART_SCREEN_ROUTE,
+                   enterTransition = enterTransition,
+                   exitTransition = exitTransition,
+                   popEnterTransition = popEnterTransition,
+                   popExitTransition = popExitTransition
+                   ) {
             TicketCartScreenRoot(
                 navController = navController,
                 onShowSnackbar = onShowSnackbar,
@@ -49,7 +59,13 @@ fun NavGraphBuilder.addTicketNavGraph(
             )
         }
         
-        composable(DestinationRoutes.ORDER_DETAIL_SCREEN_ROUTE) { backStackEntry ->
+        composable(DestinationRoutes.ORDER_DETAIL_SCREEN_ROUTE,
+                   enterTransition = enterTransition,
+                   exitTransition = exitTransition,
+                   popEnterTransition = popEnterTransition,
+                   popExitTransition = popExitTransition
+
+                   ) { backStackEntry ->
             val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
             OrderDetailScreenRoot(
                 navController = navController,
@@ -61,8 +77,13 @@ fun NavGraphBuilder.addTicketNavGraph(
             // TODO: Implement CheckinScreenRoot
         }
         
-        composable(DestinationRoutes.QR_TICKET_SCREEN_ROUTE) {
-            // TODO: Implement QrTicketScreenRoot
+        composable("${DestinationRoutes.QR_TICKET_SCREEN_ROUTE}/{ticketId}") { backStackEntry ->
+            val ticketId = backStackEntry.arguments?.getString("ticketId") ?: ""
+            QRDisplayScreenRoot(
+                navController = navController,
+                ticketId = ticketId,
+                onShowSnackbar = onShowSnackbar
+            )
         }
         
         // Parametrized routes

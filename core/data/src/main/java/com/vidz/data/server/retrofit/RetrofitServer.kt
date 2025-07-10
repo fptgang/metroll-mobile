@@ -10,6 +10,7 @@ import com.vidz.data.server.retrofit.api.StationApi
 import com.vidz.data.server.retrofit.api.TicketApi
 import com.vidz.data.server.retrofit.api.TicketValidationApi
 import com.vidz.data.server.retrofit.api.TimedTicketPlanApi
+import com.vidz.data.server.retrofit.api.VoucherApi
 import retrofit2.Retrofit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -26,4 +27,5 @@ class RetrofitServer @Inject constructor(private val retrofit: Retrofit) {
     val paymentApi: PaymentApi by lazy { retrofit.create(PaymentApi::class.java) }
     val metroLineApi: MetroLineApi by lazy { retrofit.create(MetroLineApi::class.java) }
     val stationApi: StationApi by lazy { retrofit.create(StationApi::class.java) }
+    val voucherApi: VoucherApi by lazy { retrofit.create(VoucherApi::class.java) }
 }

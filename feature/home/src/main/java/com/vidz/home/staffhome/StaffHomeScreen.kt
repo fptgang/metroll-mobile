@@ -12,12 +12,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.WavingHand
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -82,7 +88,17 @@ fun StaffHomeScreen(
     //region Event Handler
     val onQRScannerClick: () -> Unit = {
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        navController.navigate("qr_scanner")
+        navController.navigate(DestinationRoutes.QR_SCANNER_SCREEN_ROUTE)
+    }
+    
+    val onBuyTicketClick: () -> Unit = {
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        navController.navigate(DestinationRoutes.ROOT_TICKET_SCREEN_ROUTE)
+    }
+    
+    val onViewTicketsClick: () -> Unit = {
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        navController.navigate(DestinationRoutes.MY_TICKETS_SCREEN_ROUTE)
     }
     
     val onSettingsClick: () -> Unit = {
@@ -92,12 +108,17 @@ fun StaffHomeScreen(
     
     val onViewProfileClick: () -> Unit = {
         showSettingsBottomSheet = false
-        navController.navigate(DestinationRoutes.ACCOUNT_PROFILE_SCREEN_ROUTE)
+        navController.navigate(DestinationRoutes.STAFF_PROFILE_SCREEN_ROUTE)
     }
     
     val onEditProfileClick: () -> Unit = {
         showSettingsBottomSheet = false
         navController.navigate(DestinationRoutes.EDIT_PROFILE_SCREEN_ROUTE)
+    }
+    
+    val onViewLogsClick: () -> Unit = {
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        navController.navigate(DestinationRoutes.STAFF_SCAN_HISTORY_SCREEN_ROUTE)
     }
     
     val onLogoutClick: () -> Unit = {
@@ -168,6 +189,14 @@ fun StaffHomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // Welcome Message Card
+            WelcomeMessageCard(
+                staffName = uiState.staffName,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp)
+            )
+            
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -181,6 +210,33 @@ fun StaffHomeScreen(
                     isPrimary = true
                 )
 
+                // View Validation Logs Button
+                com.vidz.base.components.MetrollActionCard(
+                    title = "Validation Logs",
+                    description = "View ticket validation history for your station",
+                    icon = Icons.Default.History,
+                    onClick = onViewLogsClick,
+                    isPrimary = false
+                )
+
+                // Buy Ticket for Guest Button
+                com.vidz.base.components.MetrollActionCard(
+                    title = "Buy Ticket for Guest",
+                    description = "Purchase tickets on behalf of passengers",
+                    icon = Icons.Default.ShoppingCart,
+                    onClick = onBuyTicketClick,
+                    isPrimary = false
+                )
+
+                // View Tickets Button
+                com.vidz.base.components.MetrollActionCard(
+                    title = "View Tickets",
+                    description = "View and manage ticket orders",
+                    icon = Icons.Default.Receipt,
+                    onClick = onViewTicketsClick,
+                    isPrimary = false
+                )
+
                 // Profile & Settings Button
                 com.vidz.base.components.MetrollActionCard(
                     title = "Profile & Settings",
@@ -192,7 +248,7 @@ fun StaffHomeScreen(
             }
         }
         
-        //regiosattn Dialog and Sheet
+        //registration Dialog and Sheet
         // Settings Bottom Sheet
         if (showSettingsBottomSheet) {
             ModalBottomSheet(
@@ -305,6 +361,61 @@ private fun StaffSettingsBottomSheetContent(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Sign Out")
+            }
+        }
+    }
+}
+
+@Composable
+private fun WelcomeMessageCard(
+    staffName: String,
+    modifier: Modifier = Modifier
+) {
+    // Get current time for greeting
+    val currentHour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
+    val greeting = when (currentHour) {
+        in 5..11 -> "Good Morning"
+        in 12..16 -> "Good Afternoon"
+        in 17..21 -> "Good Evening"
+        else -> "Good Night"
+    }
+    
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.WavingHand,
+                contentDescription = "Welcome",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(32.dp)
+            )
+            
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "$greeting, $staffName!",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    text = "Ready to start your shift?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                )
             }
         }
     }

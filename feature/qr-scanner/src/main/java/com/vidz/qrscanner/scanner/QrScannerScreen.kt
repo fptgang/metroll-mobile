@@ -37,8 +37,12 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +53,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -57,7 +62,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -108,19 +112,20 @@ fun QrScannerScreen(
 ) {
     //region Define Var
     val appContext = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     var lastScanned by remember { mutableStateOf<String?>(null) }
     var boundingPoints by remember { mutableStateOf<List<PointF>?>(null) }
-    var noQrFrames by remember { mutableStateOf(0) }
     var permissionState by remember { mutableStateOf<PermissionState?>(null) }
     var requestPermission: (() -> Unit)? by remember { mutableStateOf(null) }
     // Used later for scaling bounding box
-    var previewWidth by remember { mutableStateOf(1) }
-    var previewHeight by remember { mutableStateOf(1) }
+    var previewWidth by remember { mutableIntStateOf(1) }
+    var previewHeight by remember { mutableIntStateOf(1) }
     
     // Camera control states
     var camera by remember { mutableStateOf<Camera?>(null) }
     var isFlashlightOn by remember { mutableStateOf(false) }
+    
+
     //endregion
 
     //region Event Handler
@@ -135,16 +140,26 @@ fun QrScannerScreen(
     }
 
     LaunchedEffect(qrScannerUiState.value.status) {
-        if (qrScannerUiState.value.status is QrScannerViewModel.ScannerStatus.Success) {
-            val vibrator = appContext.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator
-            vibrator?.let {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    it.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE))
-                } else {
-                    @Suppress("DEPRECATION")
-                    it.vibrate(200)
+        when (val status = qrScannerUiState.value.status) {
+            is QrScannerViewModel.ScannerStatus.Success -> {
+                val vibrator = appContext.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator
+                vibrator?.let {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        it.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE))
+                    } else {
+                        @Suppress("DEPRECATION")
+                        it.vibrate(200)
+                    }
                 }
             }
+            else -> { /* Handle other statuses if needed */ }
+        }
+    }
+
+    // Clear bounding points when returning to scanner screen
+    LaunchedEffect(qrScannerUiState.value.currentScreen) {
+        if (qrScannerUiState.value.currentScreen == QrScannerViewModel.ScreenState.Scanner) {
+            boundingPoints = null
         }
     }
 
@@ -190,8 +205,6 @@ fun QrScannerScreen(
                     qrScannerViewModel = qrScannerViewModel,
                     boundingPoints = boundingPoints,
                     onBoundingPointsChanged = { boundingPoints = it },
-                    noQrFrames = noQrFrames,
-                    onNoQrFramesChanged = { noQrFrames = it },
                     previewWidth = previewWidth,
                     previewHeight = previewHeight,
                     onPreviewSizeChanged = { width, height ->
@@ -256,8 +269,6 @@ private fun ScannerScreenContent(
     qrScannerViewModel: QrScannerViewModel,
     boundingPoints: List<PointF>?,
     onBoundingPointsChanged: (List<PointF>?) -> Unit,
-    noQrFrames: Int,
-    onNoQrFramesChanged: (Int) -> Unit,
     previewWidth: Int,
     previewHeight: Int,
     onPreviewSizeChanged: (Int, Int) -> Unit,
@@ -309,6 +320,15 @@ private fun ScannerScreenContent(
             }
         }
 
+        // Station Information Card
+        StationInfoCard(
+            account = qrScannerUiState.value.account,
+            stationDetails = qrScannerUiState.value.assignedStationDetails,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+
         // Validation Type Tabs
         Row(
             modifier = Modifier
@@ -356,20 +376,16 @@ private fun ScannerScreenContent(
                             .build()
                             .also { imageAnalysis ->
                                 imageAnalysis.setAnalyzer(analyzerExecutor, QrCodeAnalyzer { text, points, imgWidth, imgHeight ->
-                                    if (text.isNotBlank()) {
-                                        qrScannerViewModel.onTriggerEvent(QrScannerViewModel.QrScannerViewEvent.QrDetected(text))
-                                    }
-
+                                    // Update bounding points regardless of processing state
                                     if (points != null) {
                                         onBoundingPointsChanged(points)
-                                        onNoQrFramesChanged(0)
                                     } else {
-                                        val newFrames = noQrFrames + 1
-                                        onNoQrFramesChanged(newFrames)
-                                        if (newFrames > 5) {
-                                            onBoundingPointsChanged(null)
-                                            qrScannerViewModel.onTriggerEvent(QrScannerViewModel.QrScannerViewEvent.ClearStatus)
-                                        }
+                                        onBoundingPointsChanged(null)
+                                    }
+
+                                    // Send QR to ViewModel - blocking handled at ViewModel level
+                                    if (text.isNotBlank()) {
+                                        qrScannerViewModel.onTriggerEvent(QrScannerViewModel.QrScannerViewEvent.QrDetected(text))
                                     }
 
                                     onPreviewSizeChanged(imgWidth, imgHeight)
@@ -487,6 +503,109 @@ private fun ScannerScreenContent(
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Text(text = statusText, textAlign = TextAlign.Center)
+            }
+        }
+    }
+}
+
+@Composable
+private fun StationInfoCard(
+    account: com.vidz.domain.model.Account?,
+    stationDetails: com.vidz.domain.model.Station?,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Header Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Staff",
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(24.dp)
+                )
+                
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = account?.fullName ?: "Staff Member",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Text(
+                        text = "Station Scanner",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    )
+                }
+            }
+
+            // Station Information Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = "Station",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Assigned Station",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                    )
+                    
+                    if (stationDetails != null) {
+                        Text(
+                            text = stationDetails.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        if (stationDetails.code.isNotBlank()) {
+                            Text(
+                                text = "Code: ${stationDetails.code}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            )
+                        }
+                    } else if (account?.assignedStation?.isNotBlank() == true) {
+                        Text(
+                            text = account.assignedStation,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = "Loading details...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                    } else {
+                        Text(
+                            text = "No station assigned",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             }
         }
     }
