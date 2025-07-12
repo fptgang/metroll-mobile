@@ -308,11 +308,11 @@ private fun OrderCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Số Lượng: ${order.orderDetails.sumOf { it.quantity }}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+//                Text(
+//                    text = "Số Lượng: ${order.orderDetails.sumOf { it.quantity }}",
+//                    style = MaterialTheme.typography.bodyMedium,
+//                    color = MaterialTheme.colorScheme.onSurfaceVariant
+//                )
 
                 OrderStatusChip(status = order.status)
             }
