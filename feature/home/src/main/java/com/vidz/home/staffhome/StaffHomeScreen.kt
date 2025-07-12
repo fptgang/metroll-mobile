@@ -162,7 +162,7 @@ fun StaffHomeScreen(
         CenterAlignedTopAppBar(
             title = {
                 Text(
-                    text = "Metroll Staff",
+                    text = "Nhân viên Metroll",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -171,7 +171,7 @@ fun StaffHomeScreen(
                 IconButton(onClick = onLogoutClick) {
                     Icon(
                         imageVector = Icons.Default.Logout,
-                        contentDescription = "Logout",
+                        contentDescription = "Đăng xuất",
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -203,8 +203,8 @@ fun StaffHomeScreen(
             ) {
                 // Scan Ticket Button
                 com.vidz.base.components.MetrollActionCard(
-                    title = "Scan Ticket",
-                    description = "Scan passenger tickets and passes",
+                    title = "Quét vé",
+                    description = "Quét vé và thẻ tháng của hành khách",
                     icon = Icons.Default.QrCodeScanner,
                     onClick = onQRScannerClick,
                     isPrimary = true
@@ -212,8 +212,8 @@ fun StaffHomeScreen(
 
                 // View Validation Logs Button
                 com.vidz.base.components.MetrollActionCard(
-                    title = "Validation Logs",
-                    description = "View ticket validation history for your station",
+                    title = "Lịch sử kiểm tra",
+                    description = "Xem lịch sử kiểm tra vé tại trạm của bạn",
                     icon = Icons.Default.History,
                     onClick = onViewLogsClick,
                     isPrimary = false
@@ -221,8 +221,8 @@ fun StaffHomeScreen(
 
                 // Buy Ticket for Guest Button
                 com.vidz.base.components.MetrollActionCard(
-                    title = "Buy Ticket for Guest",
-                    description = "Purchase tickets on behalf of passengers",
+                    title = "Mua vé cho khách",
+                    description = "Mua vé thay mặt cho hành khách",
                     icon = Icons.Default.ShoppingCart,
                     onClick = onBuyTicketClick,
                     isPrimary = false
@@ -230,8 +230,8 @@ fun StaffHomeScreen(
 
                 // View Tickets Button
                 com.vidz.base.components.MetrollActionCard(
-                    title = "View Tickets",
-                    description = "View and manage ticket orders",
+                    title = "Xem vé",
+                    description = "Xem và quản lý đơn hàng vé",
                     icon = Icons.Default.Receipt,
                     onClick = onViewTicketsClick,
                     isPrimary = false

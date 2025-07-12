@@ -8,6 +8,7 @@ import com.vidz.data.server.retrofit.RetrofitServer
 import com.vidz.domain.Result
 import com.vidz.domain.model.PageDto
 import com.vidz.domain.model.Ticket
+import com.vidz.domain.model.TicketDashboard
 import com.vidz.domain.model.TicketStatus
 import com.vidz.domain.model.TicketUpsertRequest
 import com.vidz.domain.repository.TicketRepository
@@ -72,13 +73,25 @@ class TicketRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getTicketsByOrderDetailId(orderDetailId: String): Result<List<Ticket>> {
-        val flow: IFlow<List<Ticket>> = ServerFlow(
+    override suspend fun getTicketsByOrderDetailId(orderDetailId: String): Result<Ticket> {
+        val flow: IFlow<Ticket> = ServerFlow(
             getData = { retrofitServer.ticketApi.getTicketsByOrderDetailId(orderDetailId) },
-            convert = { it.map { dto -> dto.toDomain() } }
+            convert = { it.toDomain() }
         )
         return flow.execute().let { flowResult ->
-            var result: Result<List<Ticket>> = Result.Init
+            var result: Result<Ticket> = Result.Init
+            flowResult.collect { result = it }
+            result
+        }
+    }
+
+    override suspend fun getTicketDashboard(): Result<TicketDashboard> {
+        val flow: IFlow<TicketDashboard> = ServerFlow(
+            getData = { retrofitServer.ticketApi.getTicketDashboard() },
+            convert = { it.toDomain() }
+        )
+        return flow.execute().let { flowResult ->
+            var result: Result<TicketDashboard> = Result.Init
             flowResult.collect { result = it }
             result
         }

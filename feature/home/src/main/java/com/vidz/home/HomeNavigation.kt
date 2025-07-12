@@ -41,7 +41,7 @@ fun NavGraphBuilder.addHomeNavGraph(
                 onShowSnackbar = onShowSnackbar
             )
         }
-        
+
         // Customer home screen route
         composable("${DestinationRoutes.CUSTOMER_HOME_SCREEN_ROUTE}?numberItemOfPage={numberItemOfPage}") {
             CustomerHomeScreenRoot(
@@ -49,7 +49,7 @@ fun NavGraphBuilder.addHomeNavGraph(
                 onShowSnackbar = onShowSnackbar,
             )
         }
-        
+
         // Staff home screen route
         composable("${DestinationRoutes.STAFF_HOME_SCREEN_ROUTE}?numberItemOfPage={numberItemOfPage}") {
             StaffHomeScreenRoot(

@@ -242,34 +242,45 @@ fun TicketPurchaseScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Tab Row
-            TabRow(
-                selectedTabIndex = if (uiState.selectedTicketType == TicketType.TIMED) 0 else 1,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Tab(
-                    selected = uiState.selectedTicketType == TicketType.TIMED,
-                    onClick = { onTabSelected(TicketType.TIMED) },
-                    text = { Text("Vé Thời Hạn") }
-                )
-                Tab(
-                    selected = uiState.selectedTicketType == TicketType.P2P,
-                    onClick = { onTabSelected(TicketType.P2P) },
-                    text = { Text("Vé Theo Trạm") }
-                )
+            // Tab Row - Only show for customers, staff only see P2P
+            if (uiState.isCustomer) {
+                TabRow(
+                    selectedTabIndex = if (uiState.selectedTicketType == TicketType.TIMED) 0 else 1,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Tab(
+                        selected = uiState.selectedTicketType == TicketType.TIMED,
+                        onClick = { onTabSelected(TicketType.TIMED) },
+                        text = { Text("Vé Thời Hạn") }
+                    )
+                    Tab(
+                        selected = uiState.selectedTicketType == TicketType.P2P,
+                        onClick = { onTabSelected(TicketType.P2P) },
+                        text = { Text("Vé Theo Trạm") }
+                    )
+                }
+            } else {
+                // For staff, show a simple title instead of tabs
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Text(
+                        text = "Vé Theo Trạm",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
 
             // Content
-            when (uiState.selectedTicketType) {
-                TicketType.TIMED -> {
-                    TimedTicketsContent(
-                        tickets = uiState.timedTickets,
-                        isLoading = uiState.isLoadingTimed,
-                        onAddToCart = onTimedTicketAddToCart
-                    )
-                }
-                TicketType.P2P -> {
-                                    P2PJourneysContent(
+            if (uiState.isStaff) {
+                // Staff users only see P2P content
+                P2PJourneysContent(
                     journeys = uiState.p2pJourneys,
                     isLoading = uiState.isLoadingP2P,
                     currentSort = uiState.p2pSortType,
@@ -289,8 +300,46 @@ fun TicketPurchaseScreen(
                     },
                     onClearStations = {
                         viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ClearStationSelection)
-                    }
+                    },
+                    isStaff = uiState.isStaff,
+                    staffAssignedStation = uiState.staffAssignedStation
                 )
+            } else {
+                // Customer users see content based on selected tab
+                when (uiState.selectedTicketType) {
+                    TicketType.TIMED -> {
+                        TimedTicketsContent(
+                            tickets = uiState.timedTickets,
+                            isLoading = uiState.isLoadingTimed,
+                            onAddToCart = onTimedTicketAddToCart
+                        )
+                    }
+                    TicketType.P2P -> {
+                        P2PJourneysContent(
+                            journeys = uiState.p2pJourneys,
+                            isLoading = uiState.isLoadingP2P,
+                            currentSort = uiState.p2pSortType,
+                            stations = uiState.stations,
+                            isLoadingStations = uiState.isLoadingStations,
+                            selectedFromStation = uiState.selectedFromStation,
+                            selectedToStation = uiState.selectedToStation,
+                            onAddToCart = onP2PJourneyAddToCart,
+                            onSortChange = onSortChange,
+                            onFromStationSelect = { station ->
+                                println("TicketPurchaseScreen: From station selected: ${station?.name}")
+                                viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectFromStation(station))
+                            },
+                            onToStationSelect = { station ->
+                                println("TicketPurchaseScreen: To station selected: ${station?.name}")
+                                viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectToStation(station))
+                            },
+                            onClearStations = {
+                                viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ClearStationSelection)
+                            },
+                            isStaff = uiState.isStaff,
+                            staffAssignedStation = uiState.staffAssignedStation
+                        )
+                    }
                 }
             }
         }
@@ -368,7 +417,9 @@ private fun P2PJourneysContent(
     onSortChange: (P2PSortType) -> Unit,
     onFromStationSelect: (Station?) -> Unit,
     onToStationSelect: (Station?) -> Unit,
-    onClearStations: () -> Unit
+    onClearStations: () -> Unit,
+    isStaff: Boolean = false,
+    staffAssignedStation: String? = null
 ) {
     var showFromDropdown by remember { mutableStateOf(false) }
     var showToDropdown by remember { mutableStateOf(false) }
@@ -395,12 +446,24 @@ private fun P2PJourneysContent(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Chọn Tuyến Đường",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Column {
+                        Text(
+                            text = "Chọn Tuyến Đường",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        
+                        // Show staff-specific message if they have limited stations
+                        if (isStaff && !staffAssignedStation.isNullOrBlank()) {
+                            Text(
+                                text = "Bạn chỉ có thể chọn trạm: $staffAssignedStation",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+                    }
                     
                     if (selectedFromStation != null || selectedToStation != null) {
                         IconButton(
@@ -707,6 +770,8 @@ private fun P2PJourneysContent(
                             Text(
                                 text = if (selectedFromStation != null || selectedToStation != null) {
                                     "Không tìm thấy tuyến đường cho các trạm đã chọn"
+                                } else if (isStaff && !staffAssignedStation.isNullOrBlank()) {
+                                    "Chọn trạm để tìm kiếm tuyến đường từ trạm được gán của bạn"
                                 } else {
                                     "Chọn trạm để tìm kiếm tuyến đường"
                                 },
@@ -717,6 +782,8 @@ private fun P2PJourneysContent(
                             Text(
                                 text = if (selectedFromStation != null || selectedToStation != null) {
                                     "Hãy thử chọn các trạm khác hoặc xóa lựa chọn của bạn"
+                                } else if (isStaff && !staffAssignedStation.isNullOrBlank()) {
+                                    "Bạn chỉ có thể chọn trạm: $staffAssignedStation"
                                 } else {
                                     "Chọn trạm khởi hành và đích đến ở trên"
                                 },

@@ -9,7 +9,7 @@ data class TicketValidation(
     val ticketId: String = "",
     val validationType: ValidationType = ValidationType.ENTRY,
     val validationTime: String = "",
-    val deviceId: String = "",
+    val validatorId: String = "",
     val createdAt: String = ""
 )
 

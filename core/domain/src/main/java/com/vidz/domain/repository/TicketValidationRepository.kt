@@ -16,7 +16,15 @@ interface TicketValidationRepository {
     
     suspend fun getTicketValidationsByTicketId(ticketId: String): Result<List<TicketValidation>>
     
-    suspend fun getTicketValidationsByStationId(stationId: String): Result<List<TicketValidation>>
+    suspend fun getTicketValidationsByStationCode(
+        stationCode: String,
+        page: Int? = null,
+        size: Int? = null,
+        search: String? = null,
+        validationType: String? = null,
+        startDate: String? = null,
+        endDate: String? = null
+    ): Result<PageDto<TicketValidation>>
     
     suspend fun validateTicket(request: TicketValidationCreateRequest): Result<TicketValidation>
 } 

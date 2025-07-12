@@ -3,6 +3,7 @@ package com.vidz.domain.repository
 import com.vidz.domain.Result
 import com.vidz.domain.model.PageDto
 import com.vidz.domain.model.Ticket
+import com.vidz.domain.model.TicketDashboard
 import com.vidz.domain.model.TicketStatus
 import com.vidz.domain.model.TicketUpsertRequest
 import kotlinx.coroutines.flow.Flow
@@ -20,7 +21,9 @@ interface TicketRepository {
     
     suspend fun getTicketsByStatus(status: TicketStatus): Result<List<Ticket>>
     
-    suspend fun getTicketsByOrderDetailId(orderDetailId: String): Result<List<Ticket>>
+    suspend fun getTicketsByOrderDetailId(orderDetailId: String): Result<Ticket>
+    
+    suspend fun getTicketDashboard(): Result<TicketDashboard>
     
     suspend fun createTicket(request: TicketUpsertRequest): Result<Ticket>
     

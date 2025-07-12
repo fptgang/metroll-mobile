@@ -9,7 +9,7 @@ data class TicketValidationDto(
     val ticketId: String = "",
     val validationType: String = "", // ENTRY or EXIT
     val validationTime: String = "",
-    val deviceId: String = "",
+    val validatorId: String = "",
     val createdAt: String = ""
 )
 
