@@ -9,7 +9,7 @@ data class OrderDetail(
     val ticketType: TicketType,
     val p2pJourney: String? = null,
     val timedTicketPlan: String? = null,
-    val quantity: Int,
+//    val quantity: Int,
     val unitPrice: Double,
     val baseTotal: Double,
     val discountTotal: Double,
