@@ -69,41 +69,41 @@ fun RegisterScreen(
     val handleDisplayNameChange = { displayName: String ->
         onEvent(RegisterViewModel.RegisterEvent.DisplayNameChanged(displayName))
     }
-    
+
     val handleEmailChange = { email: String ->
         onEvent(RegisterViewModel.RegisterEvent.EmailChanged(email))
     }
-    
+
     val handlePasswordChange = { password: String ->
         onEvent(RegisterViewModel.RegisterEvent.PasswordChanged(password))
     }
-    
+
     val handleConfirmPasswordChange = { confirmPassword: String ->
         onEvent(RegisterViewModel.RegisterEvent.ConfirmPasswordChanged(confirmPassword))
     }
-    
+
     val handlePasswordVisibilityToggle = {
         onEvent(RegisterViewModel.RegisterEvent.PasswordVisibilityToggled)
     }
-    
+
     val handleConfirmPasswordVisibilityToggle = {
         onEvent(RegisterViewModel.RegisterEvent.ConfirmPasswordVisibilityToggled)
     }
-    
+
     val handleRegister = {
         keyboardController?.hide()
         focusManager.clearFocus()
         onEvent(RegisterViewModel.RegisterEvent.RegisterClicked)
     }
-    
-    val isFormValid = uiState.email.isNotBlank() && 
-                     uiState.displayName.isNotBlank() && 
-                     uiState.password.isNotBlank() && 
-                     uiState.confirmPassword.isNotBlank() &&
-                     uiState.emailError == null &&
-                     uiState.displayNameError == null &&
-                     uiState.passwordError == null &&
-                     uiState.confirmPasswordError == null
+
+    val isFormValid = uiState.email.isNotBlank() &&
+            uiState.displayName.isNotBlank() &&
+            uiState.password.isNotBlank() &&
+            uiState.confirmPassword.isNotBlank() &&
+            uiState.emailError == null &&
+            uiState.displayNameError == null &&
+            uiState.passwordError == null &&
+            uiState.confirmPasswordError == null
     //endregion
 
     //region ui
@@ -136,7 +136,7 @@ fun RegisterScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.PersonAdd,
-                    contentDescription = "Register Icon",
+                    contentDescription = "Biểu tượng đăng ký",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(20.dp)
                 )
@@ -146,17 +146,17 @@ fun RegisterScreen(
 
             // Welcome Text
             Text(
-                text = "Create Account",
+                text = "Tạo tài khoản",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Text(
-                text = "Join HCMC Metro today",
+                text = "Tham gia HCMC Metro ngay hôm nay",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -177,66 +177,28 @@ fun RegisterScreen(
                     modifier = Modifier.padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
-                    // Display Name Field
-                    OutlinedTextField(
-                        value = uiState.displayName,
-                        onValueChange = handleDisplayNameChange,
-                        label = { Text("Full Name") },
-                        placeholder = { Text("Enter your full name") },
-                        leadingIcon = { 
-                            Icon(
-                                Icons.Outlined.Person, 
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            ) 
-                        },
-                        singleLine = true,
-                        isError = uiState.displayNameError != null,
-                        supportingText = uiState.displayNameError?.let { 
-                            { 
-                                Text(
-                                    text = it,
-                                    color = MaterialTheme.colorScheme.error
-                                ) 
-                            } 
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Next
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                        ),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
                     // Email Field
                     OutlinedTextField(
                         value = uiState.email,
                         onValueChange = handleEmailChange,
-                        label = { Text("Email Address") },
-                        placeholder = { Text("Enter your email") },
-                        leadingIcon = { 
+                        label = { Text("Địa chỉ email") },
+                        placeholder = { Text("Nhập email của bạn") },
+                        leadingIcon = {
                             Icon(
-                                Icons.Outlined.Email, 
+                                Icons.Outlined.Email,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
-                            ) 
+                            )
                         },
                         singleLine = true,
                         isError = uiState.emailError != null,
-                        supportingText = uiState.emailError?.let { 
-                            { 
+                        supportingText = uiState.emailError?.let {
+                            {
                                 Text(
                                     text = it,
                                     color = MaterialTheme.colorScheme.error
-                                ) 
-                            } 
+                                )
+                            }
                         },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Email,
@@ -257,39 +219,39 @@ fun RegisterScreen(
                     OutlinedTextField(
                         value = uiState.password,
                         onValueChange = handlePasswordChange,
-                        label = { Text("Password") },
-                        placeholder = { Text("Enter your password") },
-                        leadingIcon = { 
+                        label = { Text("Mật khẩu") },
+                        placeholder = { Text("Nhập mật khẩu của bạn") },
+                        leadingIcon = {
                             Icon(
-                                Icons.Outlined.Lock, 
+                                Icons.Outlined.Lock,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
-                            ) 
+                            )
                         },
                         trailingIcon = {
                             IconButton(
                                 onClick = handlePasswordVisibilityToggle
                             ) {
                                 Icon(
-                                    imageVector = if (uiState.isPasswordVisible) 
+                                    imageVector = if (uiState.isPasswordVisible)
                                         Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                    contentDescription = if (uiState.isPasswordVisible) 
-                                        "Hide password" else "Show password",
+                                    contentDescription = if (uiState.isPasswordVisible)
+                                        "Ẩn mật khẩu" else "Hiện mật khẩu",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         },
-                        visualTransformation = if (uiState.isPasswordVisible) 
+                        visualTransformation = if (uiState.isPasswordVisible)
                             VisualTransformation.None else PasswordVisualTransformation(),
                         singleLine = true,
                         isError = uiState.passwordError != null,
-                        supportingText = uiState.passwordError?.let { 
-                            { 
+                        supportingText = uiState.passwordError?.let {
+                            {
                                 Text(
                                     text = it,
                                     color = MaterialTheme.colorScheme.error
-                                ) 
-                            } 
+                                )
+                            }
                         },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password,
@@ -310,46 +272,46 @@ fun RegisterScreen(
                     OutlinedTextField(
                         value = uiState.confirmPassword,
                         onValueChange = handleConfirmPasswordChange,
-                        label = { Text("Confirm Password") },
-                        placeholder = { Text("Confirm your password") },
-                        leadingIcon = { 
+                        label = { Text("Xác nhận mật khẩu") },
+                        placeholder = { Text("Xác nhận mật khẩu của bạn") },
+                        leadingIcon = {
                             Icon(
-                                Icons.Outlined.Lock, 
+                                Icons.Outlined.Lock,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
-                            ) 
+                            )
                         },
                         trailingIcon = {
                             IconButton(
                                 onClick = handleConfirmPasswordVisibilityToggle
                             ) {
                                 Icon(
-                                    imageVector = if (uiState.isConfirmPasswordVisible) 
+                                    imageVector = if (uiState.isConfirmPasswordVisible)
                                         Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                    contentDescription = if (uiState.isConfirmPasswordVisible) 
-                                        "Hide password" else "Show password",
+                                    contentDescription = if (uiState.isConfirmPasswordVisible)
+                                        "Ẩn mật khẩu" else "Hiện mật khẩu",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         },
-                        visualTransformation = if (uiState.isConfirmPasswordVisible) 
+                        visualTransformation = if (uiState.isConfirmPasswordVisible)
                             VisualTransformation.None else PasswordVisualTransformation(),
                         singleLine = true,
                         isError = uiState.confirmPasswordError != null,
-                        supportingText = uiState.confirmPasswordError?.let { 
-                            { 
+                        supportingText = uiState.confirmPasswordError?.let {
+                            {
                                 Text(
                                     text = it,
                                     color = MaterialTheme.colorScheme.error
-                                ) 
-                            } 
+                                )
+                            }
                         },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done
                         ),
                         keyboardActions = KeyboardActions(
-                            onDone = { 
+                            onDone = {
                                 if (isFormValid) {
                                     handleRegister()
                                 }
@@ -367,7 +329,7 @@ fun RegisterScreen(
 
                     // Register Button
                     MetrollButton(
-                        text = if (uiState.isLoading) "Creating Account..." else "Create Account",
+                        text = if (uiState.isLoading) "Đang tạo tài khoản..." else "Tạo tài khoản",
                         onClick = handleRegister,
                         enabled = !uiState.isLoading && isFormValid,
                         isLoading = uiState.isLoading,
@@ -380,7 +342,9 @@ fun RegisterScreen(
 
             // Login Link
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigateToLogin() },
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
@@ -390,18 +354,17 @@ fun RegisterScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onNavigateToLogin() }
                         .padding(20.dp),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Already have an account? ",
+                        text = "Đã có tài khoản? ",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "Sign In",
+                        text = "Đăng nhập",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
@@ -415,4 +378,4 @@ fun RegisterScreen(
     //region Dialog and Sheet
     // No dialogs or sheets needed for this screen
     //endregion
-} 
+}

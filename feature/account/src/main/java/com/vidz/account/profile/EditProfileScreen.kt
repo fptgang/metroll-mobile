@@ -1,7 +1,10 @@
 package com.vidz.account.profile
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -13,9 +16,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -119,7 +124,8 @@ fun EditProfileScreen(
                 title = "Chỉnh sửa thông tin",
                 onBackClick = handleBackClick
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surface
     ) { paddingValues ->
         
         when {
@@ -173,13 +179,18 @@ private fun LoadingScreen(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(
+                modifier = Modifier.size(48.dp),
+                strokeWidth = 4.dp,
+                color = MaterialTheme.colorScheme.primary
+            )
             Text(
                 text = "Đang tải hồ sơ...",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
             )
         }
     }
@@ -197,24 +208,37 @@ private fun ErrorScreen(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(32.dp)
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            modifier = Modifier.padding(40.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(64.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.errorContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+            
             Text(
                 text = "Không thể tải hồ sơ",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center
             )
+            
             Text(
                 text = error,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                lineHeight = MaterialTheme.typography.bodyLarge.lineHeight
             )
         }
     }
@@ -236,15 +260,15 @@ private fun EditProfileContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)
-            .padding(bottom = 80.dp), // Add extra bottom padding for bottom navigation
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+            .padding(horizontal = 20.dp)
+            .padding(top = 8.dp, bottom = 100.dp),
+        verticalArrangement = Arrangement.spacedBy(32.dp)
     ) {
-        // Current Profile Info Card
-        CurrentProfileCard(account = account)
+        // Current Profile Info Section
+        CurrentProfileSection(account = account)
         
-        // Edit Form Card
-        EditFormCard(
+        // Edit Form Section
+        EditFormSection(
             fullName = fullName,
             phoneNumber = phoneNumber,
             fullNameError = fullNameError,
@@ -253,50 +277,36 @@ private fun EditProfileContent(
             onPhoneNumberChange = onPhoneNumberChange
         )
         
-        // Save Button
+        // Save Button Section
         SaveButtonSection(
             isUpdating = isUpdating,
             onSaveClick = onSaveClick,
             canSave = fullNameError == null && phoneNumberError == null && fullName.isNotBlank()
         )
-        
-        // Add spacer to ensure content is above bottom navigation
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
 @Composable
-private fun CurrentProfileCard(
+private fun CurrentProfileSection(
     account: Account,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Thông tin hiện tại",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
-            
-            ReadOnlyInfoRow(
-                icon = Icons.Default.Email,
-                label = "Email",
-                value = account.email
-            )
-        }
+        SectionHeader(title = "Thông tin hiện tại")
+        
+        ReadOnlyInfoItem(
+            icon = Icons.Default.Email,
+            label = "Email",
+            value = account.email
+        )
     }
 }
 
 @Composable
-private fun EditFormCard(
+private fun EditFormSection(
     fullName: String,
     phoneNumber: String,
     fullNameError: String?,
@@ -305,22 +315,15 @@ private fun EditFormCard(
     onPhoneNumberChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        SectionHeader(title = "Chỉnh sửa thông tin")
+        
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Text(
-                text = "Chỉnh sửa thông tin",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
-            
             // Full Name Field
             OutlinedTextField(
                 value = fullName,
@@ -333,9 +336,19 @@ private fun EditFormCard(
                     )
                 },
                 isError = fullNameError != null,
-                supportingText = fullNameError?.let { { Text(it) } },
+                supportingText = fullNameError?.let { { 
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.error
+                    ) 
+                } },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                )
             )
             
             // Phone Number Field
@@ -350,11 +363,26 @@ private fun EditFormCard(
                     )
                 },
                 isError = phoneNumberError != null,
-                supportingText = phoneNumberError?.let { { Text(it) } },
+                supportingText = phoneNumberError?.let { { 
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.error
+                    ) 
+                } },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                placeholder = { Text("Optional") }
+                placeholder = { 
+                    Text(
+                        text = "Tùy chọn",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    ) 
+                },
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                )
             )
         }
     }
@@ -367,52 +395,103 @@ private fun SaveButtonSection(
     canSave: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        SectionHeader(title = "Lưu thay đổi")
+        
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Button(
                 onClick = onSaveClick,
                 enabled = canSave && !isUpdating,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
                 if (isUpdating) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Saving...")
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Đang lưu...",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
                 } else {
                     Icon(
                         imageVector = Icons.Default.Save,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(20.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Lưu thay đổi")
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Lưu thay đổi",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
             
+            // Helper text
             if (!canSave) {
-                Text(
-                    text = "Vui lòng nhập đẩy đủ thông tin",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                ) {
+                    Text(
+                        text = "Vui lòng nhập đầy đủ thông tin hợp lệ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                ) {
+                    Text(
+                        text = "Sẵn sàng lưu thay đổi",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ReadOnlyInfoRow(
+private fun SectionHeader(
+    title: String,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun ReadOnlyInfoItem(
     icon: ImageVector,
     label: String,
     value: String,
@@ -432,17 +511,18 @@ private fun ReadOnlyInfoRow(
         
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }

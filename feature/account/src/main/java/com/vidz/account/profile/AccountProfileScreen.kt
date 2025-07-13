@@ -1,5 +1,6 @@
 package com.vidz.account.profile
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
@@ -21,13 +23,15 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -40,6 +44,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -110,12 +116,19 @@ fun AccountProfileScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Profile") },
+                title = { 
+                    Text(
+                        text = "Profile",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surface
     ) { paddingValues ->
         
         when {
@@ -159,13 +172,18 @@ private fun LoadingScreen(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(
+                modifier = Modifier.size(48.dp),
+                strokeWidth = 4.dp,
+                color = MaterialTheme.colorScheme.primary
+            )
             Text(
                 text = "Đang tải thông tin...",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
             )
         }
     }
@@ -183,28 +201,40 @@ private fun ErrorScreen(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(32.dp)
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            modifier = Modifier.padding(40.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(64.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.errorContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+            
             Text(
                 text = "Không tải được hồ sơ",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Medium,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
             )
+            
             Text(
                 text = error,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                lineHeight = MaterialTheme.typography.bodyLarge.lineHeight
             )
-            Button(
+            
+            FilledTonalButton(
                 onClick = onRetry,
                 modifier = Modifier.padding(top = 8.dp)
             ) {
@@ -232,29 +262,26 @@ private fun ProfileContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)
-            .padding(bottom = 80.dp), // Add extra bottom padding for bottom navigation
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+            .padding(horizontal = 20.dp)
+            .padding(top = 8.dp, bottom = 100.dp),
+        verticalArrangement = Arrangement.spacedBy(32.dp)
     ) {
         // Profile Header
         ProfileHeader(account = account)
         
-        // Profile Information Card
-        ProfileInformationCard(account = account)
+        // Profile Information Section
+        ProfileInformationSection(account = account)
         
-        // Account Status Card
-        AccountStatusCard(account = account)
+        // Account Status Section
+        AccountStatusSection(account = account)
         
-        // Actions
+        // Actions Section
         ActionsSection(
             onRefresh = onRefresh, 
             onEditProfile = onEditProfile, 
             onLogout = onLogout,
             isLoggingOut = isLoggingOut
         )
-        
-        // Add spacer to ensure content is above bottom navigation
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -263,41 +290,36 @@ private fun ProfileHeader(
     account: Account,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Column(
+        // Profile Avatar
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .size(120.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
         ) {
-            // Profile Avatar
-            Surface(
-                modifier = Modifier.size(80.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = account.fullName.take(2).uppercase(),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-            
-            // Profile Name and Email
+            Text(
+                text = account.fullName.take(2).uppercase(),
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+        
+        // Profile Name and Details
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Text(
                 text = account.fullName.ifEmpty { "Người dùng không xác định" },
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Medium,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
             )
             
@@ -315,45 +337,38 @@ private fun ProfileHeader(
 }
 
 @Composable
-private fun ProfileInformationCard(
+private fun ProfileInformationSection(
     account: Account,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        SectionHeader(title = "Thông tin cá nhân")
+        
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Thông tin cá nhân",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
-            
-            ProfileInfoRow(
+            ProfileInfoItem(
                 icon = Icons.Default.Person,
                 label = "Họ và tên",
                 value = account.fullName.ifEmpty { "Chưa cung cấp" }
             )
             
-            ProfileInfoRow(
+            ProfileInfoItem(
                 icon = Icons.Default.Email,
                 label = "Email",
                 value = account.email
             )
             
-            ProfileInfoRow(
+            ProfileInfoItem(
                 icon = Icons.Default.Phone,
                 label = "Số điện thoại",
                 value = account.phoneNumber.ifEmpty { "Chưa cung cấp" }
             )
             
-            ProfileInfoRow(
+            ProfileInfoItem(
                 icon = Icons.Default.Security,
                 label = "Mã tài khoản",
                 value = account.id.ifEmpty { "Không rõ" }
@@ -363,44 +378,48 @@ private fun ProfileInformationCard(
 }
 
 @Composable
-private fun AccountStatusCard(
+private fun AccountStatusSection(
     account: Account,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        SectionHeader(title = "Trạng thái tài khoản")
+        
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Trạng thái tài khoản",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
-            
             // Account Status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Trạng thái",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.AccountCircle,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "Trạng thái",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 StatusChip(isActive = account.active)
             }
             
             // Created Date
             if (account.createdAt.isNotEmpty()) {
-                ProfileInfoRow(
-                    icon = Icons.Default.Person,
+                ProfileInfoItem(
+                    icon = Icons.Outlined.Schedule,
                     label = "Là thành viên từ",
                     value = formatDate(account.createdAt)
                 )
@@ -408,7 +427,7 @@ private fun AccountStatusCard(
             
             // Last Updated
             if (account.updatedAt.isNotEmpty()) {
-                ProfileInfoRow(
+                ProfileInfoItem(
                     icon = Icons.Default.Refresh,
                     label = "Cập nhật lần cuối",
                     value = formatDate(account.updatedAt)
@@ -426,38 +445,37 @@ private fun ActionsSection(
     isLoggingOut: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        SectionHeader(title = "Tùy chọn")
+        
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = "Tùy chọn",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
-            
             Button(
                 onClick = onEditProfile,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Person,
+                    imageVector = Icons.Default.Edit,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Chỉnh sửa hồ sơ")
+                Text(
+                    text = "Chỉnh sửa hồ sơ",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
+                )
             }
             
-            OutlinedButton(
+            FilledTonalButton(
                 onClick = onRefresh,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Refresh,
@@ -465,7 +483,11 @@ private fun ActionsSection(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Làm mới thông tin")
+                Text(
+                    text = "Làm mới thông tin",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
+                )
             }
             
             // Logout Button
@@ -475,7 +497,8 @@ private fun ActionsSection(
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = MaterialTheme.colorScheme.error
                 ),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 if (isLoggingOut) {
                     CircularProgressIndicator(
@@ -484,7 +507,11 @@ private fun ActionsSection(
                         color = MaterialTheme.colorScheme.error
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Đang đăng xuất...")
+                    Text(
+                        text = "Đang đăng xuất...",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
                 } else {
                     Icon(
                         imageVector = Icons.Default.ExitToApp,
@@ -492,7 +519,11 @@ private fun ActionsSection(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Đăng xuất")
+                    Text(
+                        text = "Đăng xuất",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }
@@ -500,7 +531,21 @@ private fun ActionsSection(
 }
 
 @Composable
-private fun ProfileInfoRow(
+private fun SectionHeader(
+    title: String,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun ProfileInfoItem(
     icon: ImageVector,
     label: String,
     value: String,
@@ -520,17 +565,18 @@ private fun ProfileInfoRow(
         
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -541,22 +587,34 @@ private fun RoleChip(
     role: AccountRole,
     modifier: Modifier = Modifier
 ) {
-    val (text, color) = when (role) {
-        AccountRole.ADMIN -> "Admin" to MaterialTheme.colorScheme.error
-        AccountRole.STAFF -> "Nhân viên" to MaterialTheme.colorScheme.primary
-        AccountRole.CUSTOMER -> "Người dùng" to MaterialTheme.colorScheme.secondary
+    val (text, containerColor, contentColor) = when (role) {
+        AccountRole.ADMIN -> Triple(
+            "Admin",
+            MaterialTheme.colorScheme.errorContainer,
+            MaterialTheme.colorScheme.onErrorContainer
+        )
+        AccountRole.STAFF -> Triple(
+            "Nhân viên",
+            MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.onPrimaryContainer
+        )
+        AccountRole.CUSTOMER -> Triple(
+            "Người dùng",
+            MaterialTheme.colorScheme.secondaryContainer,
+            MaterialTheme.colorScheme.onSecondaryContainer
+        )
     }
     
     Surface(
         modifier = modifier,
-        shape = MaterialTheme.shapes.small,
-        color = color.copy(alpha = 0.1f)
+        shape = RoundedCornerShape(16.dp),
+        color = containerColor
     ) {
         Text(
             text = text,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            style = MaterialTheme.typography.labelMedium,
-            color = color,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.labelLarge,
+            color = contentColor,
             fontWeight = FontWeight.Medium
         )
     }
@@ -567,22 +625,30 @@ private fun StatusChip(
     isActive: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val (text, color) = if (isActive) {
-        "Đang hoạt động" to MaterialTheme.colorScheme.primary
+    val (text, containerColor, contentColor) = if (isActive) {
+        Triple(
+            "Hoạt động",
+            MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.onPrimaryContainer
+        )
     } else {
-        "Không khả dụng" to MaterialTheme.colorScheme.error
+        Triple(
+            "Không khả dụng",
+            MaterialTheme.colorScheme.errorContainer,
+            MaterialTheme.colorScheme.onErrorContainer
+        )
     }
     
     Surface(
         modifier = modifier,
-        shape = MaterialTheme.shapes.small,
-        color = color.copy(alpha = 0.1f)
+        shape = RoundedCornerShape(16.dp),
+        color = containerColor
     ) {
         Text(
             text = text,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            style = MaterialTheme.typography.labelMedium,
-            color = color,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.labelLarge,
+            color = contentColor,
             fontWeight = FontWeight.Medium
         )
     }
@@ -590,16 +656,23 @@ private fun StatusChip(
 
 private fun formatDate(dateString: String): String {
     return try {
-        // If dateString is in milliseconds format, use the extension directly
-        if (dateString.toLongOrNull() != null) {
-            dateString.toFormattedDate("MMM dd, yyyy")
+        // Handle Unix timestamp format (seconds with decimal places)
+        val timestamp = dateString.toDoubleOrNull()
+        if (timestamp != null) {
+            // Convert seconds to milliseconds for Date formatting
+            val milliseconds = (timestamp * 1000).toLong()
+            val date = java.util.Date(milliseconds)
+            val formatter = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
+            formatter.format(date)
         } else {
-            // If it's in ISO format or other string format, parse it first
+            // Fallback for other formats
             val inputFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
             val date = inputFormat.parse(dateString)
-            date?.time?.toString()?.toFormattedDate("MMM dd, yyyy") ?: dateString
+            val formatter = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
+            date?.let { formatter.format(it) } ?: dateString
         }
     } catch (e: Exception) {
+        // If all parsing fails, return original string
         dateString
     }
 } 
