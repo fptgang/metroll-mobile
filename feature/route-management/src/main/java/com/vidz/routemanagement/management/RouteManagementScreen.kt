@@ -656,8 +656,8 @@ private fun AddToCartCard(
             Spacer(modifier = Modifier.height(12.dp))
             
             // Journey Information
-            val startStation = stations.find { it.id == journey.startStationId }
-            val endStation = stations.find { it.id == journey.endStationId }
+            val startStation = stations.find { it.code == journey.startStationId }
+            val endStation = stations.find { it.code == journey.endStationId }
             
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -675,7 +675,7 @@ private fun AddToCartCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "${startStation?.name ?: journey.startStationId} → ${endStation?.name ?: journey.endStationId}",
+                        text = "${startStation?.name} → ${endStation?.name}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
