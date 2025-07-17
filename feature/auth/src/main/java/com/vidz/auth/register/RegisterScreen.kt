@@ -65,10 +65,7 @@ fun RegisterScreen(
     val scrollState = rememberScrollState()
     //endregion
 
-    //region Event Handler
-    val handleDisplayNameChange = { displayName: String ->
-        onEvent(RegisterViewModel.RegisterEvent.DisplayNameChanged(displayName))
-    }
+
 
     val handleEmailChange = { email: String ->
         onEvent(RegisterViewModel.RegisterEvent.EmailChanged(email))
@@ -97,11 +94,9 @@ fun RegisterScreen(
     }
 
     val isFormValid = uiState.email.isNotBlank() &&
-            uiState.displayName.isNotBlank() &&
             uiState.password.isNotBlank() &&
             uiState.confirmPassword.isNotBlank() &&
             uiState.emailError == null &&
-            uiState.displayNameError == null &&
             uiState.passwordError == null &&
             uiState.confirmPasswordError == null
     //endregion
@@ -182,7 +177,6 @@ fun RegisterScreen(
                         value = uiState.email,
                         onValueChange = handleEmailChange,
                         label = { Text("Địa chỉ email") },
-                        placeholder = { Text("Nhập email của bạn") },
                         leadingIcon = {
                             Icon(
                                 Icons.Outlined.Email,
@@ -220,7 +214,6 @@ fun RegisterScreen(
                         value = uiState.password,
                         onValueChange = handlePasswordChange,
                         label = { Text("Mật khẩu") },
-                        placeholder = { Text("Nhập mật khẩu của bạn") },
                         leadingIcon = {
                             Icon(
                                 Icons.Outlined.Lock,
@@ -273,7 +266,6 @@ fun RegisterScreen(
                         value = uiState.confirmPassword,
                         onValueChange = handleConfirmPasswordChange,
                         label = { Text("Xác nhận mật khẩu") },
-                        placeholder = { Text("Xác nhận mật khẩu của bạn") },
                         leadingIcon = {
                             Icon(
                                 Icons.Outlined.Lock,

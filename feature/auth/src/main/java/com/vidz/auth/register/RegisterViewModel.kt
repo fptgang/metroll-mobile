@@ -27,12 +27,7 @@ class RegisterViewModel @Inject constructor(
                     emailError = null
                 )
             }
-            is RegisterEvent.DisplayNameChanged -> {
-                viewModelState.value = viewModelState.value.copy(
-                    displayName = event.displayName,
-                    displayNameError = null
-                )
-            }
+
             is RegisterEvent.PasswordChanged -> {
                 viewModelState.value = viewModelState.value.copy(
                     password = event.password,
@@ -78,11 +73,7 @@ class RegisterViewModel @Inject constructor(
             hasError = true
         }
         
-        if (currentState.displayName.isBlank()) {
-            updatedState.copy(displayNameError = "Display name is required")
-            hasError = true
-        }
-        
+
         if (currentState.password.isBlank()) {
             updatedState.copy(passwordError = "Password is required")
             hasError = true
@@ -109,7 +100,7 @@ class RegisterViewModel @Inject constructor(
                 email = currentState.email,
                 password = currentState.password,
                 confirmPassword = currentState.confirmPassword,
-                displayName = currentState.displayName.takeIf { it.isNotBlank() }
+                displayName = ""
             ).collect { result ->
                 when (result) {
                     is Result.Init -> {
@@ -135,14 +126,12 @@ class RegisterViewModel @Inject constructor(
 
     data class RegisterViewModelState(
         val email: String = "",
-        val displayName: String = "",
         val password: String = "",
         val confirmPassword: String = "",
         val isPasswordVisible: Boolean = false,
         val isConfirmPasswordVisible: Boolean = false,
         val isLoading: Boolean = false,
         val emailError: String? = null,
-        val displayNameError: String? = null,
         val passwordError: String? = null,
         val confirmPasswordError: String? = null,
         val errorMessage: String? = null,
@@ -151,14 +140,12 @@ class RegisterViewModel @Inject constructor(
     ) : ViewModelState() {
         override fun toUiState(): ViewState = RegisterViewState(
             email = email,
-            displayName = displayName,
             password = password,
             confirmPassword = confirmPassword,
             isPasswordVisible = isPasswordVisible,
             isConfirmPasswordVisible = isConfirmPasswordVisible,
             isLoading = isLoading,
             emailError = emailError,
-            displayNameError = displayNameError,
             passwordError = passwordError,
             confirmPasswordError = confirmPasswordError,
             errorMessage = errorMessage,
@@ -168,14 +155,12 @@ class RegisterViewModel @Inject constructor(
 
     data class RegisterViewState(
         val email: String,
-        val displayName: String,
         val password: String,
         val confirmPassword: String,
         val isPasswordVisible: Boolean,
         val isConfirmPasswordVisible: Boolean,
         val isLoading: Boolean,
         val emailError: String?,
-        val displayNameError: String?,
         val passwordError: String?,
         val confirmPasswordError: String?,
         val errorMessage: String?,
@@ -184,7 +169,6 @@ class RegisterViewModel @Inject constructor(
 
     sealed class RegisterEvent : ViewEvent {
         data class EmailChanged(val email: String) : RegisterEvent()
-        data class DisplayNameChanged(val displayName: String) : RegisterEvent()
         data class PasswordChanged(val password: String) : RegisterEvent()
         data class ConfirmPasswordChanged(val confirmPassword: String) : RegisterEvent()
         object PasswordVisibilityToggled : RegisterEvent()
