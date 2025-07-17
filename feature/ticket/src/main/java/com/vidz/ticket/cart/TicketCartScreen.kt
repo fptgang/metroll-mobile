@@ -284,7 +284,7 @@ fun TicketCartScreen(
             url = uiState.paymentUrl!!,
             onClose = {
                 onClosePayment()
-                onShowSnackbar("Thanh toán hoàn tất!")
+//                onShowSnackbar("Thanh toán hoàn tất!")
             }
         )
     }
@@ -299,7 +299,7 @@ fun TicketCartScreen(
                 vouchers = uiState.vouchers,
                 selectedVoucher = uiState.selectedVoucher,
                 isLoading = uiState.isLoadingVouchers,
-                cartTotal = uiState.subtotal,
+                cartTotal = uiState.subtotal - uiState.subtotal * (uiState.userDiscountPercentage?:0.0f),
                 onVoucherSelected = onSelectVoucher,
                 onDismiss = onHideVoucherSheet
             )

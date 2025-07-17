@@ -1,5 +1,6 @@
 package com.vidz.base.components
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.vidz.domain.model.Voucher
 import com.vidz.domain.model.VoucherStatus
+import kotlin.math.log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,6 +30,7 @@ fun VoucherSelectionBottomSheet(
     onVoucherSelected: (Voucher?) -> Unit,
     onDismiss: () -> Unit
 ) {
+    Log.d("VoucherSelectionBottomSheet", "VoucherSelectionBottomSheet: $cartTotal")
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -131,9 +134,9 @@ private fun VoucherCard(
                 else -> MaterialTheme.colorScheme.surfaceVariant
             }
         ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isSelected) 8.dp else 2.dp
-        )
+//        elevation = CardDefaults.cardElevation(
+//            defaultElevation = if (isSelected) 8.dp else 2.dp
+//        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
