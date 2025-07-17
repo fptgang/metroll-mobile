@@ -43,13 +43,13 @@ class AccountManagementRepositoryImpl @Inject constructor(
         request: AccountUpdateRequest
     ): Flow<Result<Account>> {
         return ServerFlow(
-            getData = { 
-                val accountDto = com.vidz.data.server.retrofit.dto.AccountDto(
+            getData = {
+                val accountUpdate = AccountUpdateRequest(
                     fullName = request.fullName ?: "",
                     phoneNumber = request.phoneNumber ?: "",
-                    role = request.role?.name ?: "CUSTOMER"
+                    role = request.role
                 )
-                retrofitServer.accountApi.updateAccount(id, accountDto)
+                retrofitServer.accountApi.updateAccount(id, accountUpdate)
             },
             convert = { response ->
                 val body = response.body() ?: throw NullPointerException("Body is null")

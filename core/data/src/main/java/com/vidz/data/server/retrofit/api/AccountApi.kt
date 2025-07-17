@@ -2,6 +2,7 @@ package com.vidz.data.server.retrofit.api
 
 import com.vidz.data.server.retrofit.dto.AccountDto
 import com.vidz.data.server.retrofit.dto.GetAccounts200Response
+import com.vidz.domain.model.AccountUpdateRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -35,7 +36,7 @@ interface AccountApi {
     @PUT("accounts/{accountId}")
     suspend fun updateAccount(
         @Path("accountId") accountId: String,
-        @Body accountDto: AccountDto
+        @Body accountDto: AccountUpdateRequest
     ): Response<AccountDto>
 
     @DELETE("accounts/{accountId}")
