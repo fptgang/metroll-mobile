@@ -58,22 +58,32 @@ class TicketValidationRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getTicketValidationsByStationId(stationId: String): Result<List<TicketValidation>> {
+    override suspend fun getTicketValidationsByStationCode(
+        stationCode: String,
+        page: Int?,
+        size: Int?,
+        search: String?,
+        validationType: String?,
+        startDate: String?,
+        endDate: String?
+    ): Result<PageDto<TicketValidation>> {
         return try {
-            android.util.Log.d("TicketValidationRepo", "getTicketValidationsByStationId called with stationId: $stationId")
+            android.util.Log.d("TicketValidationRepo", "getTicketValidationsByStationCode called with stationCode: $stationCode")
             
-            val flow: IFlow<List<TicketValidation>> = ServerFlow(
+            val flow: IFlow<PageDto<TicketValidation>> = ServerFlow(
                 getData = { 
-                    android.util.Log.d("TicketValidationRepo", "Making API call to getTicketValidationsByStationId")
-                    retrofitServer.ticketValidationApi.getTicketValidationsByStationId(stationId)
+                    android.util.Log.d("TicketValidationRepo", "Making API call to getTicketValidationsByStationCode")
+                    retrofitServer.ticketValidationApi.getTicketValidationsByStationCode(
+                        stationCode, page, size, search, validationType, startDate, endDate
+                    )
                 },
-                convert = { 
-                    android.util.Log.d("TicketValidationRepo", "Converting response: ${it.size} items")
-                    it.map { dto -> dto.toDomain() } 
+                convert = { response: com.vidz.data.server.dto.PageDto<com.vidz.data.server.dto.TicketValidationDto> -> 
+                    android.util.Log.d("TicketValidationRepo", "Converting response: ${response.content.size} items")
+                    response.toDomain { dto -> dto.toDomain() } 
                 }
             )
             
-            var result: Result<List<TicketValidation>> = Result.Init
+            var result: Result<PageDto<TicketValidation>> = Result.Init
             flow.execute().collect { 
                 android.util.Log.d("TicketValidationRepo", "Flow result: $it")
                 result = it 
@@ -81,7 +91,7 @@ class TicketValidationRepositoryImpl @Inject constructor(
             android.util.Log.d("TicketValidationRepo", "Final result: $result")
             result
         } catch (e: Exception) {
-            android.util.Log.e("TicketValidationRepo", "Exception in getTicketValidationsByStationId", e)
+            android.util.Log.e("TicketValidationRepo", "Exception in getTicketValidationsByStationCode", e)
             Result.ServerError.General("Failed to get ticket validations: ${e.message}")
         }
     }

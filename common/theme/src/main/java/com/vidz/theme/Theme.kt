@@ -128,22 +128,121 @@ private val FlatDarkColors = darkColorScheme(
     // Surface Tint - Minimal for Flat Design
     surfaceTint = FlatMetroBlue // Blue tint - minimal application
 )
+// Light Color Scheme
+private val ShadCNLightColorScheme = lightColorScheme(
+    primary = ShadCNLightColors.primary,
+    onPrimary = ShadCNLightColors.primaryForeground,
+    primaryContainer = ShadCNLightColors.primary.copy(alpha = 0.1f),
+    onPrimaryContainer = ShadCNLightColors.foreground,
 
+    secondary = ShadCNLightColors.secondary,
+    onSecondary = ShadCNLightColors.secondaryForeground,
+    secondaryContainer = ShadCNLightColors.secondary.copy(alpha = 0.1f),
+    onSecondaryContainer = ShadCNLightColors.foreground,
+
+    tertiary = ShadCNLightColors.accent,
+    onTertiary = ShadCNLightColors.accentForeground,
+    tertiaryContainer = ShadCNLightColors.accent.copy(alpha = 0.1f),
+    onTertiaryContainer = ShadCNLightColors.foreground,
+
+    error = ShadCNLightColors.destructive,
+    onError = ShadCNLightColors.destructiveForeground,
+    errorContainer = ShadCNLightColors.destructive.copy(alpha = 0.1f),
+    onErrorContainer = ShadCNLightColors.foreground,
+
+    background = ShadCNLightColors.background,
+    onBackground = ShadCNLightColors.foreground,
+
+    surface = ShadCNLightColors.card,
+    onSurface = ShadCNLightColors.cardForeground,
+    surfaceVariant = ShadCNLightColors.muted,
+    onSurfaceVariant = ShadCNLightColors.mutedForeground,
+
+    outline = ShadCNLightColors.border,
+    outlineVariant = ShadCNLightColors.border.copy(alpha = 0.3f),
+
+    scrim = Color.Black.copy(alpha = 0.32f),
+
+    inverseSurface = ShadCNLightColors.foreground,
+    inverseOnSurface = ShadCNLightColors.background,
+    inversePrimary = ShadCNLightColors.primary,
+
+    surfaceDim = ShadCNLightColors.muted,
+    surfaceBright = ShadCNLightColors.background,
+    surfaceContainer = ShadCNLightColors.card,
+    surfaceContainerHigh = ShadCNLightColors.card,
+    surfaceContainerHighest = ShadCNLightColors.card,
+    surfaceContainerLow = ShadCNLightColors.card,
+    surfaceContainerLowest = ShadCNLightColors.card,
+
+    surfaceTint = ShadCNLightColors.primary
+)
+
+// Dark Color Scheme
+private val ShadCNDarkColorScheme = darkColorScheme(
+    primary = ShadCNDarkColors.primary,
+    onPrimary = ShadCNDarkColors.primaryForeground,
+    primaryContainer = ShadCNDarkColors.primary.copy(alpha = 0.1f),
+    onPrimaryContainer = ShadCNDarkColors.foreground,
+
+    secondary = ShadCNDarkColors.secondary,
+    onSecondary = ShadCNDarkColors.secondaryForeground,
+    secondaryContainer = ShadCNDarkColors.secondary.copy(alpha = 0.1f),
+    onSecondaryContainer = ShadCNDarkColors.foreground,
+
+    tertiary = ShadCNDarkColors.accent,
+    onTertiary = ShadCNDarkColors.accentForeground,
+    tertiaryContainer = ShadCNDarkColors.accent.copy(alpha = 0.1f),
+    onTertiaryContainer = ShadCNDarkColors.foreground,
+
+    error = ShadCNDarkColors.destructive,
+    onError = ShadCNDarkColors.destructiveForeground,
+    errorContainer = ShadCNDarkColors.destructive.copy(alpha = 0.1f),
+    onErrorContainer = ShadCNDarkColors.foreground,
+
+    background = ShadCNDarkColors.background,
+    onBackground = ShadCNDarkColors.foreground,
+
+    surface = ShadCNDarkColors.card,
+    onSurface = ShadCNDarkColors.cardForeground,
+    surfaceVariant = ShadCNDarkColors.muted,
+    onSurfaceVariant = ShadCNDarkColors.mutedForeground,
+
+    outline = ShadCNDarkColors.border,
+    outlineVariant = ShadCNDarkColors.border.copy(alpha = 0.3f),
+
+    scrim = Color.Black.copy(alpha = 0.32f),
+
+    inverseSurface = ShadCNDarkColors.foreground,
+    inverseOnSurface = ShadCNDarkColors.background,
+    inversePrimary = ShadCNDarkColors.primary,
+
+    surfaceDim = ShadCNDarkColors.muted,
+    surfaceBright = ShadCNDarkColors.background,
+    surfaceContainer = ShadCNDarkColors.card,
+    surfaceContainerHigh = ShadCNDarkColors.card,
+    surfaceContainerHighest = ShadCNDarkColors.card,
+    surfaceContainerLow = ShadCNDarkColors.card,
+    surfaceContainerLowest = ShadCNDarkColors.card,
+
+    surfaceTint = ShadCNDarkColors.primary
+)
 @Composable
 fun MetrollFlatTheme(
     darkTheme: Boolean = false, // Default to light theme for metro app
     content: @Composable () -> Unit
 ) {
-    val colors = if (darkTheme) {
-        FlatDarkColors
+    val colorScheme = if (darkTheme) {
+        ShadCNDarkColorScheme
     } else {
-        FlatLightColors
+        ShadCNLightColorScheme
     }
 
     MaterialTheme(
-        colorScheme = colors,
-        content = content,
-        typography = Typography,
+        colorScheme = colorScheme,
+        typography = ShadCNTypography,
+        shapes = ShadCNShapes,
+        content = content
     )
 }
 

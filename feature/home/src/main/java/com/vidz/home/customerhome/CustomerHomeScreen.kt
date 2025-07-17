@@ -12,11 +12,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -65,6 +68,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -113,79 +117,26 @@ fun CustomerHomeScreen(
     
     // Primary Transit Actions - Essential metro operations
     val transitActions = listOf(
-        TransitAction("Buy Tickets", Icons.Default.ConfirmationNumber, "Purchase metro tickets", DestinationRoutes.TICKET_PURCHASE_SCREEN_ROUTE, true),
-        TransitAction("My Tickets", Icons.Default.Badge, "Manage your tickets", DestinationRoutes.MY_TICKETS_SCREEN_ROUTE, true),
-        TransitAction("QR Scanner", Icons.Default.QrCodeScanner, "Scan for entry", "qr_scanner", true),
-        TransitAction("Route Map", Icons.Default.Map, "Plan your journey", DestinationRoutes.ROUTE_MANAGEMENT_SCREEN_ROUTE, false)
+        TransitAction("Mua Vé", Icons.Default.ConfirmationNumber, "Mua vé tàu điện ngầm", DestinationRoutes.TICKET_PURCHASE_SCREEN_ROUTE, true),
+        TransitAction("Vé Của Tôi", Icons.Default.Badge, "Quản lý vé của bạn", DestinationRoutes.MY_TICKETS_SCREEN_ROUTE, true),
+        TransitAction("Bản Đồ Tuyến", Icons.Default.Map, "Lập kế hoạch hành trình", DestinationRoutes.ROUTE_MANAGEMENT_SCREEN_ROUTE, false)
     )
     
     // Service Actions - Additional features
     val serviceActions = listOf(
-        ServiceAction("Membership", "Manage your metro card", Icons.Default.CreditCard, DestinationRoutes.MEMBERSHIP_SCREEN_ROUTE),
-        ServiceAction("Payment Methods", "Manage payment options", Icons.Default.Wallet, DestinationRoutes.PAYMENT_METHODS_SCREEN_ROUTE),
-        ServiceAction("Travel History", "View past journeys", Icons.Default.History, DestinationRoutes.TRAVEL_HISTORY_SCREEN_ROUTE),
-        ServiceAction("Support Center", "Get assistance", Icons.Default.Support, "support")
+        ServiceAction("Thành Viên", "Quản lý thẻ tàu điện ngầm", Icons.Default.CreditCard, DestinationRoutes.MEMBERSHIP_SCREEN_ROUTE),
+        ServiceAction("Phương Thức Thanh Toán", "Quản lý tùy chọn thanh toán", Icons.Default.Wallet, DestinationRoutes.PAYMENT_METHODS_SCREEN_ROUTE),
+        ServiceAction("Lịch Sử Di Chuyển", "Xem các chuyến đi trước", Icons.Default.History, DestinationRoutes.TRAVEL_HISTORY_SCREEN_ROUTE),
+        ServiceAction("Trung Tâm Hỗ Trợ", "Nhận hỗ trợ", Icons.Default.Support, "support")
     )
     
-    // Sample recent orders for UI display
-    val recentOrders = listOf(
-        Order(
-            id = "ord_001",
-            customerId = "customer_123",
-            baseTotal = 15.50,
-            discountTotal = 0.0,
-            finalTotal = 15.50,
-            paymentMethod = "Metro Card",
-            status = OrderStatus.COMPLETED,
-            orderDetails = listOf(
-                OrderDetail(
-                    id = "detail_001",
-                    orderId = "ord_001",
-                    ticketType = TicketType.P2P,
-                    p2pJourney = "Ben Thanh ↔ Saigon Station",
-                    quantity = 1,
-                    unitPrice = 15.50,
-                    baseTotal = 15.50,
-                    discountTotal = 0.0,
-                    finalTotal = 15.50,
-                    createdAt = java.time.LocalDateTime.now().minusHours(3)
-                )
-            ),
-            createdAt = java.time.LocalDateTime.now().minusHours(3),
-            updatedAt = java.time.LocalDateTime.now().minusHours(3)
-        ),
-        Order(
-            id = "ord_002", 
-            customerId = "customer_123",
-            baseTotal = 50.00,
-            discountTotal = 5.00,
-            finalTotal = 45.00,
-            paymentMethod = "Digital Wallet",
-            status = OrderStatus.COMPLETED,
-            orderDetails = listOf(
-                OrderDetail(
-                    id = "detail_002",
-                    orderId = "ord_002",
-                    ticketType = TicketType.TIMED,
-                    timedTicketPlan = "Daily Pass",
-                    quantity = 1,
-                    unitPrice = 50.00,
-                    baseTotal = 50.00,
-                    discountTotal = 5.00,
-                    finalTotal = 45.00,
-                    createdAt = java.time.LocalDateTime.now().minusDays(1)
-                )
-            ),
-            createdAt = java.time.LocalDateTime.now().minusDays(1),
-            updatedAt = java.time.LocalDateTime.now().minusDays(1)
-        )
-    )
+
     
     // Metro System Updates - Transit-specific announcements
     val systemUpdates = listOf(
-        SystemUpdate("Line 1 Operating Normally", "All stations accessible", Icons.Default.Train, true),
-        SystemUpdate("Weekend Schedule", "Extended hours this weekend", Icons.Default.Schedule, false),
-        SystemUpdate("Mobile Ticketing", "New QR code features available", Icons.Default.Smartphone, false)
+        SystemUpdate("Tuyến 1 Hoạt Động Bình Thường", "Tất cả các ga đều có thể truy cập", Icons.Default.Train, true),
+        SystemUpdate("Lịch Cuối Tuần", "Giờ hoạt động kéo dài vào cuối tuần này", Icons.Default.Schedule, false),
+        SystemUpdate("Vé Điện Tử", "Tính năng mã QR mới đã có sẵn", Icons.Default.Smartphone, false)
     )
     //endregion
     
@@ -201,12 +152,12 @@ fun CustomerHomeScreen(
                 DestinationRoutes.PAYMENT_METHODS_SCREEN_ROUTE -> navController.navigate(DestinationRoutes.PAYMENT_METHODS_SCREEN_ROUTE)
                 DestinationRoutes.TRAVEL_HISTORY_SCREEN_ROUTE -> navController.navigate(DestinationRoutes.TRAVEL_HISTORY_SCREEN_ROUTE)
                 "qr_scanner" -> navController.navigate("qr_scanner")
-                "support" -> onShowSnackbar("🎧 Support chat will be available soon!")
+                "support" -> onShowSnackbar("🎧 Chat hỗ trợ sẽ có sẵn sớm!")
                 ROOT_TEST_ROUTE -> navController.navigate(ROOT_TEST_ROUTE)
-                else -> onShowSnackbar("🚧 Feature coming soon!")
+                else -> onShowSnackbar("🚧 Tính năng sắp ra mắt!")
             }
         } catch (e: Exception) {
-            onShowSnackbar("❌ Navigation error: ${e.message}")
+            onShowSnackbar("❌ Lỗi điều hướng: ${e.message}")
         }
     }
     
@@ -215,13 +166,13 @@ fun CustomerHomeScreen(
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             navController.navigate(DestinationRoutes.ACCOUNT_PROFILE_SCREEN_ROUTE)
         } catch (e: Exception) {
-            onShowSnackbar("❌ Unable to open profile: ${e.message}")
+            onShowSnackbar("❌ Không thể mở hồ sơ: ${e.message}")
         }
     }
     
     val onNotificationClick: () -> Unit = {
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        onShowSnackbar("🔔 No new notifications")
+        onShowSnackbar("🔔 Không có thông báo mới")
     }
     
     val onLogoutClick: () -> Unit = {
@@ -230,7 +181,7 @@ fun CustomerHomeScreen(
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 viewModel.onTriggerEvent(CustomerHomeViewModel.CustomerHomeEvent.LogoutClicked)
             } catch (e: Exception) {
-                onShowSnackbar("❌ Logout failed: ${e.message}")
+                onShowSnackbar("❌ Đăng xuất thất bại: ${e.message}")
             }
         }
     }
@@ -244,9 +195,9 @@ fun CustomerHomeScreen(
                     popUpTo(0) { inclusive = true }
                 }
                 viewModel.onTriggerEvent(CustomerHomeViewModel.CustomerHomeEvent.LogoutSuccessAcknowledged)
-                onShowSnackbar("✅ Successfully logged out")
+                onShowSnackbar("✅ Đăng xuất thành công")
             } catch (e: Exception) {
-                onShowSnackbar("❌ Logout navigation failed: ${e.message}")
+                onShowSnackbar("❌ Điều hướng đăng xuất thất bại: ${e.message}")
             }
         }
     }
@@ -260,19 +211,22 @@ fun CustomerHomeScreen(
     }
     
     //region ui
-    Scaffold {innerPadding->
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background, modifier = Modifier.padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
+    ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background),
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
             contentPadding = PaddingValues(
                 bottom = 56.dp + innerPadding.calculateBottomPadding()
-            )
+            ),
+            verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
-            // Professional Metro App Bar
+            // Modern Metro App Bar
             item {
-                MetroTopAppBar(
-                    customerName = uiState.localAccount?.fullName ?: "Welcome",
+                ModernMetroTopAppBar(
+                    customerName = uiState.localAccount?.fullName ?: "Chào mừng",
                     isLoggedIn = uiState.isLoggedIn,
                     isLoggingOut = uiState.isLoggingOut,
                     onProfileClick = onProfileClick,
@@ -281,9 +235,9 @@ fun CustomerHomeScreen(
                 )
             }
 
-            // User Welcome Card
+            // Modern Welcome Section
             item {
-                MetroWelcomeCard(
+                ModernWelcomeSection(
                     account = uiState.localAccount,
                     isLoggedIn = uiState.isLoggedIn
                 )
@@ -291,104 +245,19 @@ fun CustomerHomeScreen(
 
             // Primary Transit Actions
             item {
-                Spacer(modifier = Modifier.height(24.dp))
-                MetroSectionHeader("Quick Actions")
-                Spacer(modifier = Modifier.height(16.dp))
-
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier
-                            .height(240.dp)
-                            .padding(horizontal = 20.dp)
-                ) {
-                    items(transitActions) { action ->
-                        TransitActionCard(
-                            action = action,
-                            onClick = { onActionClick(action.route) }
-                        )
-                    }
-                }
-            }
-
-            // Recent Travel History
-            if (recentOrders.isNotEmpty()) {
-                item {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    MetroSectionHeader("Recent Journeys")
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        contentPadding = PaddingValues(horizontal = 20.dp)
-                    ) {
-                        items(recentOrders) { order ->
-                            RecentJourneyCard(
-                                order = order,
-                                onClick = { onShowSnackbar("📋 Journey: ${order.toJourneyDisplayText()}") }
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Service Features
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                MetroSectionHeader("Services")
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Column(
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    serviceActions.forEach { action ->
-                        MetrollActionCard(
-                            title = action.title,
-                            description = action.description,
-                            icon = action.icon,
-                            onClick = { onActionClick(action.route) }
-                        )
-                    }
-                }
-            }
-
-            // System Updates
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                MetroSectionHeader("System Updates")
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Column(
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    systemUpdates.forEach { update ->
-                        SystemUpdateCard(
-                            update = update,
-                            onClick = { onShowSnackbar("📢 ${update.title}") }
-                        )
-                    }
-                }
-            }
-
-            // Emergency Contact
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                EmergencyContactCard(
-                    onContactClick = { onShowSnackbar("🚨 Emergency services: 115") }
+                ModernActionSection(
+                    title = "Thao Tác Nhanh",
+                    actions = transitActions,
+                    onActionClick = onActionClick
                 )
-                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
     //endregion
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MetroTopAppBar(
+private fun ModernMetroTopAppBar(
     customerName: String,
     isLoggedIn: Boolean,
     isLoggingOut: Boolean,
@@ -396,199 +265,209 @@ private fun MetroTopAppBar(
     onNotificationClick: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
-    CenterAlignedTopAppBar(
-        title = {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "HCMC Metro",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                if (isLoggedIn) {
-                    Text(
-                        text = "Transit System",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                }
-            }
-        },
-        navigationIcon = {
-            IconButton(onClick = onProfileClick) {
-                Surface(
-                    modifier = Modifier.size(36.dp),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                    shape = CircleShape
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 24.dp, vertical = 16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Profile Icon
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                IconButton(
+                    onClick = onProfileClick,
+                    modifier = Modifier.size(44.dp)
                 ) {
                     Icon(
                         imageVector = if (isLoggedIn) Icons.Default.AccountCircle else Icons.Default.Person,
-                        contentDescription = "Profile",
+                        contentDescription = "Hồ sơ",
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(6.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
-        },
-        actions = {
-            // Notifications
-            IconButton(onClick = onNotificationClick) {
-                BadgedBox(
-                    badge = {
-                        Badge(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(6.dp)
-                        )
-                    }
-                ) {
-                    Surface(
-                        modifier = Modifier.size(36.dp),
-                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
-                        shape = CircleShape
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Notifications",
-                            tint = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.padding(6.dp)
-                        )
-                    }
-                }
+
+            // Title Section
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Metro HCM",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Hệ Thống Giao Thông",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
             }
-            
-            // Logout
+
+            // Logout Button
             if (isLoggedIn) {
-                IconButton(
-                    onClick = onLogoutClick,
-                    enabled = !isLoggingOut
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.08f),
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Surface(
-                        modifier = Modifier.size(36.dp),
-                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
-                        shape = CircleShape
+                    IconButton(
+                        onClick = onLogoutClick,
+                        enabled = !isLoggingOut,
+                        modifier = Modifier.size(44.dp)
                     ) {
                         if (isLoggingOut) {
                             CircularProgressIndicator(
-                                modifier = Modifier.padding(6.dp),
+                                modifier = Modifier.size(20.dp),
                                 strokeWidth = 2.dp,
                                 color = MaterialTheme.colorScheme.error
                             )
                         } else {
                             Icon(
                                 imageVector = Icons.Default.Logout,
-                                contentDescription = "Logout",
+                                contentDescription = "Đăng xuất",
                                 tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.padding(6.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }
                 }
-            }
-        },
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            actionIconContentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
-    )
-}
-
-@Composable
-private fun MetroWelcomeCard(
-    account: Account?,
-    isLoggedIn: Boolean
-) {
-    Card(
-        modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = 20.dp,
-                    vertical = 8.dp
-                ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // User Avatar
-            Surface(
-                modifier = Modifier.size(56.dp),
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                shape = CircleShape
-            ) {
-                Icon(
-                    imageVector = if (isLoggedIn) Icons.Default.AccountCircle else Icons.Default.Person,
-                    contentDescription = "Profile",
-                    modifier = Modifier.padding(12.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-            
-            // Welcome Text
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = if (isLoggedIn) "Welcome back," else "Welcome to",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                )
-                
-                Text(
-                    text = account?.fullName ?: "HCMC Metro",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                
-                Text(
-                    text = if (isLoggedIn) "🚇 Ready to travel?" else "🎫 Please log in to continue",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
+            } else {
+                Spacer(modifier = Modifier.size(44.dp))
             }
         }
     }
 }
 
 @Composable
-private fun MetroSectionHeader(title: String) {
-    Row(
+private fun ModernWelcomeSection(
+    account: Account?,
+    isLoggedIn: Boolean
+) {
+    Box(
         modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 24.dp, vertical = 20.dp)
     ) {
-        Box(
-            modifier = Modifier
-                    .size(4.dp)
+        Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Welcome Text
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = if (isLoggedIn) "Chào mừng trở lại" else "Chào mừng đến với Metro",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+                
+                Text(
+                    text = account?.fullName ?: "Khách hàng",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            // Status Indicator
+            Box(
+                modifier = Modifier
                     .background(
-                        MaterialTheme.colorScheme.primary,
-                        CircleShape
+                        color = if (isLoggedIn) 
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) 
+                        else 
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.08f),
+                        shape = RoundedCornerShape(12.dp)
                     )
-        )
-        
-        Spacer(modifier = Modifier.width(12.dp))
-        
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(
+                                color = if (isLoggedIn) 
+                                    MaterialTheme.colorScheme.primary 
+                                else 
+                                    MaterialTheme.colorScheme.outline,
+                                shape = CircleShape
+                            )
+                    )
+                    
+                    Text(
+                        text = if (isLoggedIn) "Sẵn sàng di chuyển" else "Vui lòng đăng nhập để tiếp tục",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModernActionSection(
+    title: String,
+    actions: List<TransitAction>,
+    onActionClick: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(top = 8.dp)
+    ) {
+        // Section Header
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp)
         )
+
+        // Actions Grid
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+            modifier = Modifier.height(280.dp)
+        ) {
+            items(actions) { action ->
+                ModernTransitActionCard(
+                    action = action,
+                    onClick = { onActionClick(action.route) }
+                )
+            }
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TransitActionCard(
+private fun ModernTransitActionCard(
     action: TransitAction,
     onClick: () -> Unit
 ) {
@@ -596,7 +475,7 @@ private fun TransitActionCard(
     val isPressed by interactionSource.collectIsPressedAsState()
     
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.95f else 1f,
+        targetValue = if (isPressed) 0.96f else 1f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
         label = "action_card_scale"
     )
@@ -605,60 +484,84 @@ private fun TransitActionCard(
         onClick = onClick,
         interactionSource = interactionSource,
         modifier = Modifier
-                .fillMaxWidth()
-                .scale(scale),
+            .fillMaxWidth()
+            .height(120.dp)
+            .scale(scale),
         colors = CardDefaults.cardColors(
             containerColor = if (action.isPrimary) {
-                MaterialTheme.colorScheme.primaryContainer
+                MaterialTheme.colorScheme.primary
             } else {
                 MaterialTheme.colorScheme.surface
             }
         ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (action.isPrimary) 6.dp else 2.dp
-        ),
-        shape = RoundedCornerShape(12.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp)
         ) {
-            Surface(
-                modifier = Modifier.size(40.dp),
-                color = if (action.isPrimary) {
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                } else {
-                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                },
-                shape = RoundedCornerShape(8.dp)
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(
-                    imageVector = action.icon,
-                    contentDescription = action.title,
-                    modifier = Modifier.padding(8.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                // Icon
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(
+                            color = if (action.isPrimary) {
+                                Color.White.copy(alpha = 0.15f)
+                            } else {
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                            },
+                            shape = RoundedCornerShape(8.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = action.icon,
+                        contentDescription = action.title,
+                        tint = if (action.isPrimary) {
+                            Color.White
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        },
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                
+                // Text Content
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = action.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (action.isPrimary) {
+                            Color.White
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    
+                    Text(
+                        text = action.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (action.isPrimary) {
+                            Color.White.copy(alpha = 0.8f)
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        },
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
-            
-            Text(
-                text = action.title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            
-            Text(
-                text = action.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
         }
     }
 }
@@ -763,8 +666,8 @@ private fun SystemUpdateCard(
     ) {
         Row(
             modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -813,8 +716,8 @@ private fun EmergencyContactCard(
 ) {
     Card(
         modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp),
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
         ),
@@ -827,8 +730,8 @@ private fun EmergencyContactCard(
     ) {
         Row(
             modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -839,7 +742,7 @@ private fun EmergencyContactCard(
             ) {
                 Icon(
                     imageVector = Icons.Default.Support,
-                    contentDescription = "Emergency",
+                    contentDescription = "Khẩn cấp",
                     tint = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(8.dp)
                 )
@@ -847,21 +750,21 @@ private fun EmergencyContactCard(
             
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Emergency Assistance",
+                    text = "Hỗ Trợ Khẩn Cấp",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.error
                 )
                 
                 Text(
-                    text = "24/7 support for urgent matters",
+                    text = "Hỗ trợ 24/7 cho các vấn đề khẩn cấp",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }
             
             MetrollButton(
-                text = "Contact",
+                text = "Liên hệ",
                 onClick = onContactClick,
                 modifier = Modifier.width(100.dp)
             )
@@ -896,9 +799,9 @@ data class SystemUpdate(
 fun Order.toJourneyDisplayText(): String {
     val orderDetails = this.orderDetails.firstOrNull()
     return when {
-        orderDetails?.p2pJourney != null -> orderDetails.p2pJourney ?: "P2P Journey"
-        orderDetails?.timedTicketPlan != null -> orderDetails.timedTicketPlan ?: "Timed Pass"
-        else -> "Metro Journey"
+        orderDetails?.p2pJourney != null -> orderDetails.p2pJourney ?: "Chuyến Đi P2P"
+        orderDetails?.timedTicketPlan != null -> orderDetails.timedTicketPlan ?: "Vé Theo Giờ"
+        else -> "Chuyến Đi Metro"
     }
 }
 
@@ -909,7 +812,7 @@ fun Order.getJourneyIcon(): ImageVector = when {
 }
 
 fun Order.getDisplayStatus(): String = when (this.status) {
-    OrderStatus.COMPLETED -> "Completed"
-    OrderStatus.PENDING -> "Pending"
-    OrderStatus.FAILED -> "Failed"
+    OrderStatus.COMPLETED -> "Hoàn thành"
+    OrderStatus.PENDING -> "Đang chờ"
+    OrderStatus.FAILED -> "Thất bại"
 } 

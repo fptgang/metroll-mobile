@@ -120,11 +120,11 @@ fun QrScannerScreen(
     // Used later for scaling bounding box
     var previewWidth by remember { mutableIntStateOf(1) }
     var previewHeight by remember { mutableIntStateOf(1) }
-    
+
     // Camera control states
     var camera by remember { mutableStateOf<Camera?>(null) }
     var isFlashlightOn by remember { mutableStateOf(false) }
-    
+
 
     //endregion
 
@@ -135,6 +135,7 @@ fun QrScannerScreen(
         }
     }
 
+
     LaunchedEffect(lastScanned) {
         lastScanned?.let { onShowSnackbar(it) }
     }
@@ -142,17 +143,25 @@ fun QrScannerScreen(
     LaunchedEffect(qrScannerUiState.value.status) {
         when (val status = qrScannerUiState.value.status) {
             is QrScannerViewModel.ScannerStatus.Success -> {
-                val vibrator = appContext.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator
+                val vibrator =
+                    appContext.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator
                 vibrator?.let {
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                        it.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE))
+                        it.vibrate(
+                            VibrationEffect.createOneShot(
+                                200,
+                                VibrationEffect.DEFAULT_AMPLITUDE
+                            )
+                        )
                     } else {
                         @Suppress("DEPRECATION")
                         it.vibrate(200)
                     }
                 }
             }
-            else -> { /* Handle other statuses if needed */ }
+
+            else -> { /* Handle other statuses if needed */
+            }
         }
     }
 
@@ -219,6 +228,7 @@ fun QrScannerScreen(
                     modifier = modifier
                 )
             }
+
             QrScannerViewModel.ScreenState.SuccessResult -> {
                 ResultScreen(
                     isSuccess = true,
@@ -228,6 +238,7 @@ fun QrScannerScreen(
                     modifier = modifier
                 )
             }
+
             QrScannerViewModel.ScreenState.FailureResult -> {
                 val errorMessage = when (val status = qrScannerUiState.value.status) {
                     is QrScannerViewModel.ScannerStatus.Error -> status.message
@@ -279,7 +290,19 @@ private fun ScannerScreenContent(
     onFlashlightToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxSize().padding(top= WindowInsets.statusBars.asPaddingValues().calculateTopPadding())) {
+    var qrAnalyzer by remember { mutableStateOf<QrCodeAnalyzer?>(null) }
+
+    // Reset analyzer state when returning to scanner
+    LaunchedEffect(qrScannerUiState.value.currentScreen) {
+        if (qrScannerUiState.value.currentScreen == QrScannerViewModel.ScreenState.Scanner) {
+            qrAnalyzer?.resetDetectionState()
+        }
+    }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
+    ) {
         // Top Bar with Back Button and Flashlight
         Row(
             modifier = Modifier
@@ -340,19 +363,33 @@ private fun ScannerScreenContent(
             ValidationTypeTab(
                 text = "ENTRY",
                 isSelected = qrScannerUiState.value.selectedValidationType == ValidationType.ENTRY,
-                onClick = { qrScannerViewModel.onTriggerEvent(QrScannerViewModel.QrScannerViewEvent.ChangeValidationType(ValidationType.ENTRY)) },
+                onClick = {
+                    qrScannerViewModel.onTriggerEvent(
+                        QrScannerViewModel.QrScannerViewEvent.ChangeValidationType(
+                            ValidationType.ENTRY
+                        )
+                    )
+                },
                 modifier = Modifier.weight(1f)
             )
             ValidationTypeTab(
                 text = "EXIT",
                 isSelected = qrScannerUiState.value.selectedValidationType == ValidationType.EXIT,
-                onClick = { qrScannerViewModel.onTriggerEvent(QrScannerViewModel.QrScannerViewEvent.ChangeValidationType(ValidationType.EXIT)) },
+                onClick = {
+                    qrScannerViewModel.onTriggerEvent(
+                        QrScannerViewModel.QrScannerViewEvent.ChangeValidationType(
+                            ValidationType.EXIT
+                        )
+                    )
+                },
                 modifier = Modifier.weight(1f)
             )
         }
 
         // Camera Preview Box
-        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+        Box(modifier = Modifier
+            .weight(1f)
+            .fillMaxWidth()) {
             // Camera PreviewView hosted inside AndroidView
             AndroidView(
                 factory = { ctx ->
@@ -371,26 +408,34 @@ private fun ScannerScreenContent(
                         }
 
                         val analyzerExecutor = Executors.newSingleThreadExecutor()
+                        val analyzer = QrCodeAnalyzer { text, points, imgWidth, imgHeight ->
+                            // Update bounding points regardless of processing state
+                            if (points != null) {
+                                onBoundingPointsChanged(points)
+                            } else {
+                                onBoundingPointsChanged(null)
+                            }
+
+                            // Send QR to ViewModel only if not empty
+                            if (text.isNotBlank()) {
+                                qrScannerViewModel.onTriggerEvent(
+                                    QrScannerViewModel.QrScannerViewEvent.QrDetected(text)
+                                )
+                            }
+
+                            onPreviewSizeChanged(imgWidth, imgHeight)
+                        }
+
+                        // Store analyzer reference
+                        qrAnalyzer = analyzer
+
                         val analysis = ImageAnalysis.Builder()
                             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                             .build()
                             .also { imageAnalysis ->
-                                imageAnalysis.setAnalyzer(analyzerExecutor, QrCodeAnalyzer { text, points, imgWidth, imgHeight ->
-                                    // Update bounding points regardless of processing state
-                                    if (points != null) {
-                                        onBoundingPointsChanged(points)
-                                    } else {
-                                        onBoundingPointsChanged(null)
-                                    }
-
-                                    // Send QR to ViewModel - blocking handled at ViewModel level
-                                    if (text.isNotBlank()) {
-                                        qrScannerViewModel.onTriggerEvent(QrScannerViewModel.QrScannerViewEvent.QrDetected(text))
-                                    }
-
-                                    onPreviewSizeChanged(imgWidth, imgHeight)
-                                })
+                                imageAnalysis.setAnalyzer(analyzerExecutor, analyzer)
                             }
+
                         try {
                             cameraProvider.unbindAll()
                             val cameraInstance = cameraProvider.bindToLifecycle(
@@ -409,7 +454,6 @@ private fun ScannerScreenContent(
                 },
                 modifier = Modifier.fillMaxSize()
             )
-
             // Static overlay shading with center square guidance
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val overlaySide = minOf(size.width, size.height) * 0.65f
@@ -421,11 +465,29 @@ private fun ScannerScreenContent(
                 // Top
                 drawRect(shadeColor, size = androidx.compose.ui.geometry.Size(size.width, top))
                 // Bottom
-                drawRect(shadeColor, topLeft = androidx.compose.ui.geometry.Offset(0f, top + overlaySide), size = androidx.compose.ui.geometry.Size(size.width, size.height - (top + overlaySide)))
+                drawRect(
+                    shadeColor,
+                    topLeft = androidx.compose.ui.geometry.Offset(0f, top + overlaySide),
+                    size = androidx.compose.ui.geometry.Size(
+                        size.width,
+                        size.height - (top + overlaySide)
+                    )
+                )
                 // Left
-                drawRect(shadeColor, topLeft = androidx.compose.ui.geometry.Offset(0f, top), size = androidx.compose.ui.geometry.Size(left, overlaySide))
+                drawRect(
+                    shadeColor,
+                    topLeft = androidx.compose.ui.geometry.Offset(0f, top),
+                    size = androidx.compose.ui.geometry.Size(left, overlaySide)
+                )
                 // Right
-                drawRect(shadeColor, topLeft = androidx.compose.ui.geometry.Offset(left + overlaySide, top), size = androidx.compose.ui.geometry.Size(size.width - (left + overlaySide), overlaySide))
+                drawRect(
+                    shadeColor,
+                    topLeft = androidx.compose.ui.geometry.Offset(left + overlaySide, top),
+                    size = androidx.compose.ui.geometry.Size(
+                        size.width - (left + overlaySide),
+                        overlaySide
+                    )
+                )
 
                 // Draw center square border for guidance
                 drawRect(
@@ -450,7 +512,10 @@ private fun ScannerScreenContent(
                         val frameWidthMapped = if (rotated) previewHeight else previewWidth
                         val frameHeightMapped = if (rotated) previewWidth else previewHeight
 
-                        val scale = max(size.width / frameWidthMapped.toFloat(), size.height / frameHeightMapped.toFloat())
+                        val scale = max(
+                            size.width / frameWidthMapped.toFloat(),
+                            size.height / frameHeightMapped.toFloat()
+                        )
 
                         val displayWidth = frameWidthMapped * scale
                         val displayHeight = frameHeightMapped * scale
@@ -459,7 +524,10 @@ private fun ScannerScreenContent(
                         val offsetY = (size.height - displayHeight) / 2f
 
                         val transformed = mappedPoints.map { point ->
-                            androidx.compose.ui.geometry.Offset(offsetX + point.x * scale, offsetY + point.y * scale)
+                            androidx.compose.ui.geometry.Offset(
+                                offsetX + point.x * scale,
+                                offsetY + point.y * scale
+                            )
                         }
 
                         var minX = transformed.minOf { it.x }
@@ -499,7 +567,10 @@ private fun ScannerScreenContent(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 32.dp)
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), shape = RoundedCornerShape(8.dp))
+                    .background(
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                        shape = RoundedCornerShape(8.dp)
+                    )
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Text(text = statusText, textAlign = TextAlign.Center)
@@ -539,7 +610,7 @@ private fun StationInfoCard(
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(24.dp)
                 )
-                
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = account?.fullName ?: "Staff Member",
@@ -566,14 +637,14 @@ private fun StationInfoCard(
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp)
                 )
-                
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Assigned Station",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                     )
-                    
+
                     if (stationDetails != null) {
                         Text(
                             text = stationDetails.name,
@@ -706,6 +777,16 @@ private class QrCodeAnalyzer(
         setHints(mapOf(DecodeHintType.POSSIBLE_FORMATS to listOf(BarcodeFormat.QR_CODE)))
     }
 
+    // Add duplicate prevention at analyzer level
+    @Volatile
+    private var lastDetectedQr: String? = null
+
+    @Volatile
+    private var lastDetectionTime: Long = 0
+
+    // Minimum time between same QR detections (milliseconds)
+    private val MIN_DETECTION_INTERVAL = 1000L
+
     override fun analyze(image: ImageProxy) {
         val buffer = image.planes[0].buffer
         val bytes = ByteArray(buffer.remaining())
@@ -728,13 +809,33 @@ private class QrCodeAnalyzer(
         try {
             val result = reader.decodeWithState(bitmap)
             val pts = result.resultPoints?.map { PointF(it.x, it.y) }
-            onResult(result.text, pts, width, height)
+            val detectedText = result.text
+            val currentTime = System.currentTimeMillis()
+
+            // Check for duplicates
+            val isDuplicate = lastDetectedQr == detectedText &&
+                    (currentTime - lastDetectionTime) < MIN_DETECTION_INTERVAL
+
+            if (!isDuplicate && detectedText.isNotBlank()) {
+                lastDetectedQr = detectedText
+                lastDetectionTime = currentTime
+                onResult(detectedText, pts, width, height)
+            } else {
+                // Still update bounding points for visual feedback
+                onResult("", pts, width, height)
+            }
         } catch (_: Exception) {
             // No QR detected in this frame
             onResult("", null, width, height)
         } finally {
             image.close()
         }
+    }
+
+    // Method to reset detection state when needed
+    fun resetDetectionState() {
+        lastDetectedQr = null
+        lastDetectionTime = 0
     }
 }
 //endregion 

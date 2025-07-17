@@ -10,7 +10,7 @@ import javax.inject.Inject
 class GetTicketsByOrderDetailIdUseCase @Inject constructor(
     private val repository: TicketRepository
 ) {
-    suspend operator fun invoke(orderDetailId: String): Flow<Result<List<Ticket>>> = flow {
+    suspend operator fun invoke(orderDetailId: String): Flow<Result<Ticket>> = flow {
         try {
             emit(Result.Init)
             
@@ -22,7 +22,7 @@ class GetTicketsByOrderDetailIdUseCase @Inject constructor(
             val result = repository.getTicketsByOrderDetailId(orderDetailId)
             emit(result)
         } catch (e: Exception) {
-            emit(Result.ServerError.General(e.message ?: "Failed to get tickets by order detail ID"))
+            emit(Result.ServerError.General(e.message ?: "Failed to get ticket by order detail ID"))
         }
     }
 } 

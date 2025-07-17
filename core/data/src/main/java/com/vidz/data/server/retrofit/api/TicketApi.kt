@@ -1,6 +1,7 @@
 package com.vidz.data.server.retrofit.api
 
 import com.vidz.data.server.dto.PageDto
+import com.vidz.data.server.dto.TicketDashboardDto
 import com.vidz.data.server.dto.TicketDto
 import com.vidz.data.server.dto.TicketUpsertRequestDto
 import retrofit2.Response
@@ -38,7 +39,10 @@ interface TicketApi {
     @GET("tickets/order-detail/{orderDetailId}")
     suspend fun getTicketsByOrderDetailId(
         @Path("orderDetailId") orderDetailId: String
-    ): List<TicketDto>
+    ): TicketDto
+    
+    @GET("tickets/dashboard")
+    suspend fun getTicketDashboard(): TicketDashboardDto
     
     @POST("tickets")
     suspend fun createTicket(

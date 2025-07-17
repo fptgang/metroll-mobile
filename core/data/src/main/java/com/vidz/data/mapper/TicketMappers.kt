@@ -3,6 +3,7 @@ package com.vidz.data.mapper
 import com.vidz.data.server.dto.P2PJourneyCreateRequestDto
 import com.vidz.data.server.dto.P2PJourneyDto
 import com.vidz.data.server.dto.P2PJourneyUpdateRequestDto
+import com.vidz.data.server.dto.TicketDashboardDto
 import com.vidz.data.server.dto.TicketDto
 import com.vidz.data.server.dto.TicketUpsertRequestDto
 import com.vidz.data.server.dto.TicketValidationCreateRequestDto
@@ -14,6 +15,7 @@ import com.vidz.domain.model.P2PJourney
 import com.vidz.domain.model.P2PJourneyCreateRequest
 import com.vidz.domain.model.P2PJourneyUpdateRequest
 import com.vidz.domain.model.Ticket
+import com.vidz.domain.model.TicketDashboard
 import com.vidz.domain.model.TicketStatus
 import com.vidz.domain.model.TicketType
 import com.vidz.domain.model.TicketUpsertRequest
@@ -111,6 +113,20 @@ fun TicketUpsertRequest.toDto(): TicketUpsertRequestDto {
     )
 }
 
+fun TicketDashboardDto.toDomain(): TicketDashboard {
+    return TicketDashboard(
+        totalTickets = totalTickets,
+        ticketsByStatus = ticketsByStatus,
+        ticketsByType = ticketsByType,
+        totalValidations = totalValidations,
+        validationsByType = validationsByType,
+        todayValidations = todayValidations,
+        totalP2PJourneys = totalP2PJourneys,
+        validationsLast7Days = validationsLast7Days,
+        lastUpdated = lastUpdated
+    )
+}
+
 // TicketValidation Mappers
 fun TicketValidationDto.toDomain(): TicketValidation {
     return TicketValidation(
@@ -119,7 +135,7 @@ fun TicketValidationDto.toDomain(): TicketValidation {
         ticketId = ticketId,
         validationType = ValidationType.valueOf(validationType),
         validationTime = validationTime,
-        deviceId = deviceId,
+        validatorId = validatorId,
         createdAt = createdAt
     )
 }

@@ -13,12 +13,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -70,6 +73,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -172,25 +176,34 @@ fun TicketPurchaseScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Mua Vé") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
-                    }
+                title = { 
+                    Text(
+                        "Mua Vé",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 },
+
                 actions = {
-                    IconButton(onClick = { 
-                        navController.navigate(com.vidz.base.navigation.DestinationRoutes.TICKET_CART_SCREEN_ROUTE)
-                    }) {
+                    IconButton(
+                        onClick = { 
+                            navController.navigate(com.vidz.base.navigation.DestinationRoutes.TICKET_CART_SCREEN_ROUTE)
+                        },
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                    ) {
                         if (uiState.cartItemCount > 0) {
                             BadgedBox(
                                 badge = {
                                     Badge(
-                                        containerColor = MaterialTheme.colorScheme.error
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
                                     ) {
                                         Text(
                                             text = uiState.cartItemCount.toString(),
-                                            style = MaterialTheme.typography.labelSmall
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold
                                         )
                                     }
                                 }
@@ -211,7 +224,7 @@ fun TicketPurchaseScreen(
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             )
         },
@@ -220,77 +233,172 @@ fun TicketPurchaseScreen(
                 ExtendedFloatingActionButton(
                     onClick = onNavigateToCart,
                     containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.height(56.dp)
                 ) {
-                    BadgedBox(
-                        badge = {
-                            Badge {
-                                Text(uiState.cartItemCount.toString())
-                            }
-                        }
-                    ) {
-                        Icon(Icons.Default.ShoppingCart, contentDescription = "Giỏ hàng")
-                    }
+                    Icon(
+                        Icons.Default.ShoppingCart, 
+                        contentDescription = "Giỏ hàng",
+                        modifier = Modifier.size(20.dp)
+                    )
                     Spacer(Modifier.width(8.dp))
-                    Text("Giỏ hàng • ${String.format("%,.0f", uiState.subtotal)}₫")
+                    Text(
+                        "Giỏ hàng (${uiState.cartItemCount}) • ${String.format("%,.0f", uiState.subtotal)}₫",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
-        }
+        },
+        // Add content padding to account for bottom navigation bar
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.surface)
         ) {
-            // Tab Row
-            TabRow(
-                selectedTabIndex = if (uiState.selectedTicketType == TicketType.TIMED) 0 else 1,
-                modifier = Modifier.fillMaxWidth(),
+            Column(
+                modifier = Modifier.fillMaxSize()
             ) {
-                Tab(
-                    selected = uiState.selectedTicketType == TicketType.TIMED,
-                    onClick = { onTabSelected(TicketType.TIMED) },
-                    text = { Text("Vé Thời Hạn") }
-                )
-                Tab(
-                    selected = uiState.selectedTicketType == TicketType.P2P,
-                    onClick = { onTabSelected(TicketType.P2P) },
-                    text = { Text("Vé Theo Trạm") }
-                )
-            }
-
-            // Content
-            when (uiState.selectedTicketType) {
-                TicketType.TIMED -> {
-                    TimedTicketsContent(
-                        tickets = uiState.timedTickets,
-                        isLoading = uiState.isLoadingTimed,
-                        onAddToCart = onTimedTicketAddToCart
-                    )
-                }
-                TicketType.P2P -> {
-                                    P2PJourneysContent(
-                    journeys = uiState.p2pJourneys,
-                    isLoading = uiState.isLoadingP2P,
-                    currentSort = uiState.p2pSortType,
-                    stations = uiState.stations,
-                    isLoadingStations = uiState.isLoadingStations,
-                    selectedFromStation = uiState.selectedFromStation,
-                    selectedToStation = uiState.selectedToStation,
-                    onAddToCart = onP2PJourneyAddToCart,
-                    onSortChange = onSortChange,
-                    onFromStationSelect = { station ->
-                        println("TicketPurchaseScreen: From station selected: ${station?.name}")
-                        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectFromStation(station))
-                    },
-                    onToStationSelect = { station ->
-                        println("TicketPurchaseScreen: To station selected: ${station?.name}")
-                        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectToStation(station))
-                    },
-                    onClearStations = {
-                        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ClearStationSelection)
+                // Tab Row - Only show for customers, staff only see P2P
+                if (uiState.isCustomer) {
+                    TabRow(
+                        selectedTabIndex = if (uiState.selectedTicketType == TicketType.TIMED) 0 else 1,
+                        modifier = Modifier.fillMaxWidth(),
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        indicator = { tabPositions ->
+                            Box(
+                                modifier = Modifier
+                                    .tabIndicatorOffset(tabPositions[if (uiState.selectedTicketType == TicketType.TIMED) 0 else 1])
+                                    .height(3.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.primary,
+                                        RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)
+                                    )
+                            )
+                        }
+                    ) {
+                        Tab(
+                            selected = uiState.selectedTicketType == TicketType.TIMED,
+                            onClick = { onTabSelected(TicketType.TIMED) },
+                            modifier = Modifier.height(56.dp)
+                        ) {
+                            Text(
+                                "Vé Thời Hạn",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = if (uiState.selectedTicketType == TicketType.TIMED) FontWeight.SemiBold else FontWeight.Medium
+                            )
+                        }
+                        Tab(
+                            selected = uiState.selectedTicketType == TicketType.P2P,
+                            onClick = { onTabSelected(TicketType.P2P) },
+                            modifier = Modifier.height(56.dp)
+                        ) {
+                            Text(
+                                "Vé Theo Trạm",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = if (uiState.selectedTicketType == TicketType.P2P) FontWeight.SemiBold else FontWeight.Medium
+                            )
+                        }
                     }
-                )
+                } else {
+                    // For staff, show a modern header instead of tabs
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
+                                    )
+                                )
+                            )
+                            .padding(20.dp)
+                    ) {
+                        Text(
+                            text = "Vé Theo Trạm",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                // Content with bottom padding for FAB and bottom navigation
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = if (uiState.cartItemCount > 0) 144.dp else 80.dp) // Extra padding for bottom nav + FAB
+                ) {
+                    if (uiState.isStaff) {
+                        // Staff users only see P2P content
+                        P2PJourneysContent(
+                            journeys = uiState.p2pJourneys,
+                            isLoading = uiState.isLoadingP2P,
+                            currentSort = uiState.p2pSortType,
+                            stations = uiState.stations,
+                            isLoadingStations = uiState.isLoadingStations,
+                            selectedFromStation = uiState.selectedFromStation,
+                            selectedToStation = uiState.selectedToStation,
+                            onAddToCart = onP2PJourneyAddToCart,
+                            onSortChange = onSortChange,
+                            onFromStationSelect = { station ->
+                                println("TicketPurchaseScreen: From station selected: ${station?.name}")
+                                viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectFromStation(station))
+                            },
+                            onToStationSelect = { station ->
+                                println("TicketPurchaseScreen: To station selected: ${station?.name}")
+                                viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectToStation(station))
+                            },
+                            onClearStations = {
+                                viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ClearStationSelection)
+                            },
+                            isStaff = uiState.isStaff,
+                            staffAssignedStation = uiState.staffAssignedStation
+                        )
+                    } else {
+                        // Customer users see content based on selected tab
+                        when (uiState.selectedTicketType) {
+                            TicketType.TIMED -> {
+                                TimedTicketsContent(
+                                    tickets = uiState.timedTickets,
+                                    isLoading = uiState.isLoadingTimed,
+                                    onAddToCart = onTimedTicketAddToCart
+                                )
+                            }
+                            TicketType.P2P -> {
+                                P2PJourneysContent(
+                                    journeys = uiState.p2pJourneys,
+                                    isLoading = uiState.isLoadingP2P,
+                                    currentSort = uiState.p2pSortType,
+                                    stations = uiState.stations,
+                                    isLoadingStations = uiState.isLoadingStations,
+                                    selectedFromStation = uiState.selectedFromStation,
+                                    selectedToStation = uiState.selectedToStation,
+                                    onAddToCart = onP2PJourneyAddToCart,
+                                    onSortChange = onSortChange,
+                                    onFromStationSelect = { station ->
+                                        println("TicketPurchaseScreen: From station selected: ${station?.name}")
+                                        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectFromStation(station))
+                                    },
+                                    onToStationSelect = { station ->
+                                        println("TicketPurchaseScreen: To station selected: ${station?.name}")
+                                        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.SelectToStation(station))
+                                    },
+                                    onClearStations = {
+                                        viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.ClearStationSelection)
+                                    },
+                                    isStaff = uiState.isStaff,
+                                    staffAssignedStation = uiState.staffAssignedStation
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -327,28 +435,43 @@ private fun TimedTicketsContent(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator()
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(48.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 4.dp
+                )
+                Text(
+                    text = "Đang tải vé thời hạn...",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     } else {
-        Column(
-            modifier = Modifier.padding(16.dp)
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Vé Thời Hạn Khả Dụng",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+            item {
+                Text(
+                    text = "Vé Thời Hạn Khả Dụng",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
             
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(tickets) { ticket ->
-                    TimedTicketCard(
-                        ticket = ticket,
-                        onAddToCart = { onAddToCart(ticket) }
-                    )
-                }
+            items(tickets) { ticket ->
+                TimedTicketCard(
+                    ticket = ticket,
+                    onAddToCart = { onAddToCart(ticket) }
+                )
             }
         }
     }
@@ -368,211 +491,165 @@ private fun P2PJourneysContent(
     onSortChange: (P2PSortType) -> Unit,
     onFromStationSelect: (Station?) -> Unit,
     onToStationSelect: (Station?) -> Unit,
-    onClearStations: () -> Unit
+    onClearStations: () -> Unit,
+    isStaff: Boolean = false,
+    staffAssignedStation: String? = null
 ) {
     var showFromDropdown by remember { mutableStateOf(false) }
     var showToDropdown by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
     
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(20.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // Station Selection Section - Always visible
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
+        // Station Selection Section
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                ),
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.padding(20.dp)
                 ) {
-                    Text(
-                        text = "Chọn Tuyến Đường",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    
-                    if (selectedFromStation != null || selectedToStation != null) {
-                        IconButton(
-                            onClick = onClearStations,
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Clear,
-                                contentDescription = "Xóa trạm",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                if (isLoadingStations) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(60.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                            Text(
-                                text = "Đang tải trạm...",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                } else {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.Top
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // From Station Dropdown
-                        ExposedDropdownMenuBox(
-                            expanded = showFromDropdown,
-                            onExpandedChange = { showFromDropdown = it },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            OutlinedTextField(
-                                value = selectedFromStation?.name ?: "",
-                                onValueChange = { },
-                                readOnly = true,
-                                label = { Text("Từ") },
-                                placeholder = { Text("Chọn một") },
-                                trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = showFromDropdown)
-                                },
-                                modifier = Modifier
-                                    .menuAnchor()
-                                    .fillMaxWidth(),
-                                singleLine = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                                )
+                        Column {
+                            Text(
+                                text = "Chọn Tuyến Đường",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
                             )
                             
-                            ExposedDropdownMenu(
-                                expanded = showFromDropdown,
-                                onDismissRequest = { showFromDropdown = false }
-                            ) {
-                                if (stations.isEmpty()) {
-                                    DropdownMenuItem(
-                                        text = { 
-                                            Text(
-                                                "Không có trạm khả dụng",
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            ) 
-                                        },
-                                        onClick = { },
-                                        enabled = false
-                                    )
-                                } else {
-                                    stations.forEach { station ->
-                                        DropdownMenuItem(
-                                            text = { 
-                                                Column {
-                                                    Text(
-                                                        text = station.name,
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        fontWeight = FontWeight.Medium
-                                                    )
-                                                    Text(
-                                                        text = "Mã: ${station.code}",
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                    )
-                                                }
-                                            },
-                                            onClick = {
-                                                onFromStationSelect(station)
-                                                showFromDropdown = false
-                                            }
-                                        )
-                                    }
-                                }
+                            // Show staff-specific message if they have limited stations
+                            if (isStaff && !staffAssignedStation.isNullOrBlank()) {
+                                Text(
+                                    text = "Trạm được gán: $staffAssignedStation",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
                             }
                         }
                         
-                        // To Station Dropdown
-                        ExposedDropdownMenuBox(
-                            expanded = showToDropdown,
-                            onExpandedChange = { showToDropdown = it },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            OutlinedTextField(
-                                value = selectedToStation?.name ?: "",
-                                onValueChange = { },
-                                readOnly = true,
-                                label = { Text("Đến") },
-                                placeholder = { Text("Chọn một") },
-                                trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = showToDropdown)
-                                },
+                        if (selectedFromStation != null || selectedToStation != null) {
+                            IconButton(
+                                onClick = onClearStations,
                                 modifier = Modifier
-                                    .menuAnchor()
-                                    .fillMaxWidth(),
-                                singleLine = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                                )
-                            )
-                            
-                            ExposedDropdownMenu(
-                                expanded = showToDropdown,
-                                onDismissRequest = { showToDropdown = false }
-                            ) {
-                                if (stations.isEmpty()) {
-                                    DropdownMenuItem(
-                                        text = { 
-                                            Text(
-                                                "Không có trạm khả dụng",
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            ) 
-                                        },
-                                        onClick = { },
-                                        enabled = false
+                                    .size(40.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.errorContainer,
+                                        RoundedCornerShape(12.dp)
                                     )
-                                } else {
-                                    // Filter out the selected from station
-                                    val availableToStations = stations.filter { it.id != selectedFromStation?.id }
-                                    
-                                    if (availableToStations.isEmpty() && selectedFromStation != null) {
+                            ) {
+                                Icon(
+                                    Icons.Default.Clear,
+                                    contentDescription = "Xóa trạm",
+                                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    if (isLoadingStations) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(80.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 3.dp
+                                )
+                                Text(
+                                    text = "Đang tải danh sách trạm...",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            // From Station Dropdown
+                            ExposedDropdownMenuBox(
+                                expanded = showFromDropdown,
+                                onExpandedChange = { showFromDropdown = it },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                OutlinedTextField(
+                                    value = selectedFromStation?.name ?: "",
+                                    onValueChange = { },
+                                    readOnly = true,
+                                    label = { 
+                                        Text(
+                                            "Từ trạm",
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
+                                    },
+                                    placeholder = { 
+                                        Text(
+                                            "Chọn trạm khởi hành",
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    },
+                                    trailingIcon = {
+                                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = showFromDropdown)
+                                    },
+                                    modifier = Modifier
+                                        .menuAnchor()
+                                        .fillMaxWidth(),
+                                    singleLine = true,
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                    )
+                                )
+                                
+                                ExposedDropdownMenu(
+                                    expanded = showFromDropdown,
+                                    onDismissRequest = { showFromDropdown = false }
+                                ) {
+                                    if (stations.isEmpty()) {
                                         DropdownMenuItem(
                                             text = { 
                                                 Text(
-                                                    "Không có trạm khác khả dụng",
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    "Không có trạm khả dụng",
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    style = MaterialTheme.typography.bodyMedium
                                                 ) 
                                             },
                                             onClick = { },
                                             enabled = false
                                         )
                                     } else {
-                                        (if (selectedFromStation != null) availableToStations else stations).forEach { station ->
+                                        stations.forEach { station ->
                                             DropdownMenuItem(
                                                 text = { 
                                                     Column {
                                                         Text(
                                                             text = station.name,
-                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            style = MaterialTheme.typography.bodyLarge,
                                                             fontWeight = FontWeight.Medium
                                                         )
                                                         Text(
@@ -583,161 +660,284 @@ private fun P2PJourneysContent(
                                                     }
                                                 },
                                                 onClick = {
-                                                    onToStationSelect(station)
-                                                    showToDropdown = false
+                                                    onFromStationSelect(station)
+                                                    showFromDropdown = false
                                                 }
                                             )
                                         }
                                     }
                                 }
                             }
+                            
+                            // To Station Dropdown
+                            ExposedDropdownMenuBox(
+                                expanded = showToDropdown,
+                                onExpandedChange = { showToDropdown = it },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                OutlinedTextField(
+                                    value = selectedToStation?.name ?: "",
+                                    onValueChange = { },
+                                    readOnly = true,
+                                    label = { 
+                                        Text(
+                                            "Đến trạm",
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
+                                    },
+                                    placeholder = { 
+                                        Text(
+                                            "Chọn trạm đích",
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    },
+                                    trailingIcon = {
+                                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = showToDropdown)
+                                    },
+                                    modifier = Modifier
+                                        .menuAnchor()
+                                        .fillMaxWidth(),
+                                    singleLine = true,
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                    )
+                                )
+                                
+                                ExposedDropdownMenu(
+                                    expanded = showToDropdown,
+                                    onDismissRequest = { showToDropdown = false }
+                                ) {
+                                    if (stations.isEmpty()) {
+                                        DropdownMenuItem(
+                                            text = { 
+                                                Text(
+                                                    "Không có trạm khả dụng",
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                ) 
+                                            },
+                                            onClick = { },
+                                            enabled = false
+                                        )
+                                    } else {
+                                        // Filter out the selected from station
+                                        val availableToStations = stations.filter { it.id != selectedFromStation?.id }
+                                        
+                                        if (availableToStations.isEmpty() && selectedFromStation != null) {
+                                            DropdownMenuItem(
+                                                text = { 
+                                                    Text(
+                                                        "Không có trạm khác khả dụng",
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        style = MaterialTheme.typography.bodyMedium
+                                                    ) 
+                                                },
+                                                onClick = { },
+                                                enabled = false
+                                            )
+                                        } else {
+                                            (if (selectedFromStation != null) availableToStations else stations).forEach { station ->
+                                                DropdownMenuItem(
+                                                    text = { 
+                                                        Column {
+                                                            Text(
+                                                                text = station.name,
+                                                                style = MaterialTheme.typography.bodyLarge,
+                                                                fontWeight = FontWeight.Medium
+                                                            )
+                                                            Text(
+                                                                text = "Mã: ${station.code}",
+                                                                style = MaterialTheme.typography.bodySmall,
+                                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                            )
+                                                        }
+                                                    },
+                                                    onClick = {
+                                                        onToStationSelect(station)
+                                                        showToDropdown = false
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                }
-                
-                // Station Selection Info
-                if (selectedFromStation != null || selectedToStation != null) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = if (selectedFromStation != null && selectedToStation != null) {
-                                "Tuyến: ${selectedFromStation.name} → ${selectedToStation.name}"
-                            } else if (selectedFromStation != null) {
-                                "Từ: ${selectedFromStation.name}"
-                            } else {
-                                "Đến: ${selectedToStation?.name}"
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Medium
-                        )
+                    
+                    // Station Selection Info
+                    if (selectedFromStation != null || selectedToStation != null) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .padding(12.dp)
+                        ) {
+                            Text(
+                                text = if (selectedFromStation != null && selectedToStation != null) {
+                                    "Tuyến đã chọn: ${selectedFromStation.name} → ${selectedToStation.name}"
+                                } else if (selectedFromStation != null) {
+                                    "Trạm khởi hành: ${selectedFromStation.name}"
+                                } else {
+                                    "Trạm đích: ${selectedToStation?.name}"
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             }
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
-        
         // Journey Results Section
         if (isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
-                    Text(
-                        text = "Đang tìm kiếm tuyến đường...",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(48.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            strokeWidth = 4.dp
+                        )
+                        Text(
+                            text = "Đang tìm kiếm tuyến đường...",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         } else {
             // Sort Options and Results Count
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Tìm thấy ${journeys.size} tuyến đường",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Medium
-                )
-                
-                Box {
-                    OutlinedButton(
-                        onClick = { showSortMenu = true }
-                    ) {
-                        Icon(
-                            Icons.Default.FilterList, 
-                            contentDescription = "Sắp xếp",
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(currentSort.displayName)
-                    }
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Tìm thấy ${journeys.size} tuyến đường",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.SemiBold
+                    )
                     
-                    DropdownMenu(
-                        expanded = showSortMenu,
-                        onDismissRequest = { showSortMenu = false }
-                    ) {
-                        P2PSortType.values().forEach { sortType ->
-                            DropdownMenuItem(
-                                text = { Text(sortType.displayName) },
-                                onClick = { 
-                                    onSortChange(sortType)
-                                    showSortMenu = false 
-                                }
+                    Box {
+                        OutlinedButton(
+                            onClick = { showSortMenu = true },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface
                             )
+                        ) {
+                            Icon(
+                                Icons.Default.FilterList, 
+                                contentDescription = "Sắp xếp",
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                currentSort.displayName,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                        
+                        DropdownMenu(
+                            expanded = showSortMenu,
+                            onDismissRequest = { showSortMenu = false }
+                        ) {
+                            P2PSortType.values().forEach { sortType ->
+                                DropdownMenuItem(
+                                    text = { 
+                                        Text(
+                                            sortType.displayName,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    },
+                                    onClick = { 
+                                        onSortChange(sortType)
+                                        showSortMenu = false 
+                                    }
+                                )
+                            }
                         }
                     }
                 }
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
-            
             // Journey List
             if (journeys.isEmpty()) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    )
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                        ),
+                        shape = RoundedCornerShape(16.dp)
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(40.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = if (selectedFromStation != null || selectedToStation != null) {
-                                    "Không tìm thấy tuyến đường cho các trạm đã chọn"
-                                } else {
-                                    "Chọn trạm để tìm kiếm tuyến đường"
-                                },
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = if (selectedFromStation != null || selectedToStation != null) {
-                                    "Hãy thử chọn các trạm khác hoặc xóa lựa chọn của bạn"
-                                } else {
-                                    "Chọn trạm khởi hành và đích đến ở trên"
-                                },
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(
+                                    text = if (selectedFromStation != null || selectedToStation != null) {
+                                        "Không tìm thấy tuyến đường"
+                                    } else if (isStaff && !staffAssignedStation.isNullOrBlank()) {
+                                        "Chọn trạm để tìm kiếm"
+                                    } else {
+                                        "Chọn trạm để bắt đầu"
+                                    },
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = if (selectedFromStation != null || selectedToStation != null) {
+                                        "Hãy thử chọn các trạm khác"
+                                    } else if (isStaff && !staffAssignedStation.isNullOrBlank()) {
+                                        "Trạm được gán: $staffAssignedStation"
+                                    } else {
+                                        "Chọn trạm khởi hành và đích đến"
+                                    },
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
                         }
                     }
                 }
             } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(journeys) { journey ->
-                        P2PJourneyCard(
-                            journey = journey,
-                            stations = stations,
-                            onAddToCart = { onAddToCart(journey) }
-                        )
-                    }
+                items(journeys) { journey ->
+                    P2PJourneyCard(
+                        journey = journey,
+                        stations = stations,
+                        onAddToCart = { onAddToCart(journey) }
+                    )
                 }
             }
         }
@@ -754,52 +954,76 @@ private fun TimedTicketCard(
         modifier = Modifier
             .fillMaxWidth()
             .animateContentSize(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
-            Text(
-                text = ticket.name,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "${ticket.validDuration} ngày",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = ticket.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                RoundedCornerShape(8.dp)
+                            )
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "${ticket.validDuration} ngày",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+                
                 Text(
                     text = "${String.format("%,.0f", ticket.basePrice)}₫",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
-                
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
                 IconButton(
                     onClick = onAddToCart,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(
+                            MaterialTheme.colorScheme.primary,
+                            RoundedCornerShape(12.dp)
+                        )
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Thêm vào giỏ hàng",
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -816,16 +1040,15 @@ private fun P2PJourneyCard(
 ) {
     Card(
         modifier = Modifier
-            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
             .fillMaxWidth()
             .animateContentSize(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -838,41 +1061,40 @@ private fun P2PJourneyCard(
                     
                     Text(
                         text = "${fromStation?.name ?: journey.startStationId} → ${toStation?.name ?: journey.endStationId}",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.fillMaxWidth(0.9f)
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.fillMaxWidth(0.85f)
                     )
                     
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     
-                    Text(
-                        text = "From: ${fromStation?.name ?: journey.startStationId} (${fromStation?.code ?: ""})",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    
-                    Text(
-                        text = "To: ${toStation?.name ?: journey.endStationId} (${toStation?.code ?: ""})",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = "Từ: ${fromStation?.name ?: journey.startStationId}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        
+                        Text(
+                            text = "Đến: ${toStation?.name ?: journey.endStationId}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
                 
                 Text(
                     text = "${String.format("%,.0f", journey.basePrice)}₫",
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
             
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -882,26 +1104,52 @@ private fun P2PJourneyCard(
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text(
-                        text = "${journey.distance} km",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "${journey.travelTime} min",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                MaterialTheme.colorScheme.secondaryContainer,
+                                RoundedCornerShape(8.dp)
+                            )
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "${journey.distance} km",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                MaterialTheme.colorScheme.tertiaryContainer,
+                                RoundedCornerShape(8.dp)
+                            )
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "${journey.travelTime} phút",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
                 
                 IconButton(
                     onClick = onAddToCart,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(
+                            MaterialTheme.colorScheme.primary,
+                            RoundedCornerShape(12.dp)
+                        )
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Add to Cart",
-                        tint = MaterialTheme.colorScheme.primary,
+                        contentDescription = "Thêm vào giỏ hàng",
+                        tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -909,8 +1157,6 @@ private fun P2PJourneyCard(
         }
     }
 }
-
-
 
 @Composable
 private fun CartItemCard(
@@ -921,66 +1167,94 @@ private fun CartItemCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = item.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Medium
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 
                 item.description?.let { desc ->
                     Text(
                         text = desc,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp)
                     )
                 }
                 
                 Text(
-                    text = "${String.format("%,.0f", item.price)}₫ each",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "${String.format("%,.0f", item.price)}₫ mỗi vé",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(top = 4.dp)
                 )
             }
             
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 IconButton(
                     onClick = { onQuantityChange(item.quantity - 1) },
-                    enabled = item.quantity > 1
+                    enabled = item.quantity > 1,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(
+                            if (item.quantity > 1) MaterialTheme.colorScheme.primaryContainer
+                            else MaterialTheme.colorScheme.surfaceVariant,
+                            RoundedCornerShape(8.dp)
+                        )
                 ) {
-                    Icon(Icons.Default.Remove, contentDescription = "Decrease")
+                    Icon(
+                        Icons.Default.Remove, 
+                        contentDescription = "Giảm số lượng",
+                        tint = if (item.quantity > 1) MaterialTheme.colorScheme.onPrimaryContainer
+                               else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
                 
                 Text(
                     text = item.quantity.toString(),
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.width(32.dp)
                 )
                 
                 IconButton(
-                    onClick = { onQuantityChange(item.quantity + 1) }
+                    onClick = { onQuantityChange(item.quantity + 1) },
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(
+                            MaterialTheme.colorScheme.primaryContainer,
+                            RoundedCornerShape(8.dp)
+                        )
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Increase")
+                    Icon(
+                        Icons.Default.Add, 
+                        contentDescription = "Tăng số lượng",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
         }
     }
 }
-
-
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -1001,13 +1275,19 @@ internal fun PaymentWebView(
                 showDialog = false
                 onPaymentFailed()
             },
-            title = { Text("Payment - PayOS") },
+            title = { 
+                Text(
+                    "Thanh toán - PayOS",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            },
             text = {
                 Column {
                     Text(
-                        text = "Please complete your payment in the web browser below:",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        text = "Vui lòng hoàn tất thanh toán trong trình duyệt web bên dưới:",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(bottom = 16.dp)
                     )
                     
                     AndroidView(
@@ -1078,6 +1358,7 @@ internal fun PaymentWebView(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(400.dp)
+                            .clip(RoundedCornerShape(12.dp))
                     )
                 }
             },
@@ -1088,7 +1369,11 @@ internal fun PaymentWebView(
                         onPaymentComplete() 
                     }
                 ) {
-                    Text("Payment Complete")
+                    Text(
+                        "Hoàn tất thanh toán",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             },
             dismissButton = {
@@ -1098,10 +1383,27 @@ internal fun PaymentWebView(
                         onPaymentFailed()
                     }
                 ) {
-                    Text("Cancel")
+                    Text(
+                        "Hủy",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
-            }
+            },
+            shape = RoundedCornerShape(16.dp)
         )
     }
+}
+
+// Extension function for tab indicator offset (if not available)
+@Composable
+private fun Modifier.tabIndicatorOffset(tabPosition: androidx.compose.material3.TabPosition): Modifier {
+    return this.then(
+        Modifier
+            .fillMaxWidth()
+            .wrapContentSize(Alignment.BottomStart)
+            .offset(x = tabPosition.left)
+            .width(tabPosition.width)
+    )
 } 
 

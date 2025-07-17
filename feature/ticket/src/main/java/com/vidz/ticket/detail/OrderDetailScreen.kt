@@ -379,17 +379,17 @@ private fun OrderDetailCard(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    Row {
-                        Text(
-                            text = "Số lượng: ${orderDetail.quantity}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text(
-                            text = "${String.format("%,.0f", orderDetail.unitPrice)}₫ mỗi vé",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+//                    Row {
+//                        Text(
+//                            text = "Số lượng: ${orderDetail.quantity}",
+//                            style = MaterialTheme.typography.bodyMedium
+//                        )
+//                        Spacer(modifier = Modifier.width(16.dp))
+//                        Text(
+//                            text = "${String.format("%,.0f", orderDetail.unitPrice)}₫ mỗi vé",
+//                            style = MaterialTheme.typography.bodyMedium
+//                        )
+//                    }
                 }
 
                 // QR Code Button

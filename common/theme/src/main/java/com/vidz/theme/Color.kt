@@ -226,3 +226,84 @@ FLAT DESIGN PRINCIPLES FOR HCMC METRO:
    - Consistent color application
    - Minimal visual noise
 */
+
+
+// ShadCN Theme Colors - Light Mode
+object ShadCNLightColors {
+    val background = Color(0xFFF7F9F3)
+    val foreground = Color(0xFF000000)
+    val card = Color(0xFFF7F9F3)
+    val cardForeground = Color(0xFF000000)
+    val popover = Color(0xFFF7F9F3)
+    val popoverForeground = Color(0xFF000000)
+    val primary = Color(0xFF6366F1)
+    val primaryForeground = Color(0xFFFFFFFF)
+    val secondary = Color(0xFF16D39A)
+    val secondaryForeground = Color(0xFFFFFFFF)
+    val muted = Color(0xFFF7F9F3)
+    val mutedForeground = Color(0xFF333333)
+    val accent = Color(0xFFF59E0B)
+    val accentForeground = Color(0xFF000000)
+    val destructive = Color(0xFFEF4444)
+    val destructiveForeground = Color(0xFFFFFFFF)
+    val border = Color(0xFF000000)
+    val input = Color(0xFF737373)
+    val ring = Color(0xFFA5B4FC)
+
+    // Chart Colors
+    val chart1 = Color(0xFF4F46E5)
+    val chart2 = Color(0xFF14B8A6)
+    val chart3 = Color(0xFFF59E0B)
+    val chart4 = Color(0xFFEC4899)
+    val chart5 = Color(0xFF22C55E)
+
+    // Sidebar Colors
+    val sidebar = Color(0xFFF7F9F3)
+    val sidebarForeground = Color(0xFF000000)
+    val sidebarPrimary = Color(0xFF4F46E5)
+    val sidebarPrimaryForeground = Color(0xFFFFFFFF)
+    val sidebarAccent = Color(0xFFF59E0B)
+    val sidebarAccentForeground = Color(0xFF000000)
+    val sidebarBorder = Color(0xFF000000)
+    val sidebarRing = Color(0xFFA5B4FC)
+}
+
+// ShadCN Theme Colors - Dark Mode
+object ShadCNDarkColors {
+    val background = Color(0xFF000000)
+    val foreground = Color(0xFFFFFFFF)
+    val card = Color(0xFF000000)
+    val cardForeground = Color(0xFFFFFFFF)
+    val popover = Color(0xFF000000)
+    val popoverForeground = Color(0xFFFFFFFF)
+    val primary = Color(0xFF94A3EA)
+    val primaryForeground = Color(0xFF000000)
+    val secondary = Color(0xFF34D399)
+    val secondaryForeground = Color(0xFF000000)
+    val muted = Color(0xFF000000)
+    val mutedForeground = Color(0xFFCCCCCC)
+    val accent = Color(0xFFFCD34D)
+    val accentForeground = Color(0xFF000000)
+    val destructive = Color(0xFFF87171)
+    val destructiveForeground = Color(0xFF000000)
+    val border = Color(0xFFFFFFFF)
+    val input = Color(0xFFFFFFFF)
+    val ring = Color(0xFF818CF8)
+
+    // Chart Colors
+    val chart1 = Color(0xFF818CF8)
+    val chart2 = Color(0xFF2DD4BF)
+    val chart3 = Color(0xFFFCD34D)
+    val chart4 = Color(0xFFF472B6)
+    val chart5 = Color(0xFF4ADE80)
+
+    // Sidebar Colors
+    val sidebar = Color(0xFF000000)
+    val sidebarForeground = Color(0xFFFFFFFF)
+    val sidebarPrimary = Color(0xFF818CF8)
+    val sidebarPrimaryForeground = Color(0xFF000000)
+    val sidebarAccent = Color(0xFFFCD34D)
+    val sidebarAccentForeground = Color(0xFF000000)
+    val sidebarBorder = Color(0xFFFFFFFF)
+    val sidebarRing = Color(0xFF818CF8)
+}

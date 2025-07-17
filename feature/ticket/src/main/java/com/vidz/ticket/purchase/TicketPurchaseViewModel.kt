@@ -143,11 +143,15 @@ class TicketPurchaseViewModel @Inject constructor(
             observeLocalAccountInfoUseCase().collect { account ->
                 val userRole = account?.role ?: AccountRole.CUSTOMER
                 val isCustomer = userRole == AccountRole.CUSTOMER
+                val isStaff = userRole == AccountRole.STAFF || userRole == AccountRole.ADMIN
                 
                 updateState {
                     copy(
                         userRole = userRole,
                         isCustomer = isCustomer,
+                        isStaff = isStaff,
+                        staffAssignedStation = if (isStaff) account?.assignedStation else null,
+                        selectedTicketType = if (isStaff) TicketType.P2P else TicketType.TIMED, // Staff default to P2P
                         selectedPaymentMethod = if (isCustomer) PaymentMethod.PAYOS else PaymentMethod.PAYOS // Default to PAYOS for both
                     )
                 }
@@ -156,12 +160,20 @@ class TicketPurchaseViewModel @Inject constructor(
                 if (isCustomer) {
                     loadVouchers()
                 }
+                
+                // For staff, reload stations with filtering
+                if (isStaff) {
+                    loadStations()
+                }
             }
         }
     }
 
     private fun loadInitialData() {
-        loadTimedTickets()
+        // Only load timed tickets for customers
+        if (viewModelState.value.isCustomer) {
+            loadTimedTickets()
+        }
         loadP2PJourneys() // Load all P2P journeys initially
         loadStations()
         loadDiscountPercentage()
@@ -298,6 +310,9 @@ class TicketPurchaseViewModel @Inject constructor(
     }
 
     private fun loadTimedTickets() {
+        // Only load timed tickets for customers
+        if (viewModelState.value.isStaff) return
+        
         viewModelScope.launch {
             getTimedTicketPlansUseCase(page = 0, size = 20)
                 .onEach { result ->
@@ -368,6 +383,10 @@ class TicketPurchaseViewModel @Inject constructor(
     }
 
     private fun selectTicketType(ticketType: TicketType) {
+        // Staff users can only select P2P tickets
+        if (viewModelState.value.isStaff && ticketType == TicketType.TIMED) {
+            return // Ignore timed ticket selection for staff
+        }
         updateState { copy(selectedTicketType = ticketType) }
     }
 
@@ -538,11 +557,25 @@ class TicketPurchaseViewModel @Inject constructor(
                             updateState { copy(isLoadingStations = true) }
                         }
                         is Result.Success -> {
-                            println("ViewModel: Stations loaded successfully - ${result.data.content.size} stations")
+                            val allStations = result.data.content
+                            val currentState = viewModelState.value
+                            
+                            // Filter stations for staff users based on their assigned station
+                            val filteredStations = if (currentState.isStaff && !currentState.staffAssignedStation.isNullOrBlank()) {
+                                // For staff, only show stations that match their assigned station code
+                                allStations.filter { station ->
+                                    station.code == currentState.staffAssignedStation
+                                }
+                            } else {
+                                // For customers and admin, show all stations
+                                allStations
+                            }
+                            
+                            println("ViewModel: Stations loaded successfully - ${allStations.size} total stations, ${filteredStations.size} filtered stations for user role: ${currentState.userRole}")
                             updateState {
                                 copy(
                                     isLoadingStations = false,
-                                    stations = result.data.content,
+                                    stations = filteredStations,
                                     error = null
                                 )
                             }
@@ -834,6 +867,8 @@ class TicketPurchaseViewModel @Inject constructor(
         val userDiscountPercentage: Float? = null,
         val userRole: AccountRole = AccountRole.CUSTOMER,
         val isCustomer: Boolean = true,
+        val isStaff: Boolean = false,
+        val staffAssignedStation: String? = null,
         val selectedPaymentMethod: PaymentMethod = PaymentMethod.PAYOS,
         val showPaymentMethodSheet: Boolean = false
     ) : ViewModelState() {
@@ -915,6 +950,8 @@ class TicketPurchaseViewModel @Inject constructor(
                 cartItemCount = cartItems.sumOf { it.quantity },
                 userRole = userRole,
                 isCustomer = isCustomer,
+                isStaff = isStaff,
+                staffAssignedStation = staffAssignedStation,
                 selectedPaymentMethod = selectedPaymentMethod,
                 showPaymentMethodSheet = showPaymentMethodSheet,
                 availablePaymentMethods = availablePaymentMethods
@@ -953,6 +990,8 @@ class TicketPurchaseViewModel @Inject constructor(
         val cartItemCount: Int,
         val userRole: AccountRole,
         val isCustomer: Boolean,
+        val isStaff: Boolean,
+        val staffAssignedStation: String?,
         val selectedPaymentMethod: PaymentMethod,
         val showPaymentMethodSheet: Boolean,
         val availablePaymentMethods: List<PaymentMethod>

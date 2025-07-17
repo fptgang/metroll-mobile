@@ -70,25 +70,25 @@ fun LoginScreen(
     val handleEmailChange = { email: String ->
         onEvent(LoginViewModel.LoginEvent.EmailChanged(email))
     }
-    
+
     val handlePasswordChange = { password: String ->
         onEvent(LoginViewModel.LoginEvent.PasswordChanged(password))
     }
-    
+
     val handlePasswordVisibilityToggle = {
         onEvent(LoginViewModel.LoginEvent.PasswordVisibilityToggled)
     }
-    
+
     val handleLogin = {
         keyboardController?.hide()
         focusManager.clearFocus()
         onEvent(LoginViewModel.LoginEvent.LoginClicked)
     }
-    
-    val isFormValid = uiState.email.isNotBlank() && 
-                     uiState.password.isNotBlank() && 
-                     uiState.emailError == null && 
-                     uiState.passwordError == null
+
+    val isFormValid = uiState.email.isNotBlank() &&
+            uiState.password.isNotBlank() &&
+            uiState.emailError == null &&
+            uiState.passwordError == null
     //endregion
 
     //region ui
@@ -121,7 +121,7 @@ fun LoginScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Lock,
-                    contentDescription = "App Logo",
+                    contentDescription = "Logo ứng dụng",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(20.dp)
                 )
@@ -131,17 +131,17 @@ fun LoginScreen(
 
             // Welcome Text
             Text(
-                text = "Welcome Back",
+                text = "Chào mừng trở lại",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Text(
-                text = "Sign in to continue to HCMC Metro",
+                text = "Đăng nhập để tiếp tục sử dụng HCMC Metro",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -166,24 +166,24 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = uiState.email,
                         onValueChange = handleEmailChange,
-                        label = { Text("Email Address") },
-                        placeholder = { Text("Enter your email") },
-                        leadingIcon = { 
+                        label = { Text("Địa chỉ email") },
+                        placeholder = { Text("Nhập email của bạn") },
+                        leadingIcon = {
                             Icon(
-                                Icons.Outlined.Email, 
+                                Icons.Outlined.Email,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
-                            ) 
+                            )
                         },
                         singleLine = true,
                         isError = uiState.emailError != null,
-                        supportingText = uiState.emailError?.let { 
-                            { 
+                        supportingText = uiState.emailError?.let {
+                            {
                                 Text(
                                     text = it,
                                     color = MaterialTheme.colorScheme.error
-                                ) 
-                            } 
+                                )
+                            }
                         },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Email,
@@ -204,46 +204,46 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = uiState.password,
                         onValueChange = handlePasswordChange,
-                        label = { Text("Password") },
-                        placeholder = { Text("Enter your password") },
-                        leadingIcon = { 
+                        label = { Text("Mật khẩu") },
+                        placeholder = { Text("Nhập mật khẩu của bạn") },
+                        leadingIcon = {
                             Icon(
-                                Icons.Outlined.Lock, 
+                                Icons.Outlined.Lock,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
-                            ) 
+                            )
                         },
                         trailingIcon = {
                             IconButton(
                                 onClick = handlePasswordVisibilityToggle
                             ) {
                                 Icon(
-                                    imageVector = if (uiState.isPasswordVisible) 
+                                    imageVector = if (uiState.isPasswordVisible)
                                         Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                    contentDescription = if (uiState.isPasswordVisible) 
-                                        "Hide password" else "Show password",
+                                    contentDescription = if (uiState.isPasswordVisible)
+                                        "Ẩn mật khẩu" else "Hiện mật khẩu",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         },
-                        visualTransformation = if (uiState.isPasswordVisible) 
+                        visualTransformation = if (uiState.isPasswordVisible)
                             VisualTransformation.None else PasswordVisualTransformation(),
                         singleLine = true,
                         isError = uiState.passwordError != null,
-                        supportingText = uiState.passwordError?.let { 
-                            { 
+                        supportingText = uiState.passwordError?.let {
+                            {
                                 Text(
                                     text = it,
                                     color = MaterialTheme.colorScheme.error
-                                ) 
-                            } 
+                                )
+                            }
                         },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done
                         ),
                         keyboardActions = KeyboardActions(
-                            onDone = { 
+                            onDone = {
                                 if (isFormValid) {
                                     handleLogin()
                                 }
@@ -261,7 +261,7 @@ fun LoginScreen(
 
                     // Login Button
                     MetrollButton(
-                        text = if (uiState.isLoading) "Signing In..." else "Sign In",
+                        text = if (uiState.isLoading) "Đang đăng nhập..." else "Đăng nhập",
                         onClick = handleLogin,
                         enabled = !uiState.isLoading && isFormValid,
                         isLoading = uiState.isLoading,
@@ -278,7 +278,7 @@ fun LoginScreen(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    "Forgot Password?",
+                    "Quên mật khẩu?",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -304,12 +304,12 @@ fun LoginScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Don't have an account? ",
+                        text = "Chưa có tài khoản? ",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "Sign Up",
+                        text = "Đăng ký",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
@@ -323,4 +323,4 @@ fun LoginScreen(
     //region Dialog and Sheet
     // No dialogs or sheets needed for this screen
     //endregion
-} 
+}
