@@ -68,7 +68,7 @@ fun NavGraphBuilder.authGraph(
             // Handle successful registration with Firebase + Backend flow
             LaunchedEffect(uiState.isRegistrationSuccessful) {
                 if (uiState.isRegistrationSuccessful) {
-                    onNavigateToApp()
+                    navController.popBackStack()
                 }
             }
             
