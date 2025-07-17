@@ -43,10 +43,18 @@ class QrScannerViewModel @Inject constructor(
 
     // JSON parser with unknown keys ignored
     private val jsonParser = Json { ignoreUnknownKeys = true }
-    
+
     // Blocking mechanism to prevent duplicate processing of same ticket ID
+    // Enhanced blocking mechanism
     @Volatile
     private var currentlyProcessingTicketId: String? = null
+    @Volatile
+    private var lastProcessedTicketId: String? = null
+    @Volatile
+    private var lastProcessedTime: Long = 0
+
+    // Prevent rapid re-processing of same ticket
+    private val MIN_REPROCESS_INTERVAL = 2000L // 2 seconds
 
     init {
         loadUserAccount()
@@ -59,7 +67,7 @@ class QrScannerViewModel @Inject constructor(
                     is Result.Success -> {
                         val account = result.data
                         viewModelState.update { it.copy(account = account) }
-                        
+
                         // Load station details if assigned station exists
                         if (account.assignedStation.isNotBlank()) {
                             loadStationDetails(account.assignedStation)
@@ -111,7 +119,7 @@ class QrScannerViewModel @Inject constructor(
     private fun handleQrDetected(raw: String) {
         // Ignore empty strings
         if (raw.isBlank()) return
-        
+
         Log.d("QrScannerViewModel", "📱 QR DETECTED: Processing QR data...")
         Log.d("QrScannerViewModel", "🔍 Current processing lock: $currentlyProcessingTicketId")
 
@@ -133,7 +141,7 @@ class QrScannerViewModel @Inject constructor(
             val obj = jsonElement.jsonObject
 
             val ticketId = obj["id"]?.jsonPrimitive?.content ?: obj["ticketNumber"]?.jsonPrimitive?.content ?: ""
-            
+
             Log.d("QrScannerViewModel", "🎫 Extracted ticket ID: '$ticketId'")
 
             if (ticketId.isBlank()) {
@@ -143,12 +151,23 @@ class QrScannerViewModel @Inject constructor(
                 return
             }
 
-            // BLOCKING MECHANISM: Check if this ticket ID is already being processed
+            val currentTime = System.currentTimeMillis()
+
+            // ENHANCED BLOCKING MECHANISM
             synchronized(this) {
+                // Check if same ticket is currently being processed
                 if (currentlyProcessingTicketId == ticketId) {
-                    Log.d("QrScannerViewModel", "🚫 BLOCKED: Ticket $ticketId already being processed, ignoring duplicate")
+                    Log.d("QrScannerViewModel", "🚫 BLOCKED: Ticket $ticketId already being processed")
                     return
                 }
+
+                // Check if same ticket was recently processed
+                if (lastProcessedTicketId == ticketId &&
+                    (currentTime - lastProcessedTime) < MIN_REPROCESS_INTERVAL) {
+                    Log.d("QrScannerViewModel", "🚫 BLOCKED: Ticket $ticketId was recently processed")
+                    return
+                }
+
                 // Lock this ticket ID for processing
                 currentlyProcessingTicketId = ticketId
                 Log.d("QrScannerViewModel", "🔒 LOCKED: Now processing ticket: $ticketId")
@@ -168,63 +187,84 @@ class QrScannerViewModel @Inject constructor(
             // Process the QR
             viewModelScope.launch(ioDispatcher) {
                 try {
-                        validateTicketUseCase(request).collect { result ->
-                            Log.d("QrScannerViewModel", "📥 Flow result for $ticketId: $result")
-                            
-                            // Double-check we still own the lock for this ticket ID before processing
-                            synchronized(this@QrScannerViewModel) {
-                                if (currentlyProcessingTicketId != ticketId) {
-                                    Log.d("QrScannerViewModel", "🚫 FLOW CANCELLED: Lock lost for $ticketId, abandoning flow")
-                                    return@collect
-                                }
+                    validateTicketUseCase(request).collect { result ->
+                        Log.d("QrScannerViewModel", "📥 Flow result for $ticketId: $result")
+
+                        // Double-check we still own the lock for this ticket ID
+                        synchronized(this@QrScannerViewModel) {
+                            if (currentlyProcessingTicketId != ticketId) {
+                                Log.d("QrScannerViewModel", "🚫 FLOW CANCELLED: Lock lost for $ticketId")
+                                return@collect
                             }
-                            
-                            when (result) {
-                                is Result.Init -> {
-                                    Log.d(
-                                        "QrScannerViewModel",
-                                        "⏳ Starting validation for $ticketId - keeping lock"
-                                    )
-                                    updateStatus(ScannerStatus.Validating)
-                                }
+                        }
 
-                                is Result.Success<*> -> {
-                                    Log.d(
-                                        "QrScannerViewModel",
-                                        "✅ Success for $ticketId - clearing lock"
-                                    )
-                                    updateStatus(ScannerStatus.Success)
-                                    updateScreenState(ScreenState.SuccessResult)
-                                    clearProcessingLock()
-                                }
+                        when (result) {
+                            is Result.Init -> {
+                                Log.d("QrScannerViewModel", "⏳ Starting validation for $ticketId")
+                                updateStatus(ScannerStatus.Validating)
+                            }
 
-                                is Result.ServerError -> {
-                                    Log.d(
-                                        "QrScannerViewModel",
-                                        "❌ Error for $ticketId - clearing lock: ${result.message}"
-                                    )
-                                    updateStatus(ScannerStatus.Error(result.message))
-                                    updateScreenState(ScreenState.FailureResult)
-                                    clearProcessingLock()
-                                }
+                            is Result.Success<*> -> {
+                                Log.d("QrScannerViewModel", "✅ Success for $ticketId")
+                                updateStatus(ScannerStatus.Success)
+                                updateScreenState(ScreenState.SuccessResult)
+                                clearProcessingLock(ticketId)
+                            }
+
+                            is Result.ServerError -> {
+                                Log.d("QrScannerViewModel", "❌ Error for $ticketId: ${result.message}")
+                                updateStatus(ScannerStatus.Error(result.message))
+                                updateScreenState(ScreenState.FailureResult)
+                                clearProcessingLock(ticketId)
+                            }
                         }
                     }
                 } catch (e: Exception) {
                     Log.e("QrScannerViewModel", "💥 Exception in flow for $ticketId", e)
                     updateStatus(ScannerStatus.Error("Validation failed: ${e.message}"))
                     updateScreenState(ScreenState.FailureResult)
-                    clearProcessingLock()
+                    clearProcessingLock(ticketId)
                 }
             }
         } catch (e: Exception) {
             Log.e("QrScannerViewModel", "Error parsing QR data: ${e.message}", e)
             updateStatus(ScannerStatus.Error("Invalid QR data"))
             updateScreenState(ScreenState.FailureResult)
-            // Clear processing lock after exception
-            clearProcessingLock()
+            clearProcessingLock(null)
         }
     }
 
+    private fun clearProcessingLock(processedTicketId: String? = null) {
+        synchronized(this) {
+            val previousTicketId = currentlyProcessingTicketId
+            currentlyProcessingTicketId = null
+
+            // Track the last processed ticket for duplicate prevention
+            if (processedTicketId != null) {
+                lastProcessedTicketId = processedTicketId
+                lastProcessedTime = System.currentTimeMillis()
+            }
+
+            Log.d("QrScannerViewModel", "🔓 UNLOCKED: Processing lock cleared for ticket: $previousTicketId")
+        }
+    }
+
+    private fun scanMore() {
+        Log.d("QrScannerViewModel", "🔄 SCAN MORE: User requested to scan more")
+        clearProcessingLock() // Allow scanning new QRs
+        // Reset the recent processing history to allow re-scanning same ticket if needed
+        synchronized(this) {
+            lastProcessedTicketId = null
+            lastProcessedTime = 0
+        }
+        updateStatus(ScannerStatus.Waiting)
+        updateScreenState(ScreenState.Scanner)
+    }
+
+    private fun showScannerScreen() {
+        clearProcessingLock() // Ensure clean state when showing scanner
+        updateScreenState(ScreenState.Scanner)
+    }
     private fun clearStatus() {
         updateStatus(ScannerStatus.Waiting)
     }
@@ -233,13 +273,8 @@ class QrScannerViewModel @Inject constructor(
         viewModelState.update { it.copy(selectedValidationType = type) }
     }
 
-    private fun scanMore() {
-        Log.d("QrScannerViewModel", "🔄 SCAN MORE: User requested to scan more")
-        clearProcessingLock() // Allow scanning new QRs
-        updateStatus(ScannerStatus.Waiting)
-        updateScreenState(ScreenState.Scanner)
-    }
-    
+
+
     private fun clearProcessingLock() {
         synchronized(this) {
             val previousTicketId = currentlyProcessingTicketId
@@ -248,10 +283,7 @@ class QrScannerViewModel @Inject constructor(
         }
     }
 
-    private fun showScannerScreen() {
-        clearProcessingLock() // Ensure clean state when showing scanner
-        updateScreenState(ScreenState.Scanner)
-    }
+
 
     private fun updateStatus(status: ScannerStatus) {
         viewModelState.update { it.copy(status = status) }
@@ -309,5 +341,5 @@ class QrScannerViewModel @Inject constructor(
         object SuccessResult : ScreenState()
         object FailureResult : ScreenState()
     }
-} 
+}
 
