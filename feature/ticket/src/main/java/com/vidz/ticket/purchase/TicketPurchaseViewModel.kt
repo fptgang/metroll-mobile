@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.math.max
 
 data class CartItem(
     val id: String,
@@ -896,10 +897,10 @@ class TicketPurchaseViewModel @Inject constructor(
                     0.0
                 }
             } ?: 0.0
-            
+
             // Apply both discounts (voucher first, then discount package)
-            val totalAfterVoucher = subtotal - voucherDiscount
-            val total = totalAfterVoucher - discountPackageDiscount
+            val totalAfterVoucher = max(subtotal - voucherDiscount, 0.0)
+            val total = max(totalAfterVoucher - discountPackageDiscount, 0.0)
             
             // Sort vouchers only for customers
             val sortedVouchers = if (isCustomer) {
