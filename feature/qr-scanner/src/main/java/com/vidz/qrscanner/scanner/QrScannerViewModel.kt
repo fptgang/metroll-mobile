@@ -181,7 +181,7 @@ class QrScannerViewModel @Inject constructor(
 
             val request = TicketValidationCreateRequest(
                 ticketId = ticketId,
-                validationType = domainValidationType,
+//                validationType = domainValidationType,
             )
 
             // Process the QR

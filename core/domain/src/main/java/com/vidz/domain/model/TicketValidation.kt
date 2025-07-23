@@ -16,5 +16,5 @@ data class TicketValidation(
 @Serializable
 data class TicketValidationCreateRequest(
     val ticketId: String,
-    val validationType: ValidationType
+//    val validationType: ValidationType
 ) 
