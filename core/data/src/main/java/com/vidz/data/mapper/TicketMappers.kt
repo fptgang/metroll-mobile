@@ -143,7 +143,7 @@ fun TicketValidationDto.toDomain(): TicketValidation {
 fun TicketValidationCreateRequest.toDto(): TicketValidationCreateRequestDto {
     return TicketValidationCreateRequestDto(
         ticketId = ticketId,
-        validationType = validationType.name
+//        validationType = validationType.name
     )
 }
 

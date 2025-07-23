@@ -352,39 +352,39 @@ private fun ScannerScreenContent(
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         )
 
-        // Validation Type Tabs
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            ValidationTypeTab(
-                text = "ENTRY",
-                isSelected = qrScannerUiState.value.selectedValidationType == ValidationType.ENTRY,
-                onClick = {
-                    qrScannerViewModel.onTriggerEvent(
-                        QrScannerViewModel.QrScannerViewEvent.ChangeValidationType(
-                            ValidationType.ENTRY
-                        )
-                    )
-                },
-                modifier = Modifier.weight(1f)
-            )
-            ValidationTypeTab(
-                text = "EXIT",
-                isSelected = qrScannerUiState.value.selectedValidationType == ValidationType.EXIT,
-                onClick = {
-                    qrScannerViewModel.onTriggerEvent(
-                        QrScannerViewModel.QrScannerViewEvent.ChangeValidationType(
-                            ValidationType.EXIT
-                        )
-                    )
-                },
-                modifier = Modifier.weight(1f)
-            )
-        }
+//        // Validation Type Tabs
+//        Row(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .background(MaterialTheme.colorScheme.surface)
+//                .padding(horizontal = 16.dp, vertical = 8.dp),
+//            horizontalArrangement = Arrangement.spacedBy(8.dp)
+//        ) {
+//            ValidationTypeTab(
+//                text = "ENTRY",
+//                isSelected = qrScannerUiState.value.selectedValidationType == ValidationType.ENTRY,
+//                onClick = {
+//                    qrScannerViewModel.onTriggerEvent(
+//                        QrScannerViewModel.QrScannerViewEvent.ChangeValidationType(
+//                            ValidationType.ENTRY
+//                        )
+//                    )
+//                },
+//                modifier = Modifier.weight(1f)
+//            )
+//            ValidationTypeTab(
+//                text = "EXIT",
+//                isSelected = qrScannerUiState.value.selectedValidationType == ValidationType.EXIT,
+//                onClick = {
+//                    qrScannerViewModel.onTriggerEvent(
+//                        QrScannerViewModel.QrScannerViewEvent.ChangeValidationType(
+//                            ValidationType.EXIT
+//                        )
+//                    )
+//                },
+//                modifier = Modifier.weight(1f)
+//            )
+//        }
 
         // Camera Preview Box
         Box(modifier = Modifier
