@@ -32,6 +32,7 @@ import com.vidz.domain.usecase.station.GetStationsUseCase
 import com.vidz.domain.usecase.timedticketplan.GetTimedTicketPlanByIdUseCase
 import com.vidz.domain.usecase.timedticketplan.GetTimedTicketPlansUseCase
 import com.vidz.domain.usecase.voucher.GetMyVouchersUseCase
+import com.vidz.domain.usecase.voucher.GetVoucherByCodeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 
 import kotlinx.coroutines.flow.launchIn
@@ -94,6 +95,7 @@ class TicketPurchaseViewModel @Inject constructor(
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val observeLocalAccountInfoUseCase: ObserveLocalAccountInfoUseCase,
     private val getMyVouchersUseCase: GetMyVouchersUseCase,
+    private val getVoucherByCodeUseCase: GetVoucherByCodeUseCase,
     private val getMyDiscountPercentageUseCase: GetMyDiscountPercentageUseCase
 ) : BaseViewModel<TicketPurchaseViewModel.TicketPurchaseEvent, TicketPurchaseViewModel.TicketPurchaseUiState, TicketPurchaseViewModel.TicketPurchaseViewModelState>(
     initState = TicketPurchaseViewModelState()
@@ -131,9 +133,10 @@ class TicketPurchaseViewModel @Inject constructor(
             is TicketPurchaseEvent.SelectToStation -> selectToStation(event.station)
             is TicketPurchaseEvent.SearchJourneyByStations -> searchJourneyByStations()
             is TicketPurchaseEvent.ClearStationSelection -> clearStationSelection()
-            is TicketPurchaseEvent.LoadVouchers -> loadVouchers()
+//            is TicketPurchaseEvent.LoadVouchers -> loadVouchers()
             is TicketPurchaseEvent.SelectVoucher -> selectVoucher(event.voucher)
             is TicketPurchaseEvent.ShowVoucherSheet -> showVoucherSheet(event.show)
+            is TicketPurchaseEvent.FetchVoucherByCode -> fetchVoucherByCode(event.code)
             is TicketPurchaseEvent.SelectPaymentMethod -> selectPaymentMethod(event.paymentMethod)
             is TicketPurchaseEvent.ShowPaymentMethodSheet -> showPaymentMethodSheet(event.show)
         }
@@ -157,10 +160,10 @@ class TicketPurchaseViewModel @Inject constructor(
                     )
                 }
                 
-                // Load vouchers only for customers
-                if (isCustomer) {
-                    loadVouchers()
-                }
+//                // Load vouchers only for customers
+//                if (isCustomer) {
+//                    loadVouchers()
+//                }
                 
                 // For staff, reload stations with filtering
                 if (isStaff) {
@@ -806,7 +809,38 @@ class TicketPurchaseViewModel @Inject constructor(
         updateState { copy(showPaymentMethodSheet = show) }
     }
     
-
+    private fun fetchVoucherByCode(code: String) {
+        viewModelScope.launch {
+            getVoucherByCodeUseCase(code)
+                .onEach { result ->
+                    when (result) {
+                        is Result.Init -> {
+                            updateState { copy(isLoadingVouchers = true) }
+                        }
+                        is Result.Success -> {
+                            val voucher = result.data
+                            updateState {
+                                copy(
+                                    isLoadingVouchers = false,
+                                    vouchers = listOf(voucher),
+                                    selectedVoucher = voucher,
+                                    error = null
+                                )
+                            }
+                        }
+                        is Result.ServerError -> {
+                            updateState {
+                                copy(
+                                    isLoadingVouchers = false,
+                                    error = result.message
+                                )
+                            }
+                        }
+                    }
+                }
+                .launchIn(this)
+        }
+    }
 
     private fun updateState(update: TicketPurchaseViewModelState.() -> TicketPurchaseViewModelState) {
         viewModelState.value = viewModelState.value.update()
@@ -835,9 +869,10 @@ class TicketPurchaseViewModel @Inject constructor(
         data class SelectToStation(val station: Station?) : TicketPurchaseEvent
         object SearchJourneyByStations : TicketPurchaseEvent
         object ClearStationSelection : TicketPurchaseEvent
-        object LoadVouchers : TicketPurchaseEvent
+//        object LoadVouchers : TicketPurchaseEvent
         data class SelectVoucher(val voucher: Voucher?) : TicketPurchaseEvent
         data class ShowVoucherSheet(val show: Boolean) : TicketPurchaseEvent
+        data class FetchVoucherByCode(val code: String) : TicketPurchaseEvent
         data class SelectPaymentMethod(val paymentMethod: PaymentMethod) : TicketPurchaseEvent
         data class ShowPaymentMethodSheet(val show: Boolean) : TicketPurchaseEvent
     }

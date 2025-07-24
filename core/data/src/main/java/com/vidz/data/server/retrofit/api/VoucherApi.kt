@@ -30,6 +30,11 @@ interface VoucherApi {
     @GET("vouchers/my-vouchers")
     suspend fun getMyVouchers(): Response<List<VoucherDto>>
 
+    @GET("vouchers/code/{code}")
+    suspend fun getVoucherByCode(
+        @Path("code") code: String
+    ): Response<VoucherDto>
+
     @POST("vouchers")
     suspend fun createVoucher(
         @Body request: VoucherCreateRequestDto

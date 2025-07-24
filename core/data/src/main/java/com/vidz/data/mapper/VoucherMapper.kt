@@ -16,7 +16,7 @@ class VoucherMapper @Inject constructor() : BaseRemoteMapper<Voucher, VoucherDto
     override fun toDomain(external: VoucherDto): Voucher {
         return Voucher(
             id = external.id,
-            ownerId = external.ownerId,
+//            ownerId = external.ownerId,
             code = external.code,
             discountAmount = external.discountAmount,
             minTransactionAmount = external.minTransactionAmount,
@@ -35,7 +35,7 @@ class VoucherMapper @Inject constructor() : BaseRemoteMapper<Voucher, VoucherDto
     override fun toRemote(domain: Voucher): VoucherDto {
         return VoucherDto(
             id = domain.id,
-            ownerId = domain.ownerId,
+//            ownerId = domain.ownerId,
             code = domain.code,
             discountAmount = domain.discountAmount,
             minTransactionAmount = domain.minTransactionAmount,
@@ -53,7 +53,7 @@ class VoucherMapper @Inject constructor() : BaseRemoteMapper<Voucher, VoucherDto
             minTransactionAmount = domain.minTransactionAmount,
             validFrom = domain.validFrom,
             validUntil = domain.validUntil,
-            ownerIds = domain.ownerIds
+//            ownerIds = domain.ownerIds
         )
     }
 

@@ -5,7 +5,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Voucher(
     val id: String = "",
-    val ownerId: String = "",
     val code: String = "",
     val discountAmount: Double = 0.0,
     val minTransactionAmount: Double = 0.0,
@@ -30,8 +29,7 @@ data class VoucherCreateRequest(
     val discountAmount: Double,
     val minTransactionAmount: Double,
     val validFrom: String,
-    val validUntil: String,
-    val ownerIds: List<String>
+    val validUntil: String
 )
 
 @Serializable
