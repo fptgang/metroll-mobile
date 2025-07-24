@@ -1,24 +1,20 @@
 package com.vidz.base.components
 
-import android.util.Log
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.vidz.domain.model.Voucher
 import com.vidz.domain.model.VoucherStatus
-import kotlin.math.log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,13 +24,16 @@ fun VoucherSelectionBottomSheet(
     isLoading: Boolean,
     cartTotal: Double,
     onVoucherSelected: (Voucher?) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onFetchVoucherByCode: ((String) -> Unit)? = null
 ) {
-    Log.d("VoucherSelectionBottomSheet", "VoucherSelectionBottomSheet: $cartTotal")
+    var voucherCode by remember { mutableStateOf(TextFieldValue("")) }
+    val fetchedVoucher = vouchers.firstOrNull()
+    
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(20.dp)
     ) {
         // Header
         Row(
@@ -43,185 +42,245 @@ fun VoucherSelectionBottomSheet(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Select Voucher",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                text = "Nhập mã voucher",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
             
             IconButton(onClick = onDismiss) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Close"
+                    contentDescription = "Đóng",
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
         
-        if (isLoading) {
-            Box(
+        // Voucher Code Input
+        OutlinedTextField(
+            value = voucherCode,
+            onValueChange = { voucherCode = it },
+            label = { Text("Mã voucher") },
+            placeholder = { Text("Nhập mã voucher của bạn") },
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    IconButton(
+                        onClick = {
+                            if (voucherCode.text.isNotBlank()) {
+                                onFetchVoucherByCode?.invoke(voucherCode.text.trim())
+                            }
+                        },
+                        enabled = voucherCode.text.isNotBlank() && !isLoading
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Tìm voucher",
+                            tint = if (voucherCode.text.isNotBlank()) 
+                                MaterialTheme.colorScheme.primary 
+                            else 
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                focusedLabelColor = MaterialTheme.colorScheme.primary
+            ),
+            shape = RoundedCornerShape(12.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        // Search Button
+        MetrollButton(
+            text = if (isLoading) "Đang tìm..." else "Tìm voucher",
+            onClick = {
+                if (voucherCode.text.isNotBlank()) {
+                    onFetchVoucherByCode?.invoke(voucherCode.text.trim())
+                }
+            },
+            enabled = voucherCode.text.isNotBlank() && !isLoading,
+            isLoading = isLoading,
+            modifier = Modifier.fillMaxWidth()
+        )
+        
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        // Display fetched voucher
+        if (fetchedVoucher != null) {
+            VoucherCard(
+                voucher = fetchedVoucher,
+                isSelected = selectedVoucher?.id == fetchedVoucher.id,
+                cartTotal = cartTotal,
+                onSelect = { 
+                    if (fetchedVoucher.status == VoucherStatus.VALID && cartTotal >= fetchedVoucher.minTransactionAmount) {
+                        onVoucherSelected(fetchedVoucher)
+                    }
+                }
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+        
+        // Option to not use any voucher
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = if (selectedVoucher == null) {
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainer
+                }
+            ),
+            shape = RoundedCornerShape(16.dp),
+            onClick = { onVoucherSelected(null) }
+        ) {
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else if (vouchers.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                contentAlignment = Alignment.Center
+                    .padding(20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "No vouchers available",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
+                    text = "Không sử dụng voucher",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = if (selectedVoucher == null) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
                 )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f, false),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Option to not use any voucher
-                item {
-                    VoucherCard(
-                        voucher = null,
-                        isSelected = selectedVoucher == null,
-                        cartTotal = cartTotal,
-                        onSelect = { onVoucherSelected(null) }
-                    )
-                }
                 
-                // Available vouchers
-                items(vouchers) { voucher ->
-                    VoucherCard(
-                        voucher = voucher,
-                        isSelected = selectedVoucher?.id == voucher.id,
-                        cartTotal = cartTotal,
-                        onSelect = { onVoucherSelected(voucher) }
+                if (selectedVoucher == null) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Đã chọn",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }
 
 @Composable
 private fun VoucherCard(
-    voucher: Voucher?,
+    voucher: Voucher,
     isSelected: Boolean,
     cartTotal: Double,
     onSelect: () -> Unit
 ) {
-    val isApplicable = voucher?.let { v ->
-        v.status == VoucherStatus.VALID && cartTotal >= v.minTransactionAmount
-    } ?: true
+    val isApplicable = voucher.status == VoucherStatus.VALID && cartTotal >= voucher.minTransactionAmount
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         onClick = { if (isApplicable) onSelect() },
         colors = CardDefaults.cardColors(
             containerColor = when {
                 isSelected -> MaterialTheme.colorScheme.primaryContainer
-                isApplicable -> MaterialTheme.colorScheme.surface
+                isApplicable -> MaterialTheme.colorScheme.surfaceContainer
                 else -> MaterialTheme.colorScheme.surfaceVariant
             }
         ),
-//        elevation = CardDefaults.cardElevation(
-//            defaultElevation = if (isSelected) 8.dp else 2.dp
-//        )
+        shape = RoundedCornerShape(16.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
-            if (voucher == null) {
-                // No voucher option
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text(
-                        text = "Don't use voucher",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                    
-                    if (isSelected) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = "Selected",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            } else {
-                // Voucher option
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
                             text = voucher.code,
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = if (isApplicable) MaterialTheme.colorScheme.onSurface 
                                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
                         
-                        Spacer(modifier = Modifier.height(4.dp))
-                        
-                        Text(
-                            text = "Save $${String.format("%.2f", voucher.discountAmount)}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = if (isApplicable) MaterialTheme.colorScheme.primary 
-                                   else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            fontWeight = FontWeight.Medium
-                        )
-                        
-                        Spacer(modifier = Modifier.height(4.dp))
-                        
-                        Text(
-                            text = "Min. spend: $${String.format("%.2f", voucher.minTransactionAmount)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        
-                        if (!isApplicable && voucher.status != VoucherStatus.VALID) {
-                            Spacer(modifier = Modifier.height(4.dp))
+                        if (isApplicable) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text(
+                                    text = "Có thể dùng",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Text(
+                        text = "Tiết kiệm ${String.format("%,.0f", voucher.discountAmount)}₫",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = if (isApplicable) MaterialTheme.colorScheme.primary 
+                               else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        fontWeight = FontWeight.Medium
+                    )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    Text(
+                        text = "Đơn tối thiểu: ${String.format("%,.0f", voucher.minTransactionAmount)}₫",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    if (!isApplicable) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        if (voucher.status != VoucherStatus.VALID) {
                             Text(
-                                text = "Status: ${voucher.status.name}",
+                                text = "Trạng thái: ${voucher.status.name}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.error
                             )
-                        } else if (!isApplicable && cartTotal < voucher.minTransactionAmount) {
-                            Spacer(modifier = Modifier.height(4.dp))
+                        } else if (cartTotal < voucher.minTransactionAmount) {
                             Text(
-                                text = "Minimum amount not met",
+                                text = "Chưa đạt đơn tối thiểu",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
                     }
-                    
-                    if (isSelected) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = "Selected",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                }
+                
+                if (isSelected) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Đã chọn",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
                 }
             }
         }

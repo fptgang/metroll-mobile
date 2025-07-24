@@ -67,6 +67,18 @@ class VoucherRepositoryImpl @Inject constructor(
         ).execute()
     }
 
+    override fun getVoucherByCode(code: String): Flow<Result<Voucher>> {
+        return ServerFlow(
+            getData = {
+                val response = retrofitServer.voucherApi.getVoucherByCode(code)
+                response.body() ?: throw NullPointerException("Get voucher by code response body is null")
+            },
+            convert = { voucherDto ->
+                voucherMapper.toDomain(voucherDto)
+            }
+        ).execute()
+    }
+
     override fun createVoucher(request: VoucherCreateRequest): Flow<Result<List<Voucher>>> {
         return ServerFlow(
             getData = {

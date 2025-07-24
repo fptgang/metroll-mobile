@@ -301,7 +301,10 @@ fun TicketCartScreen(
                 isLoading = uiState.isLoadingVouchers,
                 cartTotal = uiState.subtotal - uiState.subtotal * (uiState.userDiscountPercentage?:0.0f),
                 onVoucherSelected = onSelectVoucher,
-                onDismiss = onHideVoucherSheet
+                onDismiss = onHideVoucherSheet,
+                onFetchVoucherByCode = { code ->
+                    viewModel.onTriggerEvent(TicketPurchaseViewModel.TicketPurchaseEvent.FetchVoucherByCode(code))
+                }
             )
         }
     }
