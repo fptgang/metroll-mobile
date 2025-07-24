@@ -23,9 +23,16 @@ android {
                 )
         }
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
+            buildConfigField(
+                "String",
+                "BASE_URL",
+                "\"https://metroll.southeastasia.cloudapp.azure.com/\""
+            )
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+
             signingConfig = signingConfigs.named("debug").get()
+
         }
     }
     buildFeatures {

@@ -27,7 +27,7 @@ android {
         // Custom test runner to set up Hilt dependency graph
         multiDexEnabled = true //Add this line
 
-        testInstrumentationRunner = "com.google.samples.apps.metroll.core.testing.NiaTestRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         debug {
@@ -36,10 +36,12 @@ android {
             isShrinkResources = false
         }
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
+            isShrinkResources = false
             applicationIdSuffix = MetrollBuildType.RELEASE.applicationIdSuffix
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            // Temporary fix for Protobuf obfuscation issue
+            // proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // isObfuscationEnabled = false
 
             // who clones the code to sign and run the release variant, use the debug signing key.
             signingConfig = signingConfigs.named("debug").get()
@@ -54,6 +56,8 @@ android {
         }
     }
 
+
+
     buildFeatures{
         compose = true
         buildConfig = true
@@ -64,7 +68,7 @@ android {
             isIncludeAndroidResources = true
         }
     }
-    namespace = "com.vidz.metrollapp"
+    namespace = "com.vidz.metroll_mobile"
 }
 
 dependencies {
@@ -135,13 +139,13 @@ dependencies {
 //    testDemoImplementation(projects.core.screenshotTesting)
 //    testDemoImplementation(projects.core.testing)
 //
-//    androidTestImplementation(projects.core.testing)
+    androidTestImplementation(libs.androidx.test.runner)
 //    androidTestImplementation(projects.core.dataTest)
 //    androidTestImplementation(projects.core.datastoreTest)
-//    androidTestImplementation(libs.androidx.test.espresso.core)
-//    androidTestImplementation(libs.androidx.compose.ui.test)
+    androidTestImplementation(libs.androidx.test.espresso.core)
+    androidTestImplementation(libs.androidx.compose.ui.test)
 //    androidTestImplementation(libs.hilt.android.testing)
-//    androidTestImplementation(libs.kotlin.test)
+    androidTestImplementation(libs.kotlin.test)
 
 //    baselineProfile(projects.benchmarks)
 }

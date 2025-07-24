@@ -52,7 +52,7 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun logout(): Flow<Result<Unit>> {
         return ServerFlow(
             getData = { firebaseAuthDataSource.logout() },
-            convert = { Unit }
+            convert = { }
         ).execute()
     }
     

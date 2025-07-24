@@ -187,27 +187,36 @@ class TicketPurchaseViewModel @Inject constructor(
         viewModelScope.launch {
             getCartItemsUseCase()
                 .onEach { checkoutItems ->
-                    // Create placeholder cart items first
-                    val placeholderCartItems = checkoutItems.map { checkoutItem ->
-                        CartItem(
-                            id = checkoutItem.p2pJourneyId ?: checkoutItem.timedTicketPlanId ?: "",
-                            ticketType = checkoutItem.ticketType,
-                            name = if (checkoutItem.ticketType == TicketType.TIMED) "Loading Timed Ticket..." else "Loading P2P Journey...",
-                            price = 0.0,
-                            quantity = checkoutItem.quantity,
-                            description = "Loading details..."
-                        )
-                    }
-                    updateState { copy(cartItems = placeholderCartItems) }
-
-                    // Fetch detailed information for each item
-                    fetchCartItemDetails(checkoutItems)
-                    
-                    // Re-evaluate best voucher when cart changes (only for customers)
-                    if (viewModelState.value.isCustomer) {
-                        val currentVouchers = viewModelState.value.vouchers
-                        if (currentVouchers.isNotEmpty()) {
-                            autoSelectBestVoucher(currentVouchers)
+                    try {
+                        // Create placeholder cart items first
+                        val placeholderCartItems = checkoutItems.map { checkoutItem ->
+                            CartItem(
+                                id = checkoutItem.p2pJourneyId ?: checkoutItem.timedTicketPlanId ?: "",
+                                ticketType = checkoutItem.ticketType,
+                                name = if (checkoutItem.ticketType == TicketType.TIMED) "Loading Timed Ticket..." else "Loading P2P Journey...",
+                                price = 0.0,
+                                quantity = checkoutItem.quantity,
+                                description = "Loading details..."
+                            )
+                        }
+                        updateState { copy(cartItems = placeholderCartItems) }
+    
+                        // Fetch detailed information for each item
+                        fetchCartItemDetails(checkoutItems)
+                        
+                        // Re-evaluate best voucher when cart changes (only for customers)
+                        if (viewModelState.value.isCustomer) {
+                            val currentVouchers = viewModelState.value.vouchers
+                            if (currentVouchers.isNotEmpty()) {
+                                autoSelectBestVoucher(currentVouchers)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        // Handle any exceptions that occur during cart item processing
+                        updateState {
+                            copy(
+                                error = e.message ?: "Failed to load cart items"
+                            )
                         }
                     }
                 }
@@ -336,10 +345,18 @@ class TicketPurchaseViewModel @Inject constructor(
                         }
 
                         is Result.ServerError -> {
+                            // Handle "end of input" error specifically
+                            val errorMessage = if (result.message?.contains("end of input", ignoreCase = true) == true) {
+                                "Failed to load timed tickets. Please check your connection and try again."
+                            } else {
+                                result.message ?: "An unknown error occurred"
+                            }
+                            
+                            println("ViewModel: Error loading timed tickets - $errorMessage")
                             updateState {
                                 copy(
                                     isLoadingTimed = false,
-                                    error = result.message
+                                    error = errorMessage
                                 )
                             }
                         }
@@ -373,10 +390,18 @@ class TicketPurchaseViewModel @Inject constructor(
                         }
 
                         is Result.ServerError -> {
+                            // Handle "end of input" error specifically
+                            val errorMessage = if (result.message?.contains("end of input", ignoreCase = true) == true) {
+                                "Failed to load journeys. Please check your connection and try again."
+                            } else {
+                                result.message ?: "An unknown error occurred"
+                            }
+                            
+                            println("ViewModel: Error loading P2P journeys - $errorMessage")
                             updateState {
                                 copy(
                                     isLoadingP2P = false,
-                                    error = result.message
+                                    error = errorMessage
                                 )
                             }
                         }
@@ -507,10 +532,17 @@ class TicketPurchaseViewModel @Inject constructor(
                                             }
 
                                             is Result.ServerError -> {
+                                                // Handle "end of input" error specifically
+                                                val errorMessage = if (result.message?.contains("end of input", ignoreCase = true) == true) {
+                                                    "Failed to process checkout. Please check your connection and try again."
+                                                } else {
+                                                    result.message ?: "An unknown error occurred"
+                                                }
+                                                
                                                 updateState {
                                                     copy(
                                                         isCheckingOut = false,
-                                                        error = result.message
+                                                        error = errorMessage
                                                     )
                                                 }
                                             }
@@ -585,11 +617,18 @@ class TicketPurchaseViewModel @Inject constructor(
                             }
                         }
                         is Result.ServerError -> {
-                            println( "ViewModel: Error loading stations - ${result.message}")
+                            // Handle "end of input" error specifically
+                            val errorMessage = if (result.message?.contains("end of input", ignoreCase = true) == true) {
+                                "Failed to load stations. Please check your connection and try again."
+                            } else {
+                                result.message ?: "An unknown error occurred"
+                            }
+                            
+                            println("ViewModel: Error loading stations - $errorMessage")
                             updateState {
                                 copy(
                                     isLoadingStations = false,
-                                    error = result.message
+                                    error = errorMessage
                                 )
                             }
                         }
@@ -672,12 +711,19 @@ class TicketPurchaseViewModel @Inject constructor(
                                 }
                             }
                             is Result.ServerError -> {
-                                println("ViewModel: P2P journey search error - ${result.message}")
+                                // Handle "end of input" error specifically
+                                val errorMessage = if (result.message?.contains("end of input", ignoreCase = true) == true) {
+                                    "Failed to search journeys. Please check your connection and try again."
+                                } else {
+                                    result.message ?: "An unknown error occurred"
+                                }
+                                
+                                println("ViewModel: P2P journey search error - $errorMessage")
                                 updateState {
                                     copy(
                                         isLoadingP2P = false,
                                         p2pJourneys = emptyList(),
-                                        error = result.message
+                                        error = errorMessage
                                     )
                                 }
                             }
@@ -726,10 +772,18 @@ class TicketPurchaseViewModel @Inject constructor(
                             autoSelectBestVoucher(vouchers)
                         }
                         is Result.ServerError -> {
+                            // Handle "end of input" error specifically
+                            val errorMessage = if (result.message?.contains("end of input", ignoreCase = true) == true) {
+                                "Failed to load vouchers. Please check your connection and try again."
+                            } else {
+                                result.message ?: "An unknown error occurred"
+                            }
+                            
+                            println("ViewModel: Error loading vouchers - $errorMessage")
                             updateState {
                                 copy(
                                     isLoadingVouchers = false,
-                                    error = result.message
+                                    error = errorMessage
                                 )
                             }
                         }
@@ -788,10 +842,18 @@ class TicketPurchaseViewModel @Inject constructor(
                             }
                         }
                         is Result.ServerError -> {
+                            // Handle "end of input" error specifically
+                            val errorMessage = if (result.message?.contains("end of input", ignoreCase = true) == true) {
+                                "Failed to load discount information. Please check your connection and try again."
+                            } else {
+                                result.message ?: "An unknown error occurred"
+                            }
+                            
+                            println("ViewModel: Error loading discount percentage - $errorMessage")
                             updateState {
                                 copy(
                                     isLoadingDiscountPercentage = false,
-                                    error = result.message
+                                    error = errorMessage
                                 )
                             }
                         }

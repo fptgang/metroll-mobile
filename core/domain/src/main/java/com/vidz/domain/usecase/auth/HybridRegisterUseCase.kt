@@ -14,7 +14,7 @@ class HybridRegisterUseCase @Inject constructor(
     private val authRepository: AuthRepository,
     private val firebaseAuth: FirebaseAuth
 ) {
-    suspend operator fun invoke(
+     operator fun invoke(
         email: String, 
         password: String, 
         confirmPassword: String,

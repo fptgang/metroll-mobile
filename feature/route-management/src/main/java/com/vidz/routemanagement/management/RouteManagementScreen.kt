@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -71,6 +72,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -128,7 +130,10 @@ fun RouteManagementScreen(
     //region Define Var
     val uiState = routeManagementUiState.value
     val snackbarHostState = remember { SnackbarHostState() }
-    val bottomSheetState = rememberModalBottomSheetState()
+    val bottomSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = false,
+        confirmValueChange = { true }
+    )
     //endregion
 
     //region Event Handler
@@ -327,8 +332,9 @@ fun RouteManagementScreen(
                     val mapWeight by animateFloatAsState(
                         targetValue = if (uiState.showAddToCartCard && uiState.selectedJourney != null) 0.6f else 1f,
                         animationSpec = tween(
-                            durationMillis = 400,
-                            delayMillis = 0
+                            durationMillis = 300,
+                            delayMillis = 0,
+                            easing = FastOutSlowInEasing
                         ),
                         label = "mapWeight"
                     )
@@ -341,51 +347,47 @@ fun RouteManagementScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(mapWeight)
-                            .animateContentSize(
-                                animationSpec = tween(
-                                    durationMillis = 400,
-                                    delayMillis = 0
-                                )
-                            )
                     )
                     
                     // Add to Cart Card with animated visibility
                     AnimatedVisibility(
                         visible = uiState.showAddToCartCard && uiState.selectedJourney != null,
-                        enter = slideInVertically(
-                            initialOffsetY = { it },
+                        enter = fadeIn(
                             animationSpec = tween(
-                                durationMillis = 400,
-                                delayMillis = 100
+                                durationMillis = 220,
+                                delayMillis = 90
                             )
-                        ) + fadeIn(
+                        ) + slideInVertically(
+                            initialOffsetY = { fullHeight -> fullHeight / 2 },
                             animationSpec = tween(
-                                durationMillis = 300,
-                                delayMillis = 150
+                                durationMillis = 220,
+                                delayMillis = 90,
+                                easing = FastOutSlowInEasing
                             )
                         ) + expandVertically(
                             expandFrom = Alignment.Top,
                             animationSpec = tween(
-                                durationMillis = 400,
-                                delayMillis = 100
+                                durationMillis = 220,
+                                delayMillis = 90,
+                                easing = FastOutSlowInEasing
                             )
                         ),
-                        exit = slideOutVertically(
-                            targetOffsetY = { it },
+                        exit = fadeOut(
                             animationSpec = tween(
-                                durationMillis = 300,
-                                delayMillis = 0
+                                durationMillis = 150,
+                                easing = FastOutSlowInEasing
                             )
-                        ) + fadeOut(
+                        ) + slideOutVertically(
+                            targetOffsetY = { fullHeight -> fullHeight / 2 },
                             animationSpec = tween(
-                                durationMillis = 200,
-                                delayMillis = 0
+                                durationMillis = 150,
+                                easing = FastOutSlowInEasing
                             )
                         ) + shrinkVertically(
                             shrinkTowards = Alignment.Top,
                             animationSpec = tween(
-                                durationMillis = 300,
-                                delayMillis = 0
+                                durationMillis = 150,
+                                easing = FastOutSlowInEasing
                             )
                         ),
                         modifier = Modifier.fillMaxWidth()
@@ -428,7 +430,14 @@ fun RouteManagementScreen(
         ) {
             DestinationSelectionBottomSheet(
                 startStation = uiState.clickedStation,
-                availableDestinations = uiState.stations.filter { it.id != uiState.clickedStation.id },
+                availableDestinations = uiState.stations.filter { station ->
+                    // Filter out the clicked station itself
+                    station.id != uiState.clickedStation.id &&
+                    // Only show stations that belong to the selected metro line
+                    uiState.selectedMetroLine?.let { selectedLine ->
+                        station.lineStationInfos.any { it.lineCode == selectedLine.code }
+                    } ?: false
+                },
                 onDestinationSelect = handleDestinationSelect,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )

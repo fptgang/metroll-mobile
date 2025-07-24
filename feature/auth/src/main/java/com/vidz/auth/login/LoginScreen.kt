@@ -1,5 +1,12 @@
 package com.vidz.auth.login
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,10 +44,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
@@ -64,6 +80,8 @@ fun LoginScreen(
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val scrollState = rememberScrollState()
+    var isEmailFocused by remember { mutableStateOf(false) }
+    var isPasswordFocused by remember { mutableStateOf(false) }
     //endregion
 
     //region Event Handler
@@ -98,7 +116,7 @@ fun LoginScreen(
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
                         MaterialTheme.colorScheme.surface
                     )
                 )
@@ -113,9 +131,23 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // App Logo/Icon
+            // App Logo/Icon with subtle animation
+            var scale by remember { mutableStateOf(1f) }
+            val animatedScale by animateFloatAsState(
+                targetValue = scale,
+                animationSpec = tween(durationMillis = 1000),
+                label = "logo_scale"
+            )
+            
             Surface(
-                modifier = Modifier.size(80.dp),
+                modifier = Modifier
+                    .size(96.dp)
+                    .scale(animatedScale)
+                    .clickable {
+                        scale = 0.95f
+                        // Reset scale after animation
+                        scale = 1f
+                    },
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                 shape = CircleShape
             ) {
@@ -123,46 +155,57 @@ fun LoginScreen(
                     imageVector = Icons.Default.Lock,
                     contentDescription = "Logo ứng dụng",
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(20.dp)
+                    modifier = Modifier.padding(24.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
-            // Welcome Text
-            Text(
-                text = "Chào mừng trở lại",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
-            )
+            // Welcome Text with staggered animation
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(animationSpec = tween(delayMillis = 100))
+            ) {
+                Text(
+                    text = "Chào mừng trở lại",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = "Đăng nhập để tiếp tục sử dụng HCMC Metro",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(animationSpec = tween(delayMillis = 200))
+            ) {
+                Text(
+                    text = "Đăng nhập để tiếp tục sử dụng HCMC Metro",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
-            // Login Card
+            // Login Card with elevation animation
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(elevation = 8.dp),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                    modifier = Modifier.padding(28.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    // Email Field
+                    // Email Field with focus animation
                     OutlinedTextField(
                         value = uiState.email,
                         onValueChange = handleEmailChange,
@@ -172,7 +215,8 @@ fun LoginScreen(
                             Icon(
                                 Icons.Outlined.Email,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = if (isEmailFocused) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         },
                         singleLine = true,
@@ -195,22 +239,26 @@ fun LoginScreen(
                         shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { isEmailFocused = it.isFocused }
                     )
 
-                    // Password Field
+                    // Password Field with focus animation
                     OutlinedTextField(
                         value = uiState.password,
                         onValueChange = handlePasswordChange,
                         label = { Text("Mật khẩu") },
-                        placeholder = { Text("Nhập mật khẩu của bạn") },
                         leadingIcon = {
                             Icon(
                                 Icons.Outlined.Lock,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = if (isPasswordFocused) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         },
                         trailingIcon = {
@@ -222,7 +270,8 @@ fun LoginScreen(
                                         Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                                     contentDescription = if (uiState.isPasswordVisible)
                                         "Ẩn mật khẩu" else "Hiện mật khẩu",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    tint = if (isPasswordFocused) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         },
@@ -252,14 +301,16 @@ fun LoginScreen(
                         shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { isPasswordFocused = it.isFocused }
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Login Button
+                    // Login Button with loading animation
                     MetrollButton(
                         text = if (uiState.isLoading) "Đang đăng nhập..." else "Đăng nhập",
                         onClick = handleLogin,
@@ -270,29 +321,42 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
-            // Forgot Password
-            TextButton(
-                onClick = onNavigateToForgotPassword,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(
-                    "Quên mật khẩu?",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
+            // Forgot Password with hover effect
+            AnimatedContent(
+                targetState = uiState.isLoading,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(150)) togetherWith fadeOut(animationSpec = tween(150))
+                }
+            ) { isLoading ->
+                if (!isLoading) {
+                    TextButton(
+                        onClick = onNavigateToForgotPassword,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { onNavigateToForgotPassword() }
+                    ) {
+                        Text(
+                            "Quên mật khẩu?",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(36.dp))
 
-            // Register Link
+            // Register Link with card elevation
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f)
                 )
             ) {
                 Row(

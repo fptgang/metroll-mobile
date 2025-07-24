@@ -1,5 +1,14 @@
 package com.vidz.auth.register
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -65,8 +74,7 @@ fun RegisterScreen(
     val scrollState = rememberScrollState()
     //endregion
 
-
-
+    //region Event Handlers
     val handleEmailChange = { email: String ->
         onEvent(RegisterViewModel.RegisterEvent.EmailChanged(email))
     }
@@ -101,14 +109,14 @@ fun RegisterScreen(
             uiState.confirmPasswordError == null
     //endregion
 
-    //region ui
+    //region UI
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
+                        MaterialTheme.colorScheme.primaryContainer,
                         MaterialTheme.colorScheme.surface
                     )
                 )
@@ -123,244 +131,322 @@ fun RegisterScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // App Logo/Icon
-            Surface(
-                modifier = Modifier.size(80.dp),
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                shape = CircleShape
+            // App Logo/Icon with subtle animation
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(animationSpec = tween(600)) + slideInVertically(animationSpec = tween(600)) { -40 },
+                exit = fadeOut(animationSpec = tween(300))
             ) {
-                Icon(
-                    imageVector = Icons.Default.PersonAdd,
-                    contentDescription = "Biểu tượng đăng ký",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(20.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Welcome Text
-            Text(
-                text = "Tạo tài khoản",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Tham gia HCMC Metro ngay hôm nay",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            // Registration Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                Surface(
+                    modifier = Modifier.size(96.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = CircleShape
                 ) {
-                    // Email Field
-                    OutlinedTextField(
-                        value = uiState.email,
-                        onValueChange = handleEmailChange,
-                        label = { Text("Địa chỉ email") },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Outlined.Email,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        },
-                        singleLine = true,
-                        isError = uiState.emailError != null,
-                        supportingText = uiState.emailError?.let {
-                            {
-                                Text(
-                                    text = it,
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Email,
-                            imeAction = ImeAction.Next
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                        ),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    // Password Field
-                    OutlinedTextField(
-                        value = uiState.password,
-                        onValueChange = handlePasswordChange,
-                        label = { Text("Mật khẩu") },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Outlined.Lock,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        },
-                        trailingIcon = {
-                            IconButton(
-                                onClick = handlePasswordVisibilityToggle
-                            ) {
-                                Icon(
-                                    imageVector = if (uiState.isPasswordVisible)
-                                        Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                    contentDescription = if (uiState.isPasswordVisible)
-                                        "Ẩn mật khẩu" else "Hiện mật khẩu",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        },
-                        visualTransformation = if (uiState.isPasswordVisible)
-                            VisualTransformation.None else PasswordVisualTransformation(),
-                        singleLine = true,
-                        isError = uiState.passwordError != null,
-                        supportingText = uiState.passwordError?.let {
-                            {
-                                Text(
-                                    text = it,
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Next
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                        ),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    // Confirm Password Field
-                    OutlinedTextField(
-                        value = uiState.confirmPassword,
-                        onValueChange = handleConfirmPasswordChange,
-                        label = { Text("Xác nhận mật khẩu") },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Outlined.Lock,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        },
-                        trailingIcon = {
-                            IconButton(
-                                onClick = handleConfirmPasswordVisibilityToggle
-                            ) {
-                                Icon(
-                                    imageVector = if (uiState.isConfirmPasswordVisible)
-                                        Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                    contentDescription = if (uiState.isConfirmPasswordVisible)
-                                        "Ẩn mật khẩu" else "Hiện mật khẩu",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        },
-                        visualTransformation = if (uiState.isConfirmPasswordVisible)
-                            VisualTransformation.None else PasswordVisualTransformation(),
-                        singleLine = true,
-                        isError = uiState.confirmPasswordError != null,
-                        supportingText = uiState.confirmPasswordError?.let {
-                            {
-                                Text(
-                                    text = it,
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Done
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                if (isFormValid) {
-                                    handleRegister()
-                                }
-                            }
-                        ),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Register Button
-                    MetrollButton(
-                        text = if (uiState.isLoading) "Đang tạo tài khoản..." else "Tạo tài khoản",
-                        onClick = handleRegister,
-                        enabled = !uiState.isLoading && isFormValid,
-                        isLoading = uiState.isLoading,
-                        modifier = Modifier.fillMaxWidth()
+                    Icon(
+                        imageVector = Icons.Default.PersonAdd,
+                        contentDescription = "Biểu tượng đăng ký",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .padding(24.dp)
+                            .animateContentSize(tween(300))
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Login Link
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onNavigateToLogin() },
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            // Welcome Text with animation
+            AnimatedContent(
+                targetState = "Tạo tài khoản",
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(600)) togetherWith fadeOut(animationSpec = tween(300))
+                }
+            ) { targetText ->
+                Text(
+                    text = targetText,
+                    style = MaterialTheme.typography.displayMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.animateContentSize(tween(300))
                 )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Subtitle with animation
+            AnimatedContent(
+                targetState = "Tham gia HCMC Metro ngay hôm nay",
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(600)) togetherWith fadeOut(animationSpec = tween(300))
+                }
+            ) { targetText ->
+                Text(
+                    text = targetText,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.animateContentSize(tween(300))
+                )
+            }
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // Registration Card with elevation animation
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(animationSpec = tween(600)) + slideInVertically(animationSpec = tween(600)) { 40 },
+                exit = fadeOut(animationSpec = tween(300))
             ) {
-                Row(
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+                        .animateContentSize(tween(300)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    )
                 ) {
-                    Text(
-                        text = "Đã có tài khoản? ",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    Column(
+                        modifier = Modifier.padding(28.dp),
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        // Email Field with improved error handling
+                        OutlinedTextField(
+                            value = uiState.email,
+                            onValueChange = handleEmailChange,
+                            label = { Text("Địa chỉ email") },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Outlined.Email,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            },
+                            singleLine = true,
+                            isError = uiState.emailError != null,
+                            supportingText = {
+                                AnimatedVisibility(
+                                    visible = uiState.emailError != null,
+                                    enter = fadeIn() + slideInVertically(),
+                                    exit = fadeOut() + slideOutVertically()
+                                ) {
+                                    Text(
+                                        text = uiState.emailError ?: "",
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Email,
+                                imeAction = ImeAction.Next
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                            ),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                errorBorderColor = MaterialTheme.colorScheme.error,
+                                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateContentSize(tween(300))
+                        )
+
+                        // Password Field with improved error handling
+                        OutlinedTextField(
+                            value = uiState.password,
+                            onValueChange = handlePasswordChange,
+                            label = { Text("Mật khẩu") },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Outlined.Lock,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            },
+                            trailingIcon = {
+                                IconButton(
+                                    onClick = handlePasswordVisibilityToggle
+                                ) {
+                                    Icon(
+                                        imageVector = if (uiState.isPasswordVisible)
+                                            Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                        contentDescription = if (uiState.isPasswordVisible)
+                                            "Ẩn mật khẩu" else "Hiện mật khẩu",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            },
+                            visualTransformation = if (uiState.isPasswordVisible)
+                                VisualTransformation.None else PasswordVisualTransformation(),
+                            singleLine = true,
+                            isError = uiState.passwordError != null,
+                            supportingText = {
+                                AnimatedVisibility(
+                                    visible = uiState.passwordError != null,
+                                    enter = fadeIn() + slideInVertically(),
+                                    exit = fadeOut() + slideOutVertically()
+                                ) {
+                                    Text(
+                                        text = uiState.passwordError ?: "",
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Password,
+                                imeAction = ImeAction.Next
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                            ),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                errorBorderColor = MaterialTheme.colorScheme.error,
+                                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateContentSize(tween(300))
+                        )
+
+                        // Confirm Password Field with improved error handling
+                        OutlinedTextField(
+                            value = uiState.confirmPassword,
+                            onValueChange = handleConfirmPasswordChange,
+                            label = { Text("Xác nhận mật khẩu") },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Outlined.Lock,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            },
+                            trailingIcon = {
+                                IconButton(
+                                    onClick = handleConfirmPasswordVisibilityToggle
+                                ) {
+                                    Icon(
+                                        imageVector = if (uiState.isConfirmPasswordVisible)
+                                            Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                        contentDescription = if (uiState.isConfirmPasswordVisible)
+                                            "Ẩn mật khẩu" else "Hiện mật khẩu",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            },
+                            visualTransformation = if (uiState.isConfirmPasswordVisible)
+                                VisualTransformation.None else PasswordVisualTransformation(),
+                            singleLine = true,
+                            isError = uiState.confirmPasswordError != null,
+                            supportingText = {
+                                AnimatedVisibility(
+                                    visible = uiState.confirmPasswordError != null,
+                                    enter = fadeIn() + slideInVertically(),
+                                    exit = fadeOut() + slideOutVertically()
+                                ) {
+                                    Text(
+                                        text = uiState.confirmPasswordError ?: "",
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Password,
+                                imeAction = ImeAction.Done
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    if (isFormValid) {
+                                        handleRegister()
+                                    }
+                                }
+                            ),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                errorBorderColor = MaterialTheme.colorScheme.error,
+                                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateContentSize(tween(300))
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Register Button with enhanced animation
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = fadeIn(animationSpec = tween(600)) + slideInVertically(animationSpec = tween(600)) { 40 },
+                            exit = fadeOut(animationSpec = tween(300))
+                        ) {
+                            MetrollButton(
+                                text = if (uiState.isLoading) "Đang tạo tài khoản..." else "Tạo tài khoản",
+                                onClick = handleRegister,
+                                enabled = !uiState.isLoading && isFormValid,
+                                isLoading = uiState.isLoading,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .animateContentSize(tween(300))
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Login Link with subtle hover effect
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(animationSpec = tween(600)) + slideInVertically(animationSpec = tween(600)) { 40 },
+                exit = fadeOut(animationSpec = tween(300))
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onNavigateToLogin() }
+                        .animateContentSize(tween(300)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f)
                     )
-                    Text(
-                        text = "Đăng nhập",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
-                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Đã có tài khoản? ",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "Đăng nhập",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

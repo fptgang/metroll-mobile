@@ -76,3 +76,42 @@
 # Keep all javax.inject annotations
 -keep class javax.inject.** { *; }
 -keepattributes *Annotation*
+
+# Protobuf
+-keep class com.vidz.datastore.proto.** { *; }
+-keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
+-keep class * extends com.google.protobuf.GeneratedMessageLite$Builder { *; }
+-keep class * extends com.google.protobuf.GeneratedMessageLite$MethodToInvoke { *; }
+-keep class com.google.protobuf.** { *; }
+-keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite {
+    <fields>;
+}
+
+# More aggressive Protobuf rules to prevent field name obfuscation
+-keepclassmembernames class com.vidz.datastore.proto.** {
+    <fields>;
+}
+
+# Prevent obfuscation of all protobuf generated classes
+-keepnames class com.vidz.datastore.proto.**
+-keepnames class * extends com.google.protobuf.GeneratedMessageLite
+
+# Specific rule to keep the userData_ field
+-keepclassmembernames class com.vidz.datastore.proto.UserPreferences {
+    com.vidz.datastore.proto.UserData userData_;
+}
+
+# kotlinx.serialization
+-keep class kotlinx.serialization.** { *; }
+-keep class kotlin.reflect.** { *; }
+-keep @kotlinx.serialization.Serializable class * { *; }
+-keep class * implements kotlinx.serialization.KSerializer { *; }
+
+# Keep all data classes and their fields
+-keepclassmembers class * {
+    @kotlinx.serialization.Serializable *;
+}
+
+# Keep all classes in domain and data layers completely
+-keep class com.vidz.domain.model.** { *; }
+-keep class com.vidz.data.server.dto.** { *; }

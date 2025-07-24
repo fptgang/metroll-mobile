@@ -40,6 +40,7 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
                 "implementation"(project(":core:domain"))
                 "implementation"(libs.findLibrary("androidx-hilt-navigation-compose").get())
                 "implementation"(libs.findLibrary("androidx-lifecycle-runtimeCompose").get())
+                "implementation"(libs.findLibrary("androidx-lifecycle-runtimeCompose").get())
                 "implementation"(libs.findLibrary("androidx-lifecycle-viewModelCompose").get())
                 "implementation"(libs.findLibrary("androidx-navigation-compose").get())
                 "implementation"(libs.findLibrary("androidx-tracing-ktx").get())

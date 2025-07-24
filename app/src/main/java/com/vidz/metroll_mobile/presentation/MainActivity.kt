@@ -1,4 +1,4 @@
-package com.vidz.metrollapp.presentation
+package com.vidz.metroll_mobile.presentation
 
 import MetrollApp
 import android.content.Intent

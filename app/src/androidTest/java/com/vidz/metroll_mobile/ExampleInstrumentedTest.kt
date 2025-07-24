@@ -18,7 +18,7 @@ class ExampleInstrumentedTest {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         assertEquals(
-            "com.vidz.metroll_mobile",
+            "com.vidz.app.metroll",
             appContext.packageName
         )
     }
