@@ -52,6 +52,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -499,248 +500,156 @@ private fun P2PJourneysContent(
     var showToDropdown by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
     
+    // Automatically select the staff's assigned station as the default "from" station
+    LaunchedEffect(isStaff, staffAssignedStation, stations) {
+        if (isStaff && !staffAssignedStation.isNullOrBlank() && selectedFromStation == null && stations.isNotEmpty()) {
+            // For staff users, automatically select their assigned station as the "from" station
+            val assignedStation = stations.find { it.code == staffAssignedStation }
+            assignedStation?.let { station ->
+                onFromStationSelect(station)
+            }
+        }
+    }
+    
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // Station Selection Section
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp)
+        // Station Selection Section - Only show for non-staff users
+        if (!isStaff) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.padding(20.dp)
                     ) {
-                        Column {
-                            Text(
-                                text = "Chọn Tuyến Đường",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            
-                            // Show staff-specific message if they have limited stations
-                            if (isStaff && !staffAssignedStation.isNullOrBlank()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
                                 Text(
-                                    text = "Trạm được gán: $staffAssignedStation",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(top = 4.dp)
+                                    text = "Chọn Tuyến Đường",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
                                 )
+                            }
+                            
+                            // Show clear button when either station is selected
+                            if (selectedFromStation != null || selectedToStation != null) {
+                                IconButton(
+                                    onClick = onClearStations,
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .background(
+                                            MaterialTheme.colorScheme.errorContainer,
+                                            RoundedCornerShape(12.dp)
+                                        )
+                                ) {
+                                    Icon(
+                                        Icons.Default.Clear,
+                                        contentDescription = "Xóa trạm",
+                                        tint = MaterialTheme.colorScheme.onErrorContainer,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
                         
-                        if (selectedFromStation != null || selectedToStation != null) {
-                            IconButton(
-                                onClick = onClearStations,
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        if (isLoadingStations) {
+                            Box(
                                 modifier = Modifier
-                                    .size(40.dp)
-                                    .background(
-                                        MaterialTheme.colorScheme.errorContainer,
-                                        RoundedCornerShape(12.dp)
-                                    )
+                                    .fillMaxWidth()
+                                    .height(80.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    Icons.Default.Clear,
-                                    contentDescription = "Xóa trạm",
-                                    tint = MaterialTheme.colorScheme.onErrorContainer,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    if (isLoadingStations) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(80.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    strokeWidth = 3.dp
-                                )
-                                Text(
-                                    text = "Đang tải danh sách trạm...",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    } else {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            verticalAlignment = Alignment.Top
-                        ) {
-                            // From Station Dropdown
-                            ExposedDropdownMenuBox(
-                                expanded = showFromDropdown,
-                                onExpandedChange = { showFromDropdown = it },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                OutlinedTextField(
-                                    value = selectedFromStation?.name ?: "",
-                                    onValueChange = { },
-                                    readOnly = true,
-                                    label = { 
-                                        Text(
-                                            "Từ trạm",
-                                            style = MaterialTheme.typography.labelLarge
-                                        )
-                                    },
-                                    placeholder = { 
-                                        Text(
-                                            "Chọn trạm khởi hành",
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    },
-                                    trailingIcon = {
-                                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = showFromDropdown)
-                                    },
-                                    modifier = Modifier
-                                        .menuAnchor()
-                                        .fillMaxWidth(),
-                                    singleLine = true,
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                                    )
-                                )
-                                
-                                ExposedDropdownMenu(
-                                    expanded = showFromDropdown,
-                                    onDismissRequest = { showFromDropdown = false }
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    if (stations.isEmpty()) {
-                                        DropdownMenuItem(
-                                            text = { 
-                                                Text(
-                                                    "Không có trạm khả dụng",
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    style = MaterialTheme.typography.bodyMedium
-                                                ) 
-                                            },
-                                            onClick = { },
-                                            enabled = false
-                                        )
-                                    } else {
-                                        stations.forEach { station ->
-                                            DropdownMenuItem(
-                                                text = { 
-                                                    Column {
-                                                        Text(
-                                                            text = station.name,
-                                                            style = MaterialTheme.typography.bodyLarge,
-                                                            fontWeight = FontWeight.Medium
-                                                        )
-                                                        Text(
-                                                            text = "Mã: ${station.code}",
-                                                            style = MaterialTheme.typography.bodySmall,
-                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                        )
-                                                    }
-                                                },
-                                                onClick = {
-                                                    onFromStationSelect(station)
-                                                    showFromDropdown = false
-                                                }
-                                            )
-                                        }
-                                    }
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        strokeWidth = 3.dp
+                                    )
+                                    Text(
+                                        text = "Đang tải danh sách trạm...",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 }
                             }
-                            
-                            // To Station Dropdown
-                            ExposedDropdownMenuBox(
-                                expanded = showToDropdown,
-                                onExpandedChange = { showToDropdown = it },
-                                modifier = Modifier.weight(1f)
+                        } else {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalAlignment = Alignment.Top
                             ) {
-                                OutlinedTextField(
-                                    value = selectedToStation?.name ?: "",
-                                    onValueChange = { },
-                                    readOnly = true,
-                                    label = { 
-                                        Text(
-                                            "Đến trạm",
-                                            style = MaterialTheme.typography.labelLarge
-                                        )
-                                    },
-                                    placeholder = { 
-                                        Text(
-                                            "Chọn trạm đích",
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    },
-                                    trailingIcon = {
-                                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = showToDropdown)
-                                    },
-                                    modifier = Modifier
-                                        .menuAnchor()
-                                        .fillMaxWidth(),
-                                    singleLine = true,
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                                    )
-                                )
-                                
-                                ExposedDropdownMenu(
-                                    expanded = showToDropdown,
-                                    onDismissRequest = { showToDropdown = false }
+                                // From Station Dropdown
+                                ExposedDropdownMenuBox(
+                                    expanded = showFromDropdown,
+                                    onExpandedChange = { showFromDropdown = it },
+                                    modifier = Modifier.weight(1f)
                                 ) {
-                                    if (stations.isEmpty()) {
-                                        DropdownMenuItem(
-                                            text = { 
-                                                Text(
-                                                    "Không có trạm khả dụng",
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    style = MaterialTheme.typography.bodyMedium
-                                                ) 
-                                            },
-                                            onClick = { },
-                                            enabled = false
+                                    OutlinedTextField(
+                                        value = selectedFromStation?.name ?: "",
+                                        onValueChange = { },
+                                        readOnly = true,
+                                        label = {
+                                            Text(
+                                                "Từ trạm",
+                                                style = MaterialTheme.typography.labelLarge
+                                            )
+                                        },
+                                        placeholder = {
+                                            Text(
+                                                "Chọn trạm khởi hành",
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        },
+                                        trailingIcon = {
+                                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = showFromDropdown)
+                                        },
+                                        modifier = Modifier
+                                            .menuAnchor()
+                                            .fillMaxWidth(),
+                                        singleLine = true,
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                                         )
-                                    } else {
-                                        // Filter out the selected from station
-                                        val availableToStations = stations.filter { it.id != selectedFromStation?.id }
-                                        
-                                        if (availableToStations.isEmpty() && selectedFromStation != null) {
+                                    )
+                                    
+                                    ExposedDropdownMenu(
+                                        expanded = showFromDropdown,
+                                        onDismissRequest = { showFromDropdown = false }
+                                    ) {
+                                        if (stations.isEmpty()) {
                                             DropdownMenuItem(
-                                                text = { 
+                                                text = {
                                                     Text(
-                                                        "Không có trạm khác khả dụng",
+                                                        "Không có trạm khả dụng",
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                         style = MaterialTheme.typography.bodyMedium
-                                                    ) 
+                                                    )
                                                 },
                                                 onClick = { },
                                                 enabled = false
                                             )
                                         } else {
-                                            (if (selectedFromStation != null) availableToStations else stations).forEach { station ->
+                                            stations.forEach { station ->
                                                 DropdownMenuItem(
-                                                    text = { 
+                                                    text = {
                                                         Column {
                                                             Text(
                                                                 text = station.name,
@@ -755,42 +664,138 @@ private fun P2PJourneysContent(
                                                         }
                                                     },
                                                     onClick = {
-                                                        onToStationSelect(station)
-                                                        showToDropdown = false
+                                                        onFromStationSelect(station)
+                                                        showFromDropdown = false
                                                     }
                                                 )
                                             }
                                         }
                                     }
                                 }
+                                
+                                // To Station Dropdown
+                                ExposedDropdownMenuBox(
+                                    expanded = showToDropdown,
+                                    onExpandedChange = { showToDropdown = it },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    OutlinedTextField(
+                                        value = selectedToStation?.name ?: "",
+                                        onValueChange = { },
+                                        readOnly = true,
+                                        label = {
+                                            Text(
+                                                "Đến trạm",
+                                                style = MaterialTheme.typography.labelLarge
+                                            )
+                                        },
+                                        placeholder = {
+                                            Text(
+                                                "Chọn trạm đích",
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        },
+                                        trailingIcon = {
+                                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = showToDropdown)
+                                        },
+                                        modifier = Modifier
+                                            .menuAnchor()
+                                            .fillMaxWidth(),
+                                        singleLine = true,
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                        )
+                                    )
+                                    
+                                    ExposedDropdownMenu(
+                                        expanded = showToDropdown,
+                                        onDismissRequest = { showToDropdown = false }
+                                    ) {
+                                        if (stations.isEmpty()) {
+                                            DropdownMenuItem(
+                                                text = {
+                                                    Text(
+                                                        "Không có trạm khả dụng",
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        style = MaterialTheme.typography.bodyMedium
+                                                    )
+                                                },
+                                                onClick = { },
+                                                enabled = false
+                                            )
+                                        } else {
+                                            // Filter out the selected from station
+                                            val availableToStations = stations.filter { it.id != selectedFromStation?.id }
+                                            
+                                            if (availableToStations.isEmpty() && selectedFromStation != null) {
+                                                DropdownMenuItem(
+                                                    text = {
+                                                        Text(
+                                                            "Không có trạm khác khả dụng",
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                            style = MaterialTheme.typography.bodyMedium
+                                                        )
+                                                    },
+                                                    onClick = { },
+                                                    enabled = false
+                                                )
+                                            } else {
+                                                (if (selectedFromStation != null) availableToStations else stations).forEach { station ->
+                                                    DropdownMenuItem(
+                                                        text = {
+                                                            Column {
+                                                                Text(
+                                                                    text = station.name,
+                                                                    style = MaterialTheme.typography.bodyLarge,
+                                                                    fontWeight = FontWeight.Medium
+                                                                )
+                                                                Text(
+                                                                    text = "Mã: ${station.code}",
+                                                                    style = MaterialTheme.typography.bodySmall,
+                                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                                )
+                                                            }
+                                                        },
+                                                        onClick = {
+                                                            onToStationSelect(station)
+                                                            showToDropdown = false
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
-                    }
-                    
-                    // Station Selection Info
-                    if (selectedFromStation != null || selectedToStation != null) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                    RoundedCornerShape(8.dp)
+                        
+                        // Station Selection Info
+                        if (selectedFromStation != null || selectedToStation != null) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                        RoundedCornerShape(8.dp)
+                                    )
+                                    .padding(12.dp)
+                            ) {
+                                Text(
+                                    text = if (selectedFromStation != null && selectedToStation != null) {
+                                        "Tuyến đã chọn: ${selectedFromStation.name} → ${selectedToStation.name}"
+                                    } else if (selectedFromStation != null) {
+                                        "Trạm khởi hành: ${selectedFromStation.name}"
+                                    } else {
+                                        "Trạm đích: ${selectedToStation?.name}"
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Medium
                                 )
-                                .padding(12.dp)
-                        ) {
-                            Text(
-                                text = if (selectedFromStation != null && selectedToStation != null) {
-                                    "Tuyến đã chọn: ${selectedFromStation.name} → ${selectedToStation.name}"
-                                } else if (selectedFromStation != null) {
-                                    "Trạm khởi hành: ${selectedFromStation.name}"
-                                } else {
-                                    "Trạm đích: ${selectedToStation?.name}"
-                                },
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Medium
-                            )
+                            }
                         }
                     }
                 }
@@ -838,44 +843,47 @@ private fun P2PJourneysContent(
                         fontWeight = FontWeight.SemiBold
                     )
                     
-                    Box {
-                        OutlinedButton(
-                            onClick = { showSortMenu = true },
-                            shape = RoundedCornerShape(12.dp),
-                            colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            )
-                        ) {
-                            Icon(
-                                Icons.Default.FilterList, 
-                                contentDescription = "Sắp xếp",
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                currentSort.displayName,
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
-                        
-                        DropdownMenu(
-                            expanded = showSortMenu,
-                            onDismissRequest = { showSortMenu = false }
-                        ) {
-                            P2PSortType.values().forEach { sortType ->
-                                DropdownMenuItem(
-                                    text = { 
-                                        Text(
-                                            sortType.displayName,
-                                            style = MaterialTheme.typography.bodyMedium
-                                        )
-                                    },
-                                    onClick = { 
-                                        onSortChange(sortType)
-                                        showSortMenu = false 
-                                    }
+                    // Only show filter box for non-staff users
+                    if (!isStaff) {
+                        Box {
+                            OutlinedButton(
+                                onClick = { showSortMenu = true },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                    contentColor = MaterialTheme.colorScheme.onSurface
                                 )
+                            ) {
+                                Icon(
+                                    Icons.Default.FilterList,
+                                    contentDescription = "Sắp xếp",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    currentSort.displayName,
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            }
+                            
+                            DropdownMenu(
+                                expanded = showSortMenu,
+                                onDismissRequest = { showSortMenu = false }
+                            ) {
+                                P2PSortType.values().forEach { sortType ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                sortType.displayName,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                        },
+                                        onClick = {
+                                            onSortChange(sortType)
+                                            showSortMenu = false
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
